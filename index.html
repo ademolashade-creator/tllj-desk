@@ -12,14 +12,14 @@
 </header>
 <main id="main"><p class="empty">Loading the plan, pipeline and events.</p></main>
 </div>
-<dialog id="dlg"></dialog>
+<dialog id="dlg"></dialog><dialog id="dlg2"></dialog>
 <div id="toast" class="toast" hidden></div>
 <script>
 const END='2026-12-07', START='2026-10-27';
 const STATUSES=['Not started','Finding the contact','Contact found','First message sent','In conversation','Proposal sent','Negotiating','Agreed','Declined','On hold'];
 const ACTIVE=['First message sent','In conversation','Proposal sent','Negotiating','Agreed'];
 const LIVE=['In conversation','Proposal sent','Negotiating'];
-const COLS=['tasks','events','pipe','log','contacts','kit','prep','deals','decisions'];
+const COLS=['tasks','events','pipe','log','contacts','kit','prep','deals','decisions','activity'];
 const S={loaded:{},tab:'today',fo:'All',fw:'All',fs:'All',fc:'Missing',ai:{}};
 COLS.forEach(c=>S[c]=[]);
 let db=null,sample=null,EDIT=true;
@@ -41,10 +41,10 @@ function toast(t){const e=$('#toast');e.textContent=t;e.hidden=false;clearTimeou
 let cur=null;const hist=[];
 function rec(col,id){if(cur){const p=get(col,id);cur.push({col,id,prev:p?{...p}:null})}}
 function renderUndo(){const b=$('#undo');if(!b) return;const h=hist[hist.length-1];b.hidden=!EDIT;b.disabled=!h;b.textContent=h?'Undo: '+h.label:'Undo';b.title='Undo the last change (Ctrl+Z)'}
-async function act(label,fn){cur=[];try{await fn()}finally{if(cur.length){hist.push({label,items:cur});if(hist.length>30)hist.shift()}cur=null;renderUndo()}}
+async function act(label,fn){cur=[];let items=[];try{await fn()}finally{items=cur||[];if(items.length){hist.push({label,items});if(hist.length>30)hist.shift()}cur=null;renderUndo();if(items.length) recordActivity(label,items)}}
 function local(col,id,d){const i=S[col].findIndex(x=>x.id===id);if(d==null){if(i>=0) S[col].splice(i,1)}else if(i<0) S[col].push({...d});else S[col][i]={...d}}
 async function undo(){const b=hist.pop();renderUndo();if(!b){toast('Nothing to undo');return}
-  try{for(const it of b.items.slice().reverse()){const r=db.collection(it.col).doc(it.id);if(it.prev){await r.set(it.prev);local(it.col,it.id,it.prev)}else{await r.delete();local(it.col,it.id,null)}}toast('Undid: '+b.label);if(!$('#dlg').open) render()}catch(e){toast('Could not undo: '+(e.message||''))}}
+  try{for(const it of b.items.slice().reverse()){const r=db.collection(it.col).doc(it.id);if(it.prev){await r.set(it.prev);local(it.col,it.id,it.prev)}else{await r.delete();local(it.col,it.id,null)}}toast('Undid: '+b.label);recordActivity('Undid: '+b.label,[]);if(!$('#dlg').open) render()}catch(e){toast('Could not undo: '+(e.message||''))}}
 async function save(col,id,data){
   if(!db){toast('Saving is not available in this view.');return false}
   rec(col,id);
@@ -189,12 +189,17 @@ function vEvents(){
   return `<div class="row" style="margin-bottom:12px"><button class="btn pri" data-act="new" data-col="events">Add event</button></div><section class="box">${e.map(x=>{const pr=S.prep.filter(q=>q.eventId===x.id);return `<div class="ev" data-act="edit" data-col="events" data-id="${x.id}"><b>${esc(x.name)}</b><div class="meta"><span class="pill ${x.end<TODAY?'':x.start<=TODAY?'ok':''}">${x.end<TODAY?'Past':x.start<=TODAY?'On now':rel(x.start)}</span><span>${esc(fmt(x.start))} to ${esc(fmt(x.end))}</span><span>${esc(x.where)}</span><span>Who goes: ${esc(x.who)}</span></div><div class="meta">${esc(x.reach||'')}</div><div class="meta"><b>Access:</b> ${esc(x.status||'')}</div><div class="meta">${esc(x.how||'')} ${esc(x.note||'')}</div><div class="meta"><button class="btn sm" data-act="prepopen" data-id="${x.id}">Prep checklist ${pr.length?pr.filter(q=>q.done).length+'/'+pr.length:''}</button><span>Follow-ups due ${esc(fmt(addDays(x.end,2)))}</span></div></div>`}).join('')||'<div class="empty">No events yet. Add the first one.</div>'}</section>`;
 }
 
+const CHK=['The contact is still in the role.','No other name in the same category has been offered the same slot (see Balance).','The reach figures and the one-line description are approved by Fatimah.','The price comes from the approved rate card.','A sample feature or sample page is attached.','The pipeline shows the owner and the next step.','The story passes the north star with the sponsor taken out.'];
+const tplList=()=>S.kit.filter(k=>/^tpl/.test(k.id)).sort((a,b)=>a.id<b.id?-1:1);
 function vKit(){
-  const tpls=['tplA','tplB','tplC'].map(id=>get('kit',id)).filter(Boolean),rates=get('kit','rates');
-  const chk=['The contact is still in the role.','No other name in the same category has been offered the same slot (see Scoreboard, Conflicts).','The reach figures and the one-line description are approved by Fatimah.','The price comes from the approved rate card.','A sample feature or sample page is attached.','The pipeline shows the owner and the next step.','The story passes the north star with the sponsor taken out.'];
-  return `<section class="box"><h2>Rate card <small>${rates&&rates.rows.some(r=>r.price)?'Prices entered':'Prices stay blank until Fatimah sends the card'}</small></h2><div class="tbl"><table><tr><th>Package</th><th>Included</th><th>Price</th><th>Approved on</th></tr>${rates?rates.rows.map((r,i)=>`<tr><td>${esc(r.pkg)}</td><td>${esc(r.incl)}</td><td><input type="text" data-rate="${i}" data-k="price" value="${esc(r.price)}" placeholder="Fill in" ${EDIT?'':'disabled'} aria-label="Price"></td><td><input type="date" data-rate="${i}" data-k="approved" value="${esc(r.approved)}" ${EDIT?'':'disabled'} aria-label="Approved on"></td></tr>`).join(''):''}</table></div></section>
-  <div class="cols2">${tpls.map(t=>`<section class="box"><h2>${esc(t.title)}</h2><div class="meta" style="margin-bottom:6px">${esc(t.forText||'')}</div><textarea id="tp_${t.id}" style="min-height:300px" ${EDIT?'':'disabled'}>${esc(t.body)}</textarea><div class="row" style="margin-top:6px"><button class="btn pri" data-act="tplsave" data-id="${t.id}">Save template</button><button class="btn" data-act="copy" data-t="tp_${t.id}">Copy</button></div></section>`).join('')}</div>
-  <section class="box"><h2>Before any proposal is sent</h2>${chk.map(c=>`<div class="item"><span>☐</span><div>${esc(c)}</div></div>`).join('')}</section>`;
+  const tpls=tplList(),rates=get('kit','rates'),ideas=(get('kit','ideas')||{items:[]}).items,dis=EDIT?'':'disabled';
+  return `<section class="box"><h2>Rate card <small>${rates&&rates.rows.some(r=>r.price)?'Prices entered':'Prices stay blank until Fatimah sends the card'}</small></h2><div class="tbl"><table><tr><th>Package</th><th>Included</th><th>Price</th><th>Approved on</th><th></th></tr>${rates?rates.rows.map((r,i)=>`<tr><td><input type="text" data-rate="${i}" data-k="pkg" value="${esc(r.pkg)}" ${dis} aria-label="Package"></td><td><textarea data-rate="${i}" data-k="incl" style="min-height:48px" ${dis} aria-label="Included">${esc(r.incl)}</textarea></td><td><input type="text" data-rate="${i}" data-k="price" value="${esc(r.price)}" placeholder="Fill in" ${dis} aria-label="Price"></td><td><input type="date" data-rate="${i}" data-k="approved" value="${esc(r.approved)}" ${dis} aria-label="Approved on"></td><td>${EDIT?`<button class="btn sm del" data-act="ratedel" data-id="${i}" aria-label="Remove package">Remove</button>`:''}</td></tr>`).join(''):''}</table></div>${EDIT?'<div class="row" style="margin-top:8px"><button class="btn pri sm" data-act="rateadd" aria-label="Add a package">+ Add a package</button></div>':''}</section>
+  <section class="box"><h2>Sponsorship ideas <small>${ideas.length} saved</small></h2><p class="meta">Keep new package and format ideas here. Move one to the rate card when it is ready.</p>
+  ${ideas.map((x,i)=>`<div class="sec" style="margin-top:0"><input type="text" data-idea="${i}" data-k="title" value="${esc(x.title)}" aria-label="Idea title" ${dis}><textarea data-idea="${i}" data-k="text" style="min-height:56px;margin-top:6px" aria-label="Idea" ${dis}>${esc(x.text)}</textarea>${EDIT?`<div class="row" style="margin-top:6px"><button class="btn sm" data-act="ideatorate" data-id="${i}">Add to rate card</button><button class="btn sm del" data-act="ideadel" data-id="${i}">Remove</button></div>`:''}</div>`).join('')||'<div class="empty">No ideas saved yet.</div>'}
+  ${EDIT?'<div class="row" style="margin-top:10px"><button class="btn pri sm" data-act="ideaadd" aria-label="Add an idea">+ Add an idea</button><button class="btn sm" data-act="ideaai">Ask Claude for ideas</button></div>':''}</section>
+  <div class="row" style="margin:6px 0 10px;justify-content:space-between"><h2 style="font-family:var(--serif);font-weight:500;margin:0">Templates</h2>${EDIT?'<button class="btn pri sm" data-act="tpladd" aria-label="Add a template">+ Add a template</button>':''}</div>
+  <div class="cols2">${tpls.map(t=>`<section class="box"><input type="text" id="tt_${t.id}" value="${esc(t.title)}" aria-label="Template name" ${dis} style="font:500 17px var(--serif);margin-bottom:6px"><input type="text" id="tf_${t.id}" value="${esc(t.forText||'')}" aria-label="Who it is for" ${dis} placeholder="Who it is for" style="margin-bottom:6px"><textarea id="tp_${t.id}" style="min-height:300px" ${dis}>${esc(t.body)}</textarea><div class="row" style="margin-top:6px"><button class="btn pri" data-act="tplsave" data-id="${t.id}">Save template</button><button class="btn" data-act="copy" data-t="tp_${t.id}">Copy</button>${EDIT&&!['tplA','tplB','tplC'].includes(t.id)?`<button class="btn del" data-act="tpldel" data-id="${t.id}">Remove</button>`:''}</div></section>`).join('')}</div>
+  <section class="box"><h2>Before any proposal is sent</h2><p class="meta">Tick these inside each sponsor, under Draft. The Done button appears when every step is ticked, and Done records the proposal as sent.</p>${CHK.map(c=>`<div class="item"><span>☐</span><div>${esc(c)}</div></div>`).join('')}</section>`;
 }
 
 function vScore(){
@@ -228,9 +233,9 @@ function vDeals(){
 
 function vDecisions(){
   const dd_=S.decisions.slice().sort((a,b)=>a.n-b.n);
-  return `<section class="box"><h2>Decisions for Fatimah <small>${dd_.filter(d=>d.answer).length} of ${dd_.length} answered</small></h2>${dd_.map(d=>`<div class="sec" style="margin-top:0"><b>${d.n}. ${esc(d.decision)}</b> ${d.answer?`<span class="pill ${d.answer==='Approved'?'ok':'warn'}">${esc(d.answer)}</span>`:''}<div class="meta">${esc(d.why)}</div><div class="meta"><b>Proposed:</b> ${esc(d.proposed)}</div>
+  return `<section class="box"><h2>Decisions for Fatimah ${EDIT?'<button class="btn sm" data-act="dec-new">Add a decision</button>':''}<small>${dd_.filter(d=>d.answer).length} of ${dd_.length} answered</small></h2>${dd_.map(d=>`<div class="sec" style="margin-top:0"><b>${d.n}. ${esc(d.decision)}</b> ${d.answer?`<span class="pill ${d.answer==='Approved'?'ok':'warn'}">${esc(d.answer)}</span>`:''}<div class="meta">${esc(d.why)}</div><div class="meta"><b>Proposed:</b> ${esc(d.proposed)}</div>
    <div class="fld" style="margin-top:6px"><textarea data-dc="${d.id}" placeholder="Comment" style="min-height:56px">${esc(d.comment)}</textarea></div>
-   <div class="row"><button class="btn pri sm" data-act="decide" data-id="${d.id}" data-v="Approved">Approve</button><button class="btn sm" data-act="decide" data-id="${d.id}" data-v="Changes needed">Changes needed</button><button class="btn sm" data-act="decide" data-id="${d.id}" data-v="">Clear</button></div></div>`).join('')}</section>`;
+   <div class="row"><button class="btn pri sm" data-act="decide" data-id="${d.id}" data-v="Approved">Approve</button><button class="btn sm" data-act="decide" data-id="${d.id}" data-v="Changes needed">Changes needed</button><button class="btn sm" data-act="decide" data-id="${d.id}" data-v="">Clear</button>${EDIT?`<button class="btn sm" data-act="edit" data-col="decisions" data-id="${d.id}">Edit wording</button>`:''}</div></div>`).join('')}</section>`;
 }
 
 function vAsk(){
@@ -251,20 +256,22 @@ const FIELDS={
 function fieldHtml(f,cur){return f.map(([k,l,t])=>{const v=cur[k]==null?'':cur[k];
   const ctl=t==='area'?`<textarea id="f_${k}">${esc(v)}</textarea>`:t==='date'?`<input type="date" id="f_${k}" value="${esc(v)}">`:t.startsWith('sel:')?`<select id="f_${k}">${t.slice(4).split(',').map(o=>`<option ${o===v?'selected':''}>${esc(o)}</option>`).join('')}</select>`:`<input type="text" id="f_${k}" value="${esc(v)}">`;
   return `<div class="fld"><label for="f_${k}">${l}</label>${ctl}</div>`}).join('')}
-function openEdit(col,id){
+function openEdit(col,id,full){
   if(!EDIT) return;
-  if(col==='pipe'&&id) return openSponsor(id);
+  if(col==='pipe'&&id&&!full) return openSponsor(id);
   const isNew=!id,cur=isNew?{}:{...get(col,id)};
+  if(isNew&&col==='pipe') cur.tab=S.newTab||'Nigeria';
   if(col==='tasks') cur.done=cur.done?'Yes':'No';
-  const f=FIELDS[col];
+  const f=fieldsFor(col);
   $('#dlg').innerHTML=`<h2 style="margin-bottom:12px">${isNew?'Add':'Edit'}</h2><form id="frm">${fieldHtml(f,cur)}<div class="row"><button class="btn pri" type="submit">Save</button><button class="btn" type="button" data-act="close">Cancel</button>${isNew?'':'<button class="btn del" type="button" data-act="del">Delete</button>'}</div></form>`;
   const dlg=$('#dlg');dlg.dataset.col=col;dlg.dataset.id=id||'';dlg.showModal();
   $('#frm').onsubmit=async ev=>{ev.preventDefault();
-    const o=isNew?{id:col[0]+Date.now().toString(36)}:{...get(col,id)};
+    const old=isNew?null:get(col,id);const o=isNew?{id:col[0]+Date.now().toString(36)}:{...old};
     f.forEach(([k,,t])=>{const v=$('#f_'+k).value;o[k]=t==='date'&&!v?null:v});
     if(col==='tasks'){o.done=o.done==='Yes';if(isNew){o.dates='';o.goal=''}}
-    if(col==='pipe'&&isNew){Object.assign(o,{score:0,when:'Added',tab:'',chance:'',why:'',status:'Not started',next:'',nextDate:null,first:'',propose:'',notes:'',outcome:''})}
-    let ok=false;await act((isNew?'Add ':'Edit ')+(o.name||o.group||'step').slice(0,24),async()=>{ok=await save(col,o.id,o)});if(ok){dlg.close();toast('Saved')}};
+    if(col==='pipe'){const n=Number(o.score);if(isNaN(n)){toast('Score must be a number');return}o.score=n;if(isNew){Object.assign(o,{n:Math.max(0,...S.pipe.map(p=>Number(p.n)||0))+1,status:'Not started',next:'',nextDate:null,notes:'',outcome:''})}}
+    if(col==='decisions'){o.n=Number(o.n)||0;if(isNew){Object.assign(o,{answer:'',comment:''})}}
+    let ok=false;ok=await guard(col,old,o,(isNew?'Add ':'Edit ')+(o.name||o.group||o.decision||'step').slice(0,24),async()=>{await save(col,o.id,o)});if(ok){dlg.close();toast('Saved')}};
 }
 
 function openSponsor(id,keep){
@@ -280,18 +287,21 @@ function openSponsor(id,keep){
   <div class="fld"><label for="s_next">Next step</label><textarea id="s_next" style="min-height:60px">${esc(p.next)}</textarea></div>
   <div class="g2"><div class="fld"><label for="s_nd">Next-step date</label><input type="date" id="s_nd" value="${esc(p.nextDate)}"></div><div class="fld"><label for="s_cat">Category</label><input type="text" id="s_cat" value="${esc(p.category)}"></div></div>
   <div class="fld"><label for="s_notes">Notes</label><textarea id="s_notes" style="min-height:60px">${esc(p.notes)}</textarea></div><div class="fld"><label for="s_out">Outcome or what was agreed</label><textarea id="s_out" style="min-height:60px">${esc(p.outcome)}</textarea></div>
-  <div class="row"><button class="btn pri" type="submit">Save</button><button class="btn" type="button" data-act="close">Close</button></div></form>
-  <div class="sec"><h3>Contacts</h3>${cs.map(c=>`<div class="item"><span></span><div><b>${esc(c.name||'No name')}</b> ${esc(c.role)}<div class="meta">${esc([c.email,c.phone].filter(Boolean).join(' · ')||'No email or phone')}</div><div class="meta"><button class="btn sm del" data-act="delc" data-id="${c.id}" data-p="${id}">Remove</button></div></div></div>`).join('')||'<div class="empty">No contact entered.</div>'}
+  <div class="row"><button class="btn pri" type="submit">Save</button><button class="btn" type="button" data-act="close">Close</button><button class="btn" type="button" data-act="editfull" data-id="${id}">Edit all details</button><button class="btn del" type="button" data-act="rmsp" data-id="${id}">Remove sponsor</button></div></form>
+  <div class="sec"><h3>Contacts</h3>${cs.map(c=>`<div class="item"><span></span><div><b>${esc(c.name||'No name')}</b> ${esc(c.role)}<div class="meta">${esc([c.email,c.phone].filter(Boolean).join(' · ')||'No email or phone')}</div><div class="meta"><button class="btn sm" data-act="edit" data-col="contacts" data-id="${c.id}">Edit</button> <button class="btn sm del" data-act="delc" data-id="${c.id}" data-p="${id}">Remove</button></div></div></div>`).join('')||'<div class="empty">No contact entered.</div>'}
    <div class="g2" id="cform"><input type="text" id="cn" placeholder="Name" aria-label="Name"><input type="text" id="cr" placeholder="Role" aria-label="Role"><input type="text" id="ce" placeholder="Email" aria-label="Email"><input type="text" id="cp" placeholder="Phone" aria-label="Phone"></div><div class="row" style="margin-top:6px"><button class="btn" data-act="addcontact" data-id="${id}">Add contact</button></div></div>
   <div class="sec"><h3>Outreach log</h3>${ls.map(l=>`<div class="item"><span></span><div><span class="pill">${esc(l.type)}</span> <b>${esc(fmt(l.date))}</b><div class="meta">${esc(l.summary)}</div><div class="meta"><button class="btn sm del" data-act="dell" data-id="${l.id}" data-p="${id}">Remove</button></div></div></div>`).join('')||'<div class="empty">Nothing logged yet.</div>'}
    <div class="g2"><select id="lt" aria-label="Type">${['Email sent','Email received','Call','Meeting','Note'].map(o=>`<option>${o}</option>`).join('')}</select><input type="date" id="ld" value="${TODAY}" aria-label="Date"></div><input type="text" id="lsum" placeholder="What was said or sent" aria-label="Summary" style="margin-top:6px"><div class="row" style="margin-top:6px"><button class="btn" data-act="addlog" data-id="${id}">Add to log</button></div></div>
-  <div class="sec"><h3>Draft with Claude</h3><div class="row"><select id="dtpl" aria-label="Template" style="width:auto">${[['tplA','Template A. Series'],['tplB','Template B. Media partnership'],['tplC','Template C. Edition']].map(([v,l])=>`<option value="${v}" ${v===tplGuess?'selected':''}>${l}</option>`).join('')}</select><button class="btn pri" data-act="draft" data-k="first" data-id="${id}">First email</button><button class="btn" data-act="draft" data-k="follow" data-id="${id}">Follow-up</button><button class="btn" data-act="draft" data-k="proposal" data-id="${id}">Proposal</button></div>
+  <div class="sec"><h3>Draft with Claude</h3><div class="row"><select id="dtpl" aria-label="Template" style="width:auto">${tplList().map(t=>`<option value="${t.id}" ${t.id===tplGuess?'selected':''}>${esc(t.title)}</option>`).join('')}</select><button class="btn pri" data-act="draft" data-k="first" data-id="${id}">First email</button><button class="btn" data-act="draft" data-k="follow" data-id="${id}">Follow-up</button><button class="btn" data-act="draft" data-k="proposal" data-id="${id}">Proposal</button></div>
    <textarea id="draftout" style="min-height:240px;margin-top:8px" placeholder="The draft appears here. Only facts in the pipeline are used; gaps stay in [brackets].">${esc(keepDraft)}</textarea><div class="row" style="margin-top:6px"><button class="btn" data-act="copy" data-t="draftout">Copy</button></div></div>
+  <div class="sec"><h3>Before the proposal is sent</h3>${p.proposalSent?`<div class="banner" style="background:var(--ok-soft);color:var(--ok);border-color:var(--ok)">Marked as sent on ${esc(fmt(p.proposalSent))}. <button class="btn sm" type="button" data-act="unsent" data-id="${id}">Mark as not sent</button></div>`:''}
+   ${CHK.map((c,i)=>`<div class="item"><input type="checkbox" data-act="chk" data-id="${id}" data-i="${i}" ${(p.checks||{})[i]?'checked':''} aria-label="${esc(c)}"><div>${esc(c)}</div></div>`).join('')}
+   <div class="row" style="margin-top:6px"><span class="meta">${CHK.filter((c,i)=>(p.checks||{})[i]).length} of ${CHK.length} ticked</span>${CHK.every((c,i)=>(p.checks||{})[i])&&!p.proposalSent?`<button class="btn pri" type="button" data-act="chkdone" data-id="${id}">Done</button>`:''}</div></div>
   <div class="sec"><h3>Deal</h3>${dl?'<div class="meta">A deal tracker exists. Open the Deals tab.</div>':`<button class="btn" data-act="dealfrom" data-id="${id}">Start deal tracker</button>`}</div>`;
   dlg.dataset.col='pipe';dlg.dataset.id=id;if(!dlg.open) dlg.showModal();
   $('#frm').onsubmit=async ev=>{ev.preventDefault();
     const np={status:$('#s_status').value,owner:$('#s_owner').value,next:$('#s_next').value,nextDate:$('#s_nd').value||null,category:$('#s_cat').value,notes:$('#s_notes').value,outcome:$('#s_out').value};
-    let ok=false;await act('Edit '+p.group.slice(0,24),async()=>{ok=await patch('pipe',id,np);if(ok&&np.status==='Agreed'&&!S.deals.some(d=>d.pipeId===id)) await newDeal(id)});
+    let ok=false;const nw={...p,...np};ok=await guard('pipe',p,nw,'Edit '+p.group.slice(0,24),async()=>{await patch('pipe',id,np);if(np.status==='Agreed'&&!S.deals.some(d=>d.pipeId===id)) await newDeal(id)});
     if(ok){toast('Saved');openSponsor(id,true)}};
 }
 async function newDeal(pid){return save('deals',uid('dl'),{pipeId:pid,deliverables:'',publishDate:null,amount:'',invoice:'Not invoiced',renewal:null,notes:''})}
@@ -320,7 +330,7 @@ function openPrep(eid){
 
 /* ---------- render ---------- */
 function render(){
-  const all=[['today','Today'],['roadmap','Roadmap'],['pipeline','Pipeline'],['contacts','Contacts'],['events','Events'],['kit','Proposal Kit'],['score','Scoreboard'],['deals','Deals'],['decisions','Decisions'],['ask','Ask Claude']];
+  const all=[['today','Today'],['roadmap','Roadmap'],['sponsors','Sponsors'],['pipeline','Pipeline'],['contacts','Contacts'],['events','Events'],['kit','Proposal Kit'],['balance','Balance'],['score','Scoreboard'],['deals','Deals'],['decisions','Decisions'],['activity','Activity'],['ask','Ask Claude']];
   const tabs=EDIT?all:all.filter(([k])=>['today','score','decisions'].includes(k));
   if(!tabs.some(([k])=>k===S.tab)) S.tab=tabs[0][0];
   $('#nav').innerHTML=tabs.map(([k,l])=>`<button data-act="tab" data-id="${k}" ${S.tab===k?'aria-current="true"':''}>${l}</button>`).join('');
@@ -328,7 +338,7 @@ function render(){
   renderUndo();
   if(!S.pipe.length&&!S.tasks.length){
     $('#main').innerHTML=`<section class="box"><h2>No data yet</h2><p class="meta">${EDIT?'Choose your seed.json file to load the plan, pipeline and events.':'The plan has not been loaded yet.'}</p>${EDIT?'<input type="file" id="seedfile" accept=".json" aria-label="seed.json">':''}</section>`;return}
-  const f={today:vToday,roadmap:vRoadmap,pipeline:vPipeline,contacts:vContacts,events:vEvents,kit:vKit,score:vScore,deals:vDeals,decisions:vDecisions,ask:vAsk}[S.tab];
+  const f={today:vToday,roadmap:vRoadmap,pipeline:vPipeline,sponsors:vSponsors,balance:vBalance,contacts:vContacts,events:vEvents,kit:vKit,score:vScore,deals:vDeals,decisions:vDecisions,activity:vActivity,ask:vAsk}[S.tab];
   const y=scrollY;$('#main').innerHTML=f();scrollTo(0,y);
 }
 
@@ -407,7 +417,14 @@ document.addEventListener('click',async e=>{
   if(!EDIT) return;
   if(a==='edit'){openEdit(col,id);return}
   if(a==='new'){openEdit(col,null);return}
-  if(a==='del'){const d=$('#dlg');await act('Delete',()=>remove(d.dataset.col,d.dataset.id));d.close();toast('Deleted');return}
+  if(a==='repmake'){const per=S.ap||'Today';S.rep=reportText(per==='Today'?TODAY:per==='Last 7 days'?addDays(TODAY,-6):'2000-01-01');render();return}
+  if(a==='repai'){const per=S.ap||'Today';const base=reportText(per==='Today'?TODAY:per==='Last 7 days'?addDays(TODAY,-6):'2000-01-01');S.rep=base;render();const box=$('#rep');box.value='Writing…';try{const t=await aiText(STYLE+'\nTask: Rewrite this check-out report as a short, warm, clear update from Sade to Fatimah. Use only the facts in REPORT. Keep every sponsor name, count and date exactly. Do not add anything that is not in REPORT. No headings with symbols.\nREPORT:\n'+base,x=>box.value=x);S.rep=t.trimEnd();box.value=S.rep}catch(e){box.value=base;toast('Claude could not write it up: '+(e.message||e.code))}return}
+  if(a==='editfull'){$('#dlg').close();openEdit('pipe',id,true);return}
+  if(a==='newsp'){S.newTab=id;openEdit('pipe',null,true);return}
+  if(a==='rmsp'){const okk=await removeSponsor(id);if(okk){const d=$('#dlg');if(d.open) d.close();toast('Removed')}return}
+  if(a==='del'){const d=$('#dlg'),c=d.dataset.col,i2=d.dataset.id;if(c==='pipe'){const okk=await removeSponsor(i2);if(okk){d.close();toast('Removed')}return}
+    const old=get(c,i2);const okk=await guard(c,old,null,'Delete',async()=>{await remove(c,i2)},true);if(okk){d.close();toast('Deleted')}return}
+  if(a==='dec-new'){openEdit('decisions',null);return}
   if(a==='undo'){undo();return}
   if(a==='tick'){let ok=false;await act(el.checked?'Mark done':'Reopen step',async()=>{ok=await patch('tasks',id,{done:el.checked})});if(ok) toast(el.checked?'Marked done':'Reopened');else el.checked=!el.checked;return}
   if(a==='brief') return brief();
@@ -421,7 +438,7 @@ document.addEventListener('click',async e=>{
     await act('Add contact',()=>addContact(id,{name:f('n'),email:f('e'),phone:f('p')}));render();toast('Contact added');return}
   if(a==='addcontact'){const c={name:$('#cn').value.trim(),role:$('#cr').value.trim(),email:$('#ce').value.trim(),phone:$('#cp').value.trim()};if(!c.name&&!c.email&&!c.phone){toast('Enter a name, email or phone');return}
     await act('Add contact',()=>addContact(id,c));openSponsor(id,true);return}
-  if(a==='delc'){await act('Remove contact',()=>remove('contacts',id));openSponsor(el.dataset.p,true);return}
+  if(a==='delc'){const c0=get('contacts',id);await guard('contacts',c0,null,'Remove contact',async()=>{await remove('contacts',id)},true);openSponsor(el.dataset.p,true);return}
   if(a==='addlog'){const l={type:$('#lt').value,date:$('#ld').value,summary:$('#lsum').value.trim()};await act('Log '+l.type,()=>addLog(id,l));openSponsor(id,true);toast('Logged');return}
   if(a==='dell'){await act('Remove log entry',()=>remove('log',id));openSponsor(el.dataset.p,true);return}
   if(a==='draft') return draft(el.dataset.k,id);
@@ -429,7 +446,21 @@ document.addEventListener('click',async e=>{
   if(a==='dealnew'){const v=$('#dealpick').value;if(!v) return;await act('Start deal',()=>newDeal(v));render();return}
   if(a==='dealsave'){const box=el.closest('[data-deal]');const u={};box.querySelectorAll('[data-k]').forEach(i=>u[i.dataset.k]=(i.type==='date'&&!i.value)?null:i.value);await act('Save deal',()=>patch('deals',id,u));toast('Saved');return}
   if(a==='dealdel'){await act('Remove deal',()=>remove('deals',id));render();return}
-  if(a==='tplsave'){await act('Save template',()=>patch('kit',id,{body:document.getElementById('tp_'+id).value}));toast('Saved');return}
+  if(a==='tplsave'){await act('Save template',()=>patch('kit',id,{body:document.getElementById('tp_'+id).value,title:document.getElementById('tt_'+id).value.trim()||'Template',forText:document.getElementById('tf_'+id).value}));toast('Saved');return}
+  if(a==='tpladd'){const d=$('#dlg2');d.innerHTML=`<h2 style="margin-bottom:10px">Add a template</h2><div class="fld"><label for="nt">Name</label><input type="text" id="nt" placeholder="Template D. Newsletter placement"></div><div class="fld"><label for="nb">Start from</label><select id="nb"><option value="">A blank page</option>${tplList().map(t=>`<option value="${t.id}">A copy of ${esc(t.title)}</option>`).join('')}</select></div><div class="row"><button class="btn pri" id="ntok">Add</button><button class="btn" id="ntno">Cancel</button></div>`;d.showModal();$('#ntno').onclick=()=>d.close();
+    $('#ntok').onclick=async()=>{const nm=$('#nt').value.trim();if(!nm){toast('Give the template a name');return}const src=get('kit',$('#nb').value);const nid='tpl'+Date.now().toString(36);d.close();await act('Add template',()=>save('kit',nid,{title:nm,forText:src?src.forText:'',body:src?src.body:''}));render();toast('Template added')};return}
+  if(a==='tpldel'){const t0=get('kit',id);if(!t0) return;await act('Remove template',()=>remove('kit',id));render();toast('Removed. Undo brings it back.');return}
+  if(a==='rateadd'){const r=get('kit','rates');await act('Add package',()=>patch('kit','rates',{rows:[...r.rows,{pkg:'New package',incl:'',price:'',approved:''}]}));render();return}
+  if(a==='ratedel'){const r=get('kit','rates');const gone=r.rows[+id];await act('Remove package',()=>patch('kit','rates',{rows:r.rows.filter((_,k)=>k!==+id)}));render();toast('Removed '+(gone?gone.pkg:'package')+'. Undo brings it back.');return}
+  if(a==='ideaadd'){const it=(get('kit','ideas')||{items:[]}).items;await act('Add idea',()=>save('kit','ideas',{items:[...it,{title:'New idea',text:''}]}));render();return}
+  if(a==='ideadel'){const it=(get('kit','ideas')||{items:[]}).items;await act('Remove idea',()=>save('kit','ideas',{items:it.filter((_,k)=>k!==+id)}));render();return}
+  if(a==='ideatorate'){const it=(get('kit','ideas')||{items:[]}).items[+id],r=get('kit','rates');if(!it||!r) return;await act('Idea to rate card',async()=>{await patch('kit','rates',{rows:[...r.rows,{pkg:it.title,incl:it.text,price:'',approved:''}]});await save('kit','ideas',{items:get('kit','ideas').items.filter((_,k)=>k!==+id)})});render();toast('Added to the rate card. Add the price.');return}
+  if(a==='ideaai'){toast('Asking Claude…');try{const r=await aiJson(STYLE+'\nSuggest 5 sponsorship packages or formats The Leisurely Life Journal could add to its rate card, different from the packages already in RATES. Each must suit a global luxury publication for the discerning African reader and keep editorial independence. Return JSON only: [{"title":"","text":"what the sponsor gets, in one or two sentences"}].\nRATES: '+JSON.stringify((get('kit','rates')||{rows:[]}).rows.map(x=>x.pkg))+'\nDATA: '+ctx());const arr=(Array.isArray(r)?r:[]).filter(x=>x&&x.title).slice(0,5).map(x=>({title:String(x.title),text:String(x.text||'')}));if(!arr.length){toast('No ideas came back. Try again.');return}await act('Add ideas',()=>save('kit','ideas',{items:[...(get('kit','ideas')||{items:[]}).items,...arr]}));render();toast('Added '+arr.length+' ideas')}catch(e){toast('Claude could not suggest ideas: '+(e.message||e.code))}return}
+  if(a==='chk'){const p0=get('pipe',id);const c={...(p0.checks||{})};c[el.dataset.i]=el.checked;await act('Proposal checklist',()=>patch('pipe',id,{checks:c}));openSponsor(id,true);return}
+  if(a==='chkdone'){const p0=get('pipe',id),d=$('#dlg2');d.innerHTML=`<h2 style="margin-bottom:6px">Mark as sent?</h2><p class="meta">All ${CHK.length} steps are ticked. Done means the proposal to ${esc(p0.group)} has gone out. You can change this later.</p><div class="row" style="margin-top:12px"><button class="btn pri" id="dk">Done, it is sent</button><button class="btn" id="dn">Not yet</button></div>`;d.showModal();$('#dn').onclick=()=>d.close();
+    $('#dk').onclick=async()=>{d.close();const np={proposalSent:TODAY};if(!['Proposal sent','Negotiating','Agreed'].includes(p0.status)){np.status='Proposal sent';np.next='Follow up on the proposal.';np.nextDate=addDays(TODAY,7)}
+      await guard('pipe',p0,{...p0,...np},'Proposal sent: '+p0.group.slice(0,20),async()=>{await addLog(id,{type:'Email sent',date:TODAY,summary:'Proposal sent.'});await patch('pipe',id,np)});openSponsor(id,true);toast('Marked as sent')};return}
+  if(a==='unsent'){await act('Mark not sent',()=>patch('pipe',id,{proposalSent:null}));openSponsor(id,true);toast('Marked as not sent. The status and log entry stay, so change them if needed.');return}
   if(a==='prepopen'){openPrep(id);return}
   if(a==='preptick'){await act('Prep item',()=>patch('prep',id,{done:el.checked}));return}
   if(a==='prepdel'){await act('Remove prep item',()=>remove('prep',id));openPrep(el.dataset.e);return}
@@ -439,12 +470,206 @@ document.addEventListener('click',async e=>{
 });
 document.addEventListener('change',async e=>{
   const t=e.target;
+  if(t.dataset&&t.dataset.cell&&EDIT){const col=t.dataset.cell,id=t.dataset.id,k=t.dataset.k,old=get(col,id);let v=t.value;if(!old) return;if(k==='score'){v=Number(v);if(isNaN(v)){toast('Score must be a number');render();return}}if(k==='group'&&!String(v).trim()){toast('A sponsor needs a name');render();return}const nw={...old,[k]:v};await guard(col,old,nw,'Edit '+String(old.group||'').slice(0,24),async()=>{await save(col,id,nw);if(col==='pipe'&&k==='status'&&v==='Agreed'&&!S.deals.some(d=>d.pipeId===id)) await newDeal(id)});render();return}
+  if(t.id==='ap'){S.ap=t.value;render()}
   if(t.id==='fo'){S.fo=t.value;render()}if(t.id==='fw'){S.fw=t.value;render()}if(t.id==='fs'){S.fs=t.value;render()}if(t.id==='fc'){S.fc=t.value;render()}
   if(t.id==='seedfile'&&EDIT&&t.files[0]){await seedFrom(t.files[0])}
+  if(t.dataset&&t.dataset.idea!==undefined&&EDIT){const it=(get('kit','ideas')||{items:[]}).items.map(x=>({...x}));it[+t.dataset.idea][t.dataset.k]=t.value;await act('Edit idea',()=>save('kit','ideas',{items:it}));return}
   if(t.dataset&&t.dataset.rate!==undefined&&EDIT){const r=get('kit','rates');const rows=r.rows.map(x=>({...x}));rows[+t.dataset.rate][t.dataset.k]=t.value;await act('Rate card',()=>patch('kit','rates',{rows}))}
 });
 document.addEventListener('keydown',e=>{if(EDIT&&(e.ctrlKey||e.metaKey)&&!e.shiftKey&&e.key.toLowerCase()==='z'&&!e.target.closest('input,textarea,select,dialog')){e.preventDefault();undo()}});
 $('#dlg').addEventListener('close',()=>render());
+
+/* ---------- editing everywhere, ripple warnings, balance ---------- */
+const REGIONS=['Nigeria','Africa','Global'];
+const optsOf=(k,base)=>[...new Set([...base,...S.pipe.map(p=>p[k]).filter(Boolean)])];
+function fieldsFor(col){
+  if(col==='pipe') return [['group','Sponsor group','text'],['tab','Region','sel:'+REGIONS.join(',')],['category','Category','text'],['score','Score (higher comes first)','text'],['chance','Chance of a yes','sel:'+optsOf('chance',['Likely','Feasible','Possible','Big dream']).join(',')],['size','Size','sel:'+optsOf('size',['Big','Bigger','Biggest']).join(',')],['when','When to approach','sel:'+optsOf('when',['Start now','Second wave','Long-term target']).join(',')],['owner','Owner','sel:Sade,Fatimah,Both'],['first','Write to first','area'],['propose','Propose first','area'],['why','Why they should care','area']];
+  if(col==='contacts') return [['name','Name','text'],['role','Role','text'],['email','Email','text'],['phone','Phone','text'],['route','Route in','area']];
+  if(col==='decisions') return [['n','Number','text'],['decision','Decision','text'],['proposed','Proposed answer','area'],['why','Why it matters','area']];
+  return FIELDS[col];
+}
+const STOP=new Set(['lagos','week','2026','2027','fair','art','design','international','festival','sponsors','group']);
+const ownerLoad=ex=>{const L={Sade:0,Fatimah:0};const add=o=>{if(o==='Both'){L.Sade+=.5;L.Fatimah+=.5}else if(L[o]!=null) L[o]++};
+  S.tasks.filter(t=>!t.done&&t.id!==ex).forEach(t=>add(t.owner));S.pipe.filter(p=>p.id!==ex&&ACTIVE.includes(p.status)&&p.status!=='Agreed').forEach(p=>add(p.owner));return L};
+const loadOn=(date,ex)=>S.tasks.filter(t=>!t.done&&t.due===date&&t.id!==ex).length+S.pipe.filter(p=>p.nextDate===date&&p.id!==ex&&!['Agreed','Declined'].includes(p.status)).length;
+const lighterDay=(from,ex)=>{for(let i=1;i<=14;i++){const d=addDays(from,i);if(pd(d).getDay()!==0&&loadOn(d,ex)<3) return d}return null};
+const catActive=(p)=>S.pipe.filter(q=>q.id!==p.id&&q.category&&q.category===p.category&&ACTIVE.includes(q.status));
+function ripple(col,old,nw,del){
+  const W=[];const w=(msg,fix)=>W.push({msg,fix});const t=(msg,fix)=>W.push({msg,fix,tip:true});
+  if(col==='pipe'){
+    const P=del?old:nw;
+    if(del){const nc=contactsOf(P.id).length,nl=logsOf(P.id).length,nd=S.deals.some(d=>d.pipeId===P.id);
+      w(`Removing ${P.group} also removes ${nc} contact${nc===1?'':'s'}, ${nl} log entr${nl===1?'y':'ies'}${nd?' and its deal tracker':''}. Undo brings them all back.`);
+      if(ACTIVE.includes(P.status)) w(`${P.group} is ${P.status.toLowerCase()}. Removing it lowers the live count.`);
+      const st=S.tasks.filter(x=>!x.done&&x.target===P.group);if(st.length) t(`${st.length} open plan step${st.length===1?'':'s'} point to this sponsor and will keep its name.`);
+      return W}
+    if(old&&nw.status!==old.status){
+      const same=catActive(nw);
+      if(nw.status==='Agreed'){t('A deal tracker starts for this sponsor.');if(same.length) same.forEach(q=>w(`${q.group} is in the same category (${nw.category}) and still ${q.status.toLowerCase()}. Two sponsors in one category cannot hold the same slot.`,{label:`Put ${q.group} on hold`,col:'pipe',id:q.id,patch:{status:'On hold'}}))}
+      else if(ACTIVE.includes(nw.status)&&!ACTIVE.includes(old.status)&&same.length) same.forEach(q=>w(`${q.group} in the same category is already ${q.status.toLowerCase()}. Offer a different slot.`));
+      if(['Declined','On hold'].includes(nw.status)&&ACTIVE.includes(old.status)){
+        const left=S.pipe.filter(p=>p.id!==nw.id&&ACTIVE.includes(p.status)).length;
+        if(left===0){const nb=S.pipe.filter(p=>p.id!==nw.id&&p.status==='Not started').sort((a,b)=>b.score-a.score)[0];
+          w('No other sponsor is active, and the target needs one by 7 December.',nb?{label:`Start ${nb.group} (next best, score ${nb.score})`,col:'pipe',id:nb.id,patch:{status:'Finding the contact',nextDate:addDays(TODAY,1),next:'Find the contact route and send the first message.'}}:null)}
+        if(nw.nextDate) t('This sponsor still has a next-step date. Clear it so it stops showing on Today.',{label:'Clear its next step',col:'pipe',id:nw.id,patch:{nextDate:null,next:''}})}
+    }
+    if(nw.category!==(old||{}).category&&ACTIVE.includes(nw.status)) catActive(nw).forEach(q=>w(`${q.group} in the new category is already ${q.status.toLowerCase()}.`));
+    if(nw.nextDate&&(!old||nw.nextDate!==old.nextDate)){
+      if(nw.nextDate<TODAY) w(`${fmt(nw.nextDate)} is in the past, so this shows as overdue.`);
+      if(nw.nextDate>END) w('That date is after 7 December, the target date.');
+      const n=loadOn(nw.nextDate,nw.id);if(n>=3){const d=lighterDay(nw.nextDate,nw.id);w(`${n} other things are already due on ${fmt(nw.nextDate)}.`,d?{label:`Move this to ${fmt(d)}`,col:'pipe',id:nw.id,patch:{nextDate:d}}:null)}}
+    if(old&&nw.owner!==old.owner){const L=ownerLoad(nw.id),add=o=>{if(o==='Both'){L.Sade+=.5;L.Fatimah+=.5}else if(L[o]!=null) L[o]++;};if(ACTIVE.includes(nw.status)||true) add(nw.owner);const tot=L.Sade+L.Fatimah;const top=L.Sade>=L.Fatimah?'Sade':'Fatimah';
+      if(tot>=6&&L[top]/tot>.7) w(`${top} would hold ${Math.round(L[top])} of ${Math.round(tot)} open items.`,nw.owner!=='Both'?{label:'Set the owner to Both',col:'pipe',id:nw.id,patch:{owner:'Both'}}:null)}
+    if(old&&Number(nw.score)!==Number(old.score)) t('Score sets the order of cards and suggested next steps. The order will change.');
+    if(old&&nw.tab!==old.tab) t(`${nw.group} moves from ${old.tab} to ${nw.tab} in the Sponsors tab.`);
+    return W}
+  if(col==='tasks'){
+    if(del){if(!old.done) t('This step is not done. Removing it takes it out of the roadmap and the week count.');return W}
+    if(nw.due&&(!old||nw.due!==old.due)&&!nw.done){
+      if(nw.due<TODAY) w(`${fmt(nw.due)} is in the past, so this shows as overdue.`);
+      if(nw.due>END) w('That date is after 7 December.',{label:'Set it to 7 December',col:'tasks',id:nw.id,patch:{due:END}});
+      const n=loadOn(nw.due,nw.id);if(n>=3){const d=lighterDay(nw.due,nw.id);w(`${n} other things are already due on ${fmt(nw.due)}.`,d?{label:`Move this to ${fmt(d)}`,col:'tasks',id:nw.id,patch:{due:d}}:null)}
+      const mates=S.tasks.filter(x=>x.week===nw.week&&x.id!==nw.id&&x.due).map(x=>x.due).sort();
+      if(mates.length>1&&(nw.due<mates[0]||nw.due>mates[mates.length-1])) t(`Other steps in ${nw.week} fall between ${fmt(mates[0])} and ${fmt(mates[mates.length-1])}. Check the week label.`)}
+    if(old&&nw.owner!==old.owner){const L=ownerLoad(nw.id),a=nw.owner;if(a==='Both'){L.Sade+=.5;L.Fatimah+=.5}else if(L[a]!=null) L[a]++;const tot=L.Sade+L.Fatimah,top=L.Sade>=L.Fatimah?'Sade':'Fatimah';
+      if(tot>=6&&L[top]/tot>.7) w(`${top} would hold ${Math.round(L[top])} of ${Math.round(tot)} open items.`,a!=='Both'?{label:'Set the owner to Both',col:'tasks',id:nw.id,patch:{owner:'Both'}}:null)}
+    return W}
+  if(col==='events'){
+    if(del){const ps=S.prep.filter(x=>x.eventId===old.id).length;if(ps) w(`${ps} prep item${ps===1?'':'s'} for this event will be left without an event.`);return W}
+    if(nw.end&&nw.start&&nw.end<nw.start) w('The end date is before the start date.');
+    if(nw.start&&nw.end){const ov=S.events.filter(x=>x.id!==nw.id&&x.start<=nw.end&&x.end>=nw.start);
+      if(ov.length) w(`Overlaps ${ov.map(x=>x.name).join(', ')}. One person cannot be at two events on the same day, so decide who goes where.`);
+      const toks=nw.name.split(/\W+/).filter(x=>x.length>=5&&!STOP.has(x.toLowerCase()));
+      S.tasks.filter(x=>!x.done&&x.due&&toks.some(k=>(x.action+' '+(x.target||'')).toLowerCase().includes(k.toLowerCase()))&&x.due>nw.end).slice(0,3).forEach(x=>t(`Plan step due after the event ends: ${String(x.action).slice(0,70)}`,{label:`Move it to ${fmt(nw.end)}`,col:'tasks',id:x.id,patch:{due:nw.end}}))}
+    return W}
+  if(col==='contacts'){
+    if(del){const p=get('pipe',old.pipeId);const rest=contactsOf(old.pipeId).filter(c=>c.id!==old.id&&(c.email||c.phone));
+      if(p&&!rest.length&&(old.email||old.phone)&&!['Not started','Finding the contact','Declined'].includes(p.status)) w(`${p.group} would have no contact with an email or phone, but its status is ${p.status}.`,{label:'Set status back to Finding the contact',col:'pipe',id:p.id,patch:{status:'Finding the contact'}})}
+    return W}
+  if(col==='decisions'){
+    if(old&&old.answer&&(nw.decision!==old.decision||nw.proposed!==old.proposed)) w(`Fatimah answered "${old.answer}" to the old wording.`,{label:'Clear her answer so she can answer again',col:'decisions',id:nw.id,patch:{answer:''}});
+    return W}
+  return W;
+}
+function guard(col,old,nw,label,commit,del){
+  const W=ripple(col,old,nw,del);
+  const run=async fixes=>{await act(label,async()=>{await commit();for(const f of fixes) await patch(f.col,f.id,f.patch)})};
+  if(!W.length) return run([]).then(()=>true);
+  return new Promise(res=>{
+    const d=$('#dlg2');
+    d.innerHTML=`<h2 style="margin-bottom:6px">Before you save</h2><p class="meta">${W.some(x=>!x.tip)?'This change touches other parts of the plan.':'Good to know.'} Tick a fix to apply it with the change, or go back.</p>
+    ${W.map((x,i)=>`<div class="item" style="grid-template-columns:22px minmax(0,1fr)">${x.fix?`<input type="checkbox" id="fx${i}" ${x.tip?'':'checked'} aria-label="${esc(x.fix.label)}">`:'<span>'+(x.tip?'·':'!')+'</span>'}<div><div>${esc(x.msg)}</div>${x.fix?`<div class="meta"><label for="fx${i}">Fix: ${esc(x.fix.label)}</label></div>`:''}</div></div>`).join('')}
+    <div class="row" style="margin-top:12px"><button class="btn pri" id="gs">${del?'Remove anyway':'Save'}</button><button class="btn" id="gb">Go back</button></div>`;
+    d.showModal();
+    $('#gb').onclick=()=>{d.close();res(false)};
+    $('#gs').onclick=async()=>{const fx=W.map((x,i)=>x.fix&&document.getElementById('fx'+i)&&document.getElementById('fx'+i).checked?x.fix:null).filter(Boolean);d.close();await run(fx);res(true)};
+  });
+}
+async function removeSponsor(id){
+  const p=get('pipe',id);if(!p) return false;
+  const ok=await guard('pipe',p,null,'Remove '+p.group.slice(0,24),async()=>{
+    for(const c of contactsOf(id)) await remove('contacts',c.id);
+    for(const l of logsOf(id)) await remove('log',l.id);
+    for(const d of S.deals.filter(d=>d.pipeId===id)) await remove('deals',d.id);
+    await remove('pipe',id)},true);
+  return ok;
+}
+function balanceChecks(){
+  const out=[],add=(level,title,detail,col,id)=>out.push({level,title,detail,col,id});
+  const L=ownerLoad(),tot=L.Sade+L.Fatimah;
+  if(tot>=6&&Math.max(L.Sade,L.Fatimah)/tot>.7){const top=L.Sade>=L.Fatimah?'Sade':'Fatimah';add('warn','Workload is uneven',`${top} holds ${Math.round(L[top])} of ${Math.round(tot)} open items. Reassign a few to the other person or to Both.`)}
+  const days={};S.tasks.filter(t=>!t.done&&t.due).forEach(t=>(days[t.due]=days[t.due]||[]).push(t));S.pipe.filter(p=>p.nextDate&&!['Agreed','Declined'].includes(p.status)).forEach(p=>(days[p.nextDate]=days[p.nextDate]||[]).push(p));
+  Object.entries(days).filter(([d,a])=>a.length>=4&&d>=TODAY).sort().slice(0,3).forEach(([d,a])=>{const it=a.slice().sort((x,y)=>(x.score||0)-(y.score||0))[0];add('warn',`${a.length} things are due on ${fmt(d)}`,`Move the lowest-priority one to a lighter day.`,it.group?'pipe':'tasks',it.id)});
+  const od=S.tasks.filter(t=>!t.done&&t.due&&t.due<TODAY);if(od.length) add('bad',`${od.length} overdue plan step${od.length===1?'':'s'}`,String(od[0].action).slice(0,90),'tasks',od[0].id);
+  const odp=S.pipe.filter(p=>p.nextDate&&p.nextDate<TODAY&&!['Agreed','Declined','On hold'].includes(p.status));if(odp.length) add('bad',`${odp.length} sponsor next step${odp.length===1?'':'s'} overdue`,odp.slice(0,3).map(p=>p.group).join(', '),'pipe',odp[0].id);
+  const cats={};S.pipe.filter(p=>p.category&&ACTIVE.includes(p.status)).forEach(p=>(cats[p.category]=cats[p.category]||[]).push(p));
+  Object.entries(cats).filter(([,a])=>a.length>1).forEach(([c,a])=>add('bad',`Two active sponsors in ${c}`,a.map(p=>p.group+' ('+p.status+')').join(' and ')+'. They cannot hold the same slot.','pipe',a[0].id));
+  const live=S.pipe.filter(p=>LIVE.includes(p.status)||p.status==='Agreed').length,days_=dd(TODAY,END);
+  if(!live&&days_<=30){const nb=S.pipe.filter(p=>p.status==='Not started').sort((a,b)=>b.score-a.score).slice(0,3);add('warn','No live conversation yet',`${days_} days remain. Start with ${nb.map(p=>p.group).join(', ')}.`,'pipe',nb[0]&&nb[0].id)}
+  S.pipe.filter(p=>ACTIVE.includes(p.status)&&!p.nextDate&&p.status!=='Agreed').slice(0,3).forEach(p=>add('warn',`${p.group} has no next-step date`,'An active sponsor needs a date for the next move.','pipe',p.id));
+  S.pipe.filter(p=>!['Not started','Finding the contact','Declined'].includes(p.status)&&!hasContact(p.id)).slice(0,3).forEach(p=>add('warn',`${p.group} has no contact`,`Status is ${p.status}, but no email or phone is entered.`,'pipe',p.id));
+  S.pipe.filter(p=>ACTIVE.includes(p.status)&&p.status!=='Agreed'&&(()=>{const l=logsOf(p.id)[0];return !l||dd(l.date,TODAY)>7})()).slice(0,3).forEach(p=>add('warn',`${p.group} has been quiet for a week`,'Send a follow-up or log what happened.','pipe',p.id));
+  const evs=S.events.slice().sort((a,b)=>a.start<b.start?-1:1);for(let i=0;i<evs.length;i++)for(let j=i+1;j<evs.length;j++){const a=evs[i],b=evs[j];if(a.start<=b.end&&a.end>=b.start&&a.end>=TODAY&&a.who===b.who&&a.who&&a.who!=='To decide'&&a.who!=='Both') add('warn',`${a.name} overlaps ${b.name}`,`${a.who} is down for both.`,'events',a.id)}
+  const late=S.tasks.filter(t=>!t.done&&t.due>END);if(late.length) add('warn',`${late.length} plan step${late.length===1?'':'s'} after 7 December`,String(late[0].action).slice(0,90),'tasks',late[0].id);
+  REGIONS.forEach(r=>{const a=S.pipe.filter(p=>p.tab===r);if(a.length&&!a.some(p=>p.status!=='Not started')&&r!=='Global') add('info',`Nothing has started in ${r}`,`${a.length} sponsor groups wait there. Highest score: ${a.slice().sort((x,y)=>y.score-x.score)[0].group}.`,'pipe',a.slice().sort((x,y)=>y.score-x.score)[0].id)});
+  return out;
+}
+function vBalance(){
+  const c=balanceChecks(),bad=c.filter(x=>x.level==='bad').length;
+  return `<section class="box"><h2>Balance <small>${c.length?c.length+' to look at':'Everything is in balance'}</small></h2><p class="meta">Live checks across the plan, the sponsors, the events and the owners. Each one points to the item to change. Changes also warn you before they save.</p>
+  ${c.map(x=>`<div class="item" style="grid-template-columns:22px minmax(0,1fr)"><span class="pill ${x.level==='bad'?'warn':x.level==='warn'?'gold':''}" style="height:fit-content">${x.level==='bad'?'!':x.level==='warn'?'~':'i'}</span><div><b>${esc(x.title)}</b><div class="meta">${esc(x.detail)}</div>${x.id?`<div class="meta"><button class="btn sm" data-act="edit" data-col="${x.col}" data-id="${x.id}">Open</button></div>`:''}</div></div>`).join('')||'<div class="empty">Nothing needs attention right now.</div>'}</section>`;
+}
+function vSponsors(){
+  const sel=(o,v)=>o.map(x=>`<option ${x===v?'selected':''}>${esc(x)}</option>`).join('');
+  const ch=optsOf('chance',['Likely','Feasible','Possible','Big dream']);
+  return `<p class="meta" style="margin-bottom:12px">${S.pipe.length} sponsor groups. Change any cell and it saves. A change that affects something else warns you first.</p>`+REGIONS.map(r=>{
+    const a=S.pipe.filter(p=>p.tab===r).sort((x,y)=>y.score-x.score);
+    return `<section class="box"><h2>${r} <small>${a.length} group${a.length===1?'':'s'} · ${a.filter(p=>ACTIVE.includes(p.status)).length} active</small></h2>
+    <div class="row" style="margin-bottom:8px"><button class="btn pri sm" data-act="newsp" data-id="${r}">Add to ${r}</button></div>
+    <div class="tbl"><table><tr><th>Sponsor</th><th>Category</th><th>Score</th><th>Chance</th><th>Owner</th><th>Status</th><th></th></tr>
+    ${a.map(p=>`<tr><td><input type="text" data-cell="pipe" data-id="${p.id}" data-k="group" value="${esc(p.group)}" aria-label="Sponsor"></td><td><input type="text" data-cell="pipe" data-id="${p.id}" data-k="category" value="${esc(p.category)}" aria-label="Category"></td><td><input type="text" style="width:56px" data-cell="pipe" data-id="${p.id}" data-k="score" value="${esc(p.score)}" aria-label="Score"></td>
+    <td><select data-cell="pipe" data-id="${p.id}" data-k="chance" aria-label="Chance">${sel(ch,p.chance)}</select></td><td><select data-cell="pipe" data-id="${p.id}" data-k="owner" aria-label="Owner">${sel(['Sade','Fatimah','Both'],p.owner)}</select></td><td><select data-cell="pipe" data-id="${p.id}" data-k="status" aria-label="Status">${sel(STATUSES,p.status)}</select></td>
+    <td style="white-space:nowrap"><button class="btn sm" data-act="edit" data-col="pipe" data-id="${p.id}">Open</button> <button class="btn sm" data-act="editfull" data-id="${p.id}">All fields</button> <button class="btn sm del" data-act="rmsp" data-id="${p.id}">Remove</button></td></tr>`).join('')||'<tr><td colspan="7" class="empty">No sponsors here yet.</td></tr>'}
+    </table></div></section>`}).join('');
+}
+
+
+/* ---------- activity log: records everything, changes nothing ---------- */
+const NAMEKEY={pipe:'group',tasks:'action',events:'name',contacts:'name',decisions:'decision',kit:'title',prep:'text'};
+const FRIENDLY={pipe:'Sponsor',tasks:'Plan step',events:'Event',contacts:'Contact',decisions:'Decision',kit:'Proposal Kit',prep:'Event prep',deals:'Deal',log:'Outreach log'};
+const shortV=v=>{v=v==null||v===''?'blank':String(v);return v.length>48?v.slice(0,48)+'…':v};
+function nameOfRec(col,r){if(!r) return '';if(col==='log'||col==='deals'){const p=get('pipe',r.pipeId);return (p?p.group+': ':'')+(col==='log'?(r.type+' '+(r.summary||'')).trim():'Deal tracker')}if(col==='contacts'&&!r.name&&r.email) return r.email;return shortV(r[NAMEKEY[col]]||r.id)}
+function diffOf(col,prev,now){
+  if(!prev&&now) return 'added';if(prev&&!now) return 'removed';
+  const skip=new Set(['id','checks','n','rows','items','body']);const out=[];
+  Object.keys(now).forEach(k=>{if(skip.has(k)||JSON.stringify(prev[k])===JSON.stringify(now[k])) return;out.push(k+': '+shortV(prev[k])+' → '+shortV(now[k]))});
+  if(col==='kit'&&JSON.stringify(prev.rows)!==JSON.stringify(now.rows)) out.push('rate card edited');
+  if(col==='kit'&&JSON.stringify(prev.items)!==JSON.stringify(now.items)) out.push('ideas edited');
+  if(col==='kit'&&prev.body!==now.body) out.push('template text edited');
+  if(JSON.stringify(prev.checks)!==JSON.stringify(now.checks)&&now.checks) out.push('proposal checklist updated');
+  return out.slice(0,4).join('; ')||'edited';
+}
+function recordActivity(label,items){
+  if(!db||!EDIT) return;
+  try{
+    const seen=new Set(),ch=[];
+    items.forEach(it=>{const k=it.col+'/'+it.id;if(seen.has(k)||it.col==='activity') return;seen.add(k);const now=get(it.col,it.id);
+      ch.push({col:it.col,kind:FRIENDLY[it.col]||it.col,name:nameOfRec(it.col,now||it.prev),what:diffOf(it.col,it.prev,now)})});
+    const doc={id:uid('a'),at:new Date().toISOString(),label:String(label).slice(0,120),by:window.TLLJ_USER||'You',changes:ch.slice(0,12),count:ch.length};
+    db.collection('activity').doc(doc.id).set(doc).then(()=>{local('activity',doc.id,doc);if(S.tab==='activity'&&!$('#dlg').open) render()}).catch(()=>{});
+  }catch(e){}
+}
+const fromAt=a=>iso(new Date(a));
+function activityIn(since){return S.activity.filter(a=>fromAt(a.at)>=since).sort((a,b)=>a.at<b.at?1:-1)}
+function reportText(since){
+  const a=activityIn(since).slice().reverse(),L=[],ch=a.flatMap(x=>x.changes.map(c=>({...c,at:x.at,label:x.label})));
+  const status=ch.filter(c=>c.col==='pipe'&&/status:/.test(c.what)).map(c=>c.name+' ('+c.what.match(/status: [^;]*/)[0].replace('status: ','')+')');
+  const sent=ch.filter(c=>c.col==='log'&&c.what==='added').map(c=>c.name);
+  const done=ch.filter(c=>c.col==='tasks'&&/done: [^;]*→ true/.test(c.what)).map(c=>c.name);
+  const decs=ch.filter(c=>c.col==='decisions'&&/answer:/.test(c.what)).map(c=>c.name+' ('+c.what.match(/answer: [^;]*/)[0].replace('answer: ','')+')');
+  const evs=ch.filter(c=>c.col==='events').map(c=>c.name);
+  const cons=ch.filter(c=>c.col==='contacts'&&c.what==='added').map(c=>c.name);
+  const adds=ch.filter(c=>c.what==='added'&&['pipe','tasks','events','prep'].includes(c.col)).map(c=>c.kind+': '+c.name);
+  const uniq=x=>[...new Set(x)];const sec=(t,x)=>{x=uniq(x);if(x.length){L.push('');L.push(t+' ('+x.length+')');x.forEach(y=>L.push('- '+y))}};
+  L.push('Check-out report: '+(since===TODAY?fmt(TODAY):fmt(since)+' to '+fmt(TODAY)));
+  L.push(a.length+' recorded actions.');
+  sec('Sponsors moved',status);sec('Outreach logged',sent);sec('Contacts added',cons);sec('Plan steps completed',done);sec('Decisions answered',decs);sec('Events updated',evs);sec('Added to the plan',adds);
+  const od=S.tasks.filter(t=>!t.done&&t.due&&t.due<TODAY).length,nx=S.tasks.filter(t=>!t.done&&t.due&&t.due>=TODAY&&t.due<=addDays(TODAY,7)).sort(byDue).slice(0,5);
+  L.push('');L.push('Where things stand');L.push('- '+dd(TODAY,END)+' days to 7 December. '+(n=>n+' live conversation'+(n===1?'':'s'))(S.pipe.filter(p=>LIVE.includes(p.status)).length)+', '+S.pipe.filter(p=>p.status==='Agreed').length+' agreed.');
+  L.push('- '+od+' plan step'+(od===1?'':'s')+' overdue.');
+  if(nx.length){L.push('- Next seven days:');nx.forEach(t=>L.push('  '+fmt(t.due)+': '+String(t.action).slice(0,90)))}
+  return L.join('\n');
+}
+function vActivity(){
+  const per=S.ap||'Today',since=per==='Today'?TODAY:per==='Last 7 days'?addDays(TODAY,-6):'2000-01-01';
+  const list=activityIn(since),days=[...new Set(list.map(a=>fromAt(a.at)))];
+  return `<section class="box"><h2>Check-out report <small>for Fatimah</small></h2><p class="meta">Built from what the log recorded for the period chosen below. It uses recorded facts only.</p>
+   <div class="row"><button class="btn pri" data-act="repmake">Build the report</button><button class="btn" data-act="repai">Write it up with Claude</button><button class="btn" data-act="copy" data-t="rep">Copy</button></div>
+   <textarea id="rep" style="min-height:260px;margin-top:8px" placeholder="Choose a period, then build the report.">${esc(S.rep||'')}</textarea></section>
+  <div class="filters"><select id="ap" aria-label="Period">${['Today','Last 7 days','All'].map(o=>`<option ${o===per?'selected':''}>${o}</option>`).join('')}</select><span class="meta" style="align-self:center">${list.length} recorded action${list.length===1?'':'s'}. The log only records. Nothing here changes your plan.</span></div>
+  ${days.map(d=>`<section class="box"><h2>${esc(fmt(d))}</h2>${list.filter(a=>fromAt(a.at)===d).map(a=>`<div class="item" style="grid-template-columns:52px minmax(0,1fr)"><span class="meta" style="margin:0">${new Date(a.at).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</span><div><b>${esc(a.label)}</b>${a.changes.map(c=>`<div class="meta"><span>${esc(c.kind)}: ${esc(c.name)}</span><span>${esc(c.what)}</span></div>`).join('')}</div></div>`).join('')}</section>`).join('')||'<div class="empty">Nothing recorded for this period yet.</div>'}`;
+}
 
 window.TLLJ_STATE=()=>S;
 async function startApp(env){
@@ -563,7 +788,7 @@ if(!configured){
         document.getElementById('out').onclick=()=>window.signOutApp();return;
       }
       started=true;
-      window.startApp({db:fdb,sample:makeSample(),edit,auth:true});
+      window.TLLJ_USER=email;window.startApp({db:fdb,sample:makeSample(),edit,auth:true});
     });
   }catch(e){
     main.innerHTML='<section class="box"><h2>Could not start</h2><p class="meta">'+String(e.message||e)+'</p></section>';
