@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="styles.css"></head><body>
 <div class="wrap">
 <header>
- <div class="top"><h1>TLLJ Partnerships Desk</h1><div class="row"><div class="sub" id="sub"></div><button class="btn" id="undo" data-act="undo" disabled>Undo</button><span id="tools" class="row"><button class="btn" data-act="search">Search</button><button class="btn" id="tillybtn" data-act="tilly">Tilly</button></span><button class="btn" id="themebtn" data-act="theme" aria-label="Switch between light and dark">Dark</button><button class="btn" data-act="settings">Settings</button><button class="btn" id="signout" data-act="signout" hidden>Sign out</button></div></div>
+ <div class="top"><h1>TLLJ Partnerships Desk</h1><div class="row"><div class="sub" id="sub"></div><button class="btn" id="undo" data-act="undo" disabled>Undo</button><span id="tools" class="row"><button class="btn" data-act="search">Search</button><button class="btn" id="tillybtn" data-act="tilly">Tilly</button></span><button class="btn" id="notesbtn" data-act="tab" data-id="notes">Suggestions</button><button class="btn" id="themebtn" data-act="theme" aria-label="Switch between light and dark">Dark</button><button class="btn" data-act="settings">Settings</button><button class="btn" id="signout" data-act="signout" hidden>Sign out</button></div></div>
  <nav id="nav"></nav>
 </header>
 <main id="main"><p class="empty">Loading the plan, pipeline and events.</p></main>
@@ -15,7 +15,7 @@
 <dialog id="dlg"></dialog><dialog id="dlg2"></dialog>
 <div id="toast" class="toast" hidden></div>
 <script>
-const END='2026-12-07', START='2026-10-27';
+let END='2026-12-07', START='2026-10-27';
 const STATUSES=['Not started','Finding the contact','Contact found','First message sent','In conversation','Proposal sent','Negotiating','Agreed','Declined','On hold'];
 const ACTIVE=['First message sent','In conversation','Proposal sent','Negotiating','Agreed'];
 const LIVE=['In conversation','Proposal sent','Negotiating'];
@@ -28,8 +28,12 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pd=s=>{const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
 const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-const TODAY=iso(new Date());
+let TODAY=iso(new Date());
 const dd=(a,b)=>Math.round((pd(b)-pd(a))/864e5);
+const DL=()=>pd(END).toLocaleDateString('en-GB',{day:'numeric',month:'long'}),DS=()=>pd(END).toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+const TG0={label:'one partnership',goal:1,date:'2026-12-07',start:'2026-10-27',history:[]};
+const tgt=()=>({...TG0,...(get('kit','target')||{})});
+function applyTarget(){const t=tgt();if(/^\d{4}-\d\d-\d\d$/.test(t.date)) END=t.date;if(/^\d{4}-\d\d-\d\d$/.test(t.start)) START=t.start}
 const addDays=(s,n)=>{const d=pd(s);d.setDate(d.getDate()+n);return iso(d)};
 const fmt=s=>s?pd(s).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}):'No date';
 const rel=s=>{const n=dd(TODAY,s);return n===0?'today':n===1?'tomorrow':n===-1?'yesterday':n<0?(-n)+' days overdue':'in '+n+' days'};
@@ -130,7 +134,7 @@ function vToday0(){
   const pend=S.decisions.filter(d=>!d.answer).length;
   return `${late?`<div class="banner" role="status">${late} overdue. Clear these first.</div>`:''}
   <div class="stats">
-   <div class="stat"><b>${Math.max(0,dd(TODAY,END))}</b><span>days to 7 Dec</span></div>
+   <div class="stat"><b>${Math.max(0,dd(TODAY,END))}</b><span>days to ${DS()}</span></div>
    <div class="stat ${late?'bad':''}"><b>${late}</b><span>overdue</span></div>
    <div class="stat"><b>${todayT.length+pDue.filter(p=>p.nextDate===TODAY).length}</b><span>due today</span></div>
    <div class="stat"><b>${live}</b><span>live conversations</span></div>
@@ -140,7 +144,7 @@ function vToday0(){
   <div class="cols"><div>
    <section class="box"><h2>Suggested next steps <small>from the log, contacts, events and deals</small></h2>${L(sg,(s,i)=>sugItem(s,i,'local'),'Nothing extra suggested. The plan covers today.')}${ask.length?`<div class="meta" style="margin-top:8px"><b>Suggested for you</b></div>`+ask.map((s,i)=>sugItem(s,i,'ai')).join(''):''}${EDIT?`<div class="row" style="margin-top:8px"><button class="btn" data-act="aisugg">Ask Tilly for more</button></div>`:''}</section>
    <section class="box"><h2>Due now <small>${fmt(TODAY)}</small></h2>${L([...overdue,...todayT],taskItem,'Nothing overdue or due today.')}${pDue.map(pipeItem).join('')}</section>
-   <section class="box"><h2>Next 7 days</h2>${L(week,taskItem,'No plan steps in the next 7 days.')}${pWeek.map(pipeItem).join('')}</section>
+   <section class="box"><h2>Next 7 days</h2>${L(week,taskItem,'No plan steps in the next 7 days. Add one in Roadmap, or ask Tilly for more.')}${pWeek.map(pipeItem).join('')}</section>
   </div><div>
    <section class="box"><h2>Events <small>next 3 weeks</small></h2>${L(evs,evRow,'No events in the next 3 weeks.')}</section>
    <section class="box"><h2>Opportunities <small>start now, by score</small></h2>${L(opp,p=>`<div class="ev" data-act="edit" data-col="pipe" data-id="${p.id}"><b>${esc(p.group)}</b><div class="meta"><span class="pill">Score ${esc(p.score)}</span><span>${esc(p.chance)}</span><span>${esc(p.owner)}</span></div><div class="meta">${esc(p.propose)}</div></div>`,'No unstarted groups marked Start now.')}</section>
@@ -148,18 +152,20 @@ function vToday0(){
 }
 
 function vRoadmap(){
-  const days=[...Array(42)].map((_,i)=>addDays(START,i));
-  const col=s=>Math.min(42,Math.max(1,dd(START,s)+1));
+  const lastD=[END,...S.tasks.map(t=>t.due),...S.events.map(e=>e.end),...S.pipe.map(p=>p.nextDate)].filter(x=>/^\d{4}-\d\d-\d\d$/.test(x||'')).reduce((a,b)=>a>b?a:b);
+  const N=Math.min(182,Math.max(42,Math.ceil((dd(START,lastD)+8)/7)*7)),NW=N/7;
+  const days=[...Array(N)].map((_,i)=>addDays(START,i));
+  const col=s=>Math.min(N,Math.max(1,dd(START,s)+1));
   const weeks=[...new Set(S.tasks.map(t=>t.week))];
   const tl=dd(START,TODAY);
-  const head=`<div class="rmh"><div></div>${[0,1,2,3,4,5].map(i=>`<div class="wk">Week ${i+1} · ${fmt(days[i*7]).replace(/^\w+ /,'')}</div>`).join('')}</div><div class="rmh"><div></div>${days.map(d=>`<div>${pd(d).getDate()}</div>`).join('')}</div>`;
-  const evRows=S.events.slice().sort((a,b)=>a.start<b.start?-1:1).map(e=>`<div class="rmr"><div class="lab">${esc(e.name)}</div><div class="cell"><button class="bar" data-act="edit" data-col="events" data-id="${e.id}" style="grid-column:${col(e.start)}/${Math.min(42,col(e.end))+1}" title="${esc(e.name)}">${esc(e.name)}</button></div></div>`).join('');
+  const head=`<div class="rmh"><div></div>${[...Array(NW).keys()].map(i=>`<div class="wk">Week ${i+1} · ${fmt(days[i*7]).replace(/^\w+ /,'')}</div>`).join('')}</div><div class="rmh"><div></div>${days.map(d=>`<div>${pd(d).getDate()}</div>`).join('')}</div>`;
+  const evRows=S.events.slice().sort((a,b)=>a.start<b.start?-1:1).map(e=>`<div class="rmr"><div class="lab">${esc(e.name)}</div><div class="cell"><button class="bar" data-act="edit" data-col="events" data-id="${e.id}" style="grid-column:${col(e.start)}/${Math.min(N,col(e.end))+1}" title="${esc(e.name)}">${esc(e.name)}</button></div></div>`).join('');
   const wkRows=weeks.map(w=>{const ts=S.tasks.filter(t=>t.week===w);return `<div class="rmr"><div class="lab"><b>${esc(w)}</b></div><div class="cell">${ts.filter(t=>t.due).map(t=>`<button class="dot ${t.done?'done':t.due<TODAY?'late':''}" style="grid-column:${col(t.due)}" data-act="edit" data-col="tasks" data-id="${t.id}" title="${esc(fmt(t.due))}: ${esc(t.action)}" aria-label="${esc(t.action)}"></button>`).join('')}</div></div>`}).join('');
   const pRow=`<div class="rmr"><div class="lab"><b>Sponsor next steps</b></div><div class="cell">${days.map(d=>{const n=S.pipe.filter(p=>p.nextDate===d&&!['Agreed','Declined'].includes(p.status)).length;return n?`<span class="pill gold" style="grid-column:${col(d)};justify-self:center" title="${n} next steps on ${esc(fmt(d))}">${n}</span>`:''}).join('')}</div></div>`;
-  const line=tl>=0&&tl<42?`<div class="today-line" style="left:calc(150px + (100% - 150px) * ${(tl+.5)/42})"></div>`:'';
+  const line=tl>=0&&tl<N?`<div class="today-line" style="left:calc(150px + (100% - 150px) * ${(tl+.5)/N})"></div>`:'';
   const lists=weeks.map(w=>{const ts=S.tasks.filter(t=>t.week===w).sort(byDue),n=ts.filter(t=>t.done).length,g=ts[0]||{};return `<section class="box week"><h3>${esc(w)} <small style="font:400 13px var(--sans);color:var(--mute)">${esc(g.dates)}</small></h3><div class="meta">${esc(g.goal)} · ${n} of ${ts.length} done</div><div class="prog"><i style="width:${ts.length?100*n/ts.length:0}%"></i></div>${ts.map(taskItem).join('')}</section>`}).join('');
   return `<div class="legend"><span><i></i>Plan step due</span><span><i style="background:var(--ok);border-color:var(--ok)"></i>Done</span><span><i style="border-color:var(--warn);background:var(--warn-soft)"></i>Overdue</span><span><span class="pill" style="background:var(--accent);color:var(--accent-ink)">Bar</span> Event</span></div>
-  <div class="rm"><div class="rmi">${head}${evRows}${wkRows}${pRow}${line}</div></div>
+  <div class="rm" style="--n:${N}"><div class="rmi" style="min-width:${150+N*22}px">${head}${evRows}${wkRows}${pRow}${line}</div></div>
   <div class="row" style="margin:14px 0"><button class="btn pri" data-act="new" data-col="tasks">Add plan step</button><button class="btn" data-act="new" data-col="events">Add event</button></div>${lists}`;
 }
 
@@ -180,10 +186,9 @@ function vContacts(){
   if(S.fc==='Missing') list=miss;
   return `<div class="filters"><select id="fc" aria-label="Show"><option ${S.fc==='Missing'?'selected':''}>Missing</option><option ${S.fc==='All'?'selected':''}>All</option></select><span class="meta" style="align-self:center">${miss.length} of ${S.pipe.length} sponsors have no email or phone yet. Adding one moves the sponsor to Contact found and sets the next step to send the first email.</span></div>
   <section class="box">${list.map(p=>{const cs=contactsOf(p.id);return `<div class="sec" style="margin-top:0;border-top:1px solid var(--line)"><div class="row" style="justify-content:space-between"><b data-act="edit" data-col="pipe" data-id="${p.id}" style="cursor:pointer">${esc(p.group)}</b><span class="pill ${hasContact(p.id)?'ok':'warn'}">${hasContact(p.id)?'Contact entered':'Contact needed'}</span></div>
-  ${cs.map(c=>`<div class="item" style="padding:4px 0"><div><b>${esc(c.name||'Unnamed')}</b>${c.role?` <span class="meta">${esc(c.role)}</span>`:''}<div class="meta">${esc([c.email,c.phone].filter(Boolean).join(' · '))}</div>${c.route?`<div class="meta">${esc(c.route)}</div>`:''}</div>${EDIT||CONTRIB?`<button class="btn sm" data-act="edit" data-col="contacts" data-id="${c.id}">Edit</button>`:''}</div>`).join('')||'<div class="meta">Nothing entered yet.</div>'}
-  <label class="meta">Write to first / how to reach them</label>
-  <textarea data-cell="pipe" data-id="${p.id}" data-k="first" style="min-height:44px" placeholder="Who to approach and how, for example an introduction through a friend" aria-label="Write to first" ${EDIT||CONTRIB?'':'disabled'}>${esc(p.first||'')}</textarea>
-  ${EDIT||CONTRIB?`<div class="g2" style="margin-top:6px" data-pid="${p.id}"><input type="text" placeholder="Name" data-f="n" aria-label="Name"><input type="text" placeholder="Role or how you know them" data-f="r" aria-label="Role"><input type="text" placeholder="Email" data-f="e" aria-label="Email"><input type="text" placeholder="Phone" data-f="p" aria-label="Phone"><input type="text" placeholder="Route or note (optional)" data-f="w" aria-label="Route or note"><button class="btn pri" data-act="quickc" data-id="${p.id}">Add contact</button>${EDIT?`<button class="btn" data-act="findc2" data-id="${p.id}">Find with Tilly</button>`:''}</div>`:''}</div>`}).join('')||'<div class="empty">Every sponsor has a contact entered.</div>'}</section>`;
+  <div class="meta">${cs.map(c=>`<span ${EDIT||CONTRIB?`data-act="edit" data-col="contacts" data-id="${c.id}" style="cursor:pointer" title="Click to edit"`:''}>${esc([c.name,c.email,c.phone].filter(Boolean).join(' · '))}</span>`).join(' | ')||'No contact entered'}</div>
+  <div class="meta">${EDIT||CONTRIB?`<input type="text" class="ghost" data-cell="pipe" data-id="${p.id}" data-k="first" value="${esc((cs[0]&&cs[0].route)||p.first||'')}" placeholder="Who to write to first, and how" aria-label="Write to first">`:esc((cs[0]&&cs[0].route)||p.first||'')}</div>
+  ${EDIT||CONTRIB?`<div class="g2" style="margin-top:6px" data-pid="${p.id}"><input type="text" placeholder="Name" data-f="n" aria-label="Name"><input type="text" placeholder="Email" data-f="e" aria-label="Email"><input type="text" placeholder="Phone" data-f="p" aria-label="Phone"><button class="btn pri" data-act="quickc" data-id="${p.id}">Add contact</button>${EDIT?`<button class="btn" data-act="findc2" data-id="${p.id}">Find with Tilly</button>`:''}</div>`:''}</div>`}).join('')||'<div class="empty">Every sponsor has a contact entered.</div>'}</section>`;
 }
 
 function vEvents0(){
@@ -212,13 +217,15 @@ function vScore(){
   const fb=(get('kit','fallbacks')||{items:[]}).items;
   const cf=conflicts();
   const left=dd(TODAY,END);
-  const verdict=signed.length?'A partnership is agreed. Confirm it in writing and move to the deal tracker.':`No partnership is signed yet. ${left} days remain. If nothing signs by 7 December, the six weeks are recorded as pipeline built, not revenue secured.`;
-  return `<div class="stats"><div class="stat ${signed.length?'good':'bad'}"><b>${signed.length}</b><span>signed (target 1)</span></div><div class="stat"><b>${pend.length}</b><span>proposals pending</span></div><div class="stat"><b>${live.length}</b><span>live conversations</span></div><div class="stat"><b>${money?'₦'+money.toLocaleString('en-NG'):'Not entered'}</b><span>signed value</span></div><div class="stat"><b>${left}</b><span>days to 7 Dec</span></div></div>
+  const T=tgt(),done=signed.length>=(+T.goal||1);
+  const verdict=done?`The target is met: ${signed.length} signed. Confirm it in writing and move to the deal tracker, then set the next target below.`:left<0?`The target date (${DL()}) has passed with ${signed.length} of ${T.goal} signed. The work carries on: set the next target below and keep the live conversations moving.`:`${signed.length} of ${T.goal} signed toward ${T.label}. ${left} days remain until ${DL()}. If nothing signs by then, the period is recorded as pipeline built, not revenue secured.`;
+  return `<div class="stats"><div class="stat ${done?'good':'bad'}"><b>${signed.length}</b><span>signed (target ${esc(T.goal)})</span></div><div class="stat"><b>${pend.length}</b><span>proposals pending</span></div><div class="stat"><b>${live.length}</b><span>live conversations</span></div><div class="stat"><b>${money?'₦'+money.toLocaleString('en-NG'):'Not entered'}</b><span>signed value</span></div><div class="stat"><b>${left}</b><span>days to ${DS()}</span></div></div>
   <section class="box"><h2>The one number</h2><p style="margin:0">${esc(verdict)}</p></section>
   <div class="cols2"><section class="box"><h2>Pipeline by status</h2><div class="funnel">${STATUSES.map(s=>`<div><span>${esc(s)}</span><span><i style="width:${100*by(s).length/mx}%"></i></span><b>${by(s).length}</b></div>`).join('')}</div></section>
   <section class="box"><h2>Cash fallbacks <small>in order</small></h2>${fb.map((f,i)=>{const p=S.pipe.find(q=>q.group===f.group);return `<div class="item"><span>${i+1}.</span><div><b>${esc(f.group)}</b> <span class="pill">${esc(p?p.status:'Not in pipeline')}</span><div class="meta">${esc(f.text)}</div></div></div>`}).join('')}</section></div>
   <section class="box"><h2>Conflicts <small>same category, both active</small></h2>${cf.length?cf.map(([c,a])=>`<div class="item"><span>⚠</span><div><b>${esc(c)}</b><div class="meta">${a.map(p=>esc(p.group+' ('+p.status+')')).join(' | ')}</div><div class="meta">Do not offer these the same slot.</div></div></div>`).join(''):'<div class="empty">No two active sponsors share a category.</div>'}</section>
-  ${EDIT?`<section class="box"><h2>Weekly update for Fatimah</h2><div class="row"><button class="btn pri" data-act="weekly">Write this week's update</button><button class="btn" data-act="copy" data-t="wk">Copy</button></div><textarea id="wk" style="margin-top:8px;min-height:220px">${esc(S.ai.weekly||'')}</textarea></section>`:''}`;
+  ${EDIT?`<section class="box"><h2>Target <small>${esc(DL())} · ${left<0?'date passed':left+' days left'}</small></h2><div class="g2"><div class="fld"><label for="tg_label">What we are aiming for</label><input type="text" id="tg_label" data-tg="label" value="${esc(T.label)}"></div><div class="fld"><label for="tg_goal">How many signed</label><input type="number" min="1" id="tg_goal" data-tg="goal" value="${esc(T.goal)}"></div><div class="fld"><label for="tg_start">Starts</label><input type="date" id="tg_start" data-tg="start" value="${esc(T.start)}"></div><div class="fld"><label for="tg_date">Deadline</label><input type="date" id="tg_date" data-tg="date" value="${esc(T.date)}"></div></div><p class="meta">Change any of these if Fatimah changes the target. The countdown, the warnings and the calendar follow. When this target ends, start the next one and the old one is kept below.</p><div class="row"><button class="btn pri" data-act="tgnext">Start the next target (6 weeks from today)</button></div>${(T.history||[]).length?`<div class="meta" style="margin-top:8px"><b>Past targets</b></div>${T.history.map(h=>`<div class="meta">${esc(h.label)}: ${esc(fmt(h.start))} to ${esc(fmt(h.date))}, ${esc(h.signed)} of ${esc(h.goal)} signed</div>`).join('')}`:''}</section>
+  <section class="box"><h2>Weekly update for Fatimah</h2><div class="row"><button class="btn pri" data-act="weekly">Write this week's update</button><button class="btn" data-act="copy" data-t="wk">Copy</button></div><textarea id="wk" style="margin-top:8px;min-height:220px">${esc(S.ai.weekly||'')}</textarea></section>`:''}`;
 }
 
 function vDeals(){
@@ -235,18 +242,23 @@ function vDeals(){
 
 function vDecisions(){
   const dd_=S.decisions.slice().sort((a,b)=>a.n-b.n);
-  return `<section class="box"><h2>Decisions for Fatimah ${EDIT?'<button class="btn sm" data-act="dec-new">Add a decision</button>':''}<small>${dd_.filter(d=>d.answer).length} of ${dd_.length} answered</small></h2>${dd_.map(d=>`<div class="sec" style="margin-top:0"><b>${d.n}. ${esc(d.decision)}</b> ${d.answer?`<span class="pill ${d.answer==='Approved'?'ok':'warn'}">${esc(d.answer)}</span>`:''}<div class="meta">${esc(d.why)}</div><div class="meta"><b>Proposed:</b> ${esc(d.proposed)}</div>
+  return `<section class="box"><h2>Decisions for Fatimah ${EDIT?'<button class="btn sm" data-act="dec-new">Add a decision</button>':''}<small>${dd_.filter(d=>d.answer).length} of ${dd_.length} answered</small></h2>${dd_.map(d=>`<div class="sec" style="margin-top:0">${EDIT?`<div class="row"><b>${d.n}.</b><input type="text" data-cell="decisions" data-id="${d.id}" data-k="decision" value="${esc(d.decision)}" aria-label="Decision" style="flex:1;font-weight:600"> ${d.answer?`<span class="pill ${d.answer==='Approved'?'ok':'warn'}">${esc(d.answer)}</span>`:''}</div><textarea data-cell="decisions" data-id="${d.id}" data-k="why" style="min-height:48px;margin-top:4px" aria-label="Why it matters">${esc(d.why)}</textarea><label class="meta">Proposed</label><textarea data-cell="decisions" data-id="${d.id}" data-k="proposed" style="min-height:48px" aria-label="Proposed">${esc(d.proposed)}</textarea>`:`<b>${d.n}. ${esc(d.decision)}</b> ${d.answer?`<span class="pill ${d.answer==='Approved'?'ok':'warn'}">${esc(d.answer)}</span>`:''}<div class="meta">${esc(d.why)}</div><div class="meta"><b>Proposed:</b> ${esc(d.proposed)}</div>`}
    <div class="fld" style="margin-top:6px"><textarea data-dc="${d.id}" placeholder="Comment" style="min-height:56px">${esc(d.comment)}</textarea></div>
    <div class="row"><button class="btn pri sm" data-act="decide" data-id="${d.id}" data-v="Approved">Approve</button><button class="btn sm" data-act="decide" data-id="${d.id}" data-v="Changes needed">Changes needed</button><button class="btn sm" data-act="decide" data-id="${d.id}" data-v="">Clear</button>${EDIT?`<button class="btn sm" data-act="edit" data-col="decisions" data-id="${d.id}">Edit wording</button>`:''}</div></div>`).join('')}</section>`;
 }
 
+const APPGUIDE='TLLJ Partnerships Desk. Tabs: Today (what is due, suggested next steps); Roadmap (calendar of plan steps, events and sponsor next steps; it grows past six weeks when later items are added; Add plan step puts a step in any week); Sponsors (all sponsors under Nigeria, Africa, Global, every cell editable, warnings when a change affects other items); Pipeline (sponsors by stage; open one for contacts, outreach log, drafts, proposal checklist, deal); Contacts (each sponsor contacts and who to write to first; click a contact to edit; adding an email or phone moves the sponsor to Contact found); Events; Proposal Kit (rate card, sponsorship ideas, templates); Balance (checks workload, dates and sponsor conflicts); Scoreboard (signed, pending, live counts, fallbacks, conflicts, the editable Target with deadline and countdown, Start the next target, weekly note for Fatimah); Deals; Decisions (Fatimah approves or comments; Sade edits wording in place); Ask Tilly (brief, propose updates from pasted text, ask anything, Test Tilly); Activity (log of what changes and the check-out report); Suggestions (top right, notes about the desk). Top bar: Search, Tilly (update the board, search the web, or ask a question), Undo, Dark/Light, Settings (Gemini key and model). Roles: editor (Sade) edits everything; contributor (Fatimah) can add and edit sponsors, contacts, events, and answer decisions; viewer reads and comments. Undo reverses the last change.';
+async function askq(){const q=$('#aq').value.trim(),o=$('#aqout');if(!q){toast('Type a question first');return}if(!gem()){needKey();return}o.textContent='Thinking…';
+  try{const web=$('#aqweb').checked;const t=await aiText(STYLE+'\nAnswer QUESTION. If it is about how this app works or what something means in it, answer only from APP GUIDE and DATA, and say so if the guide does not cover it. If the question needs outside facts, search the web and name the source link for each fact; if you cannot confirm something, say so.\nQUESTION: '+q+'\nAPP GUIDE: '+APPGUIDE+'\nDATA: '+ctx(),x=>o.textContent=x,web?{search:true}:undefined);o.textContent=t}catch(e){o.textContent='Tilly could not answer: '+(e.message||e.code)}}
 function vAsk(){
   const A=S.ai;
   return `<div class="cols"><div>
   <section class="box"><h2>Brief me</h2><p class="meta">Tilly reads the plan, pipeline, outreach log, contacts and events and says what to do first.</p><div class="row"><button class="btn pri" data-act="brief">Brief me for today</button></div><div class="ai" id="brief" style="margin-top:10px">${esc(A.brief||'')}</div></section>
+  <section class="box"><h2>Ask Tilly anything</h2><p class="meta">Ask how something in this app works, what a word means, or a general question. Tick the box to search the web.</p><textarea id="aq" placeholder="For example: what does Balance check? or Who sponsors Art X Lagos?" style="min-height:70px"></textarea><label class="meta" style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="checkbox" id="aqweb"> Search the web for this</label><div class="row" style="margin-top:8px"><button class="btn pri" data-act="askq">Ask</button></div><div class="ai" id="aqout" style="margin-top:10px"></div></section>
   <section class="box"><h2>Tell Tilly what happened</h2><p class="meta">Paste a reply, call notes, contact details or a line on what you did. Tilly proposes updates across pipeline, outreach log, contacts, plan steps, events and deals. Nothing changes until you press Apply all changes. Undo reverses the whole batch.</p><textarea id="paste" placeholder="Paste text here">${esc(A.paste||'')}</textarea><div class="row" style="margin-top:8px"><button class="btn pri" data-act="propose">Propose updates</button></div><div id="props" style="margin-top:10px"></div></section>
   </div><div>
-  <section class="box guide"><h2>How this works</h2><ol><li><b>Today</b> shows what is due and the next steps suggested from facts in the log.</li><li><b>Roadmap</b> lays the plan and events on a 42-day grid. Click a dot or bar to edit it.</li><li><b>Sponsors</b> lists every sponsor group under Nigeria, Africa and Global. Every cell is editable.</li><li><b>Pipeline</b> shows the same sponsors by stage. Open one to see its contacts, outreach log, drafts, proposal checklist and deal tracker.</li><li><b>Contacts</b> lists the sponsors with no email or phone. Type a name, email or phone to fill one.</li><li><b>Events</b> holds the events, who goes, and the prep list for each.</li><li><b>Proposal Kit</b> holds the rate card, sponsorship ideas and templates. Add more of each.</li><li><b>Balance</b> checks that workload, dates and sponsors fit together.</li><li><b>Scoreboard</b> shows signed, pending and live counts, fallbacks and conflicts, and writes the weekly note to Fatimah.</li><li><b>Decisions</b> is where Fatimah approves or comments.</li><li><b>Activity</b> records what you do and builds the check-out report.</li></ol><p class="meta">New events are added by hand in Events. Changes that affect other items warn you first, and Undo reverses the last change.</p></section></div></div>`;
+  <section class="box guide"><h2>How this works</h2><ol><li><b>Today</b> shows what is due and the next steps suggested from facts in the log.</li><li><b>Roadmap</b> lays the plan and events on a 42-day grid. Click a dot or bar to edit it.</li><li><b>Sponsors</b> lists every sponsor under Nigeria, Africa and Global. Every cell is editable.</li><li><b>Pipeline</b> shows the same sponsors by stage. Open one to see its contacts, outreach log, drafts, proposal checklist and deal tracker.</li><li><b>Contacts</b> lists each sponsor's contacts and who to write to first. Click a contact to edit it, or add a name, email or phone.</li><li><b>Events</b> holds the events, who goes and the prep list for each. Tilly can search for new ones.</li><li><b>Proposal Kit</b> holds the rate card, sponsorship ideas and templates.</li><li><b>Balance</b> checks that workload, dates and sponsors fit together.</li><li><b>Scoreboard</b> shows signed, pending and live counts, fallbacks and conflicts, and writes the weekly note to Fatimah.</li><li><b>Decisions</b> is where Fatimah approves or comments. Sade can edit the wording in place.</li><li><b>Ask Tilly</b> (this page) briefs you and turns pasted messages into proposed updates. The Tilly button at the top searches the web for events, contacts and sponsors.</li><li><b>Activity</b> records what you do and builds the check-out report.</li><li><b>Suggestions</b> (top right) is where Fatimah and Sade leave notes about the desk itself.</li></ol><p class="meta">Changes that affect other items warn you first, and Undo reverses the last change.</p>
+  <div class="row"><button class="btn sm" data-act="tillytest">Test Tilly</button></div><div class="meta" id="tt"></div></section></div></div>`;
 }
 
 /* ---------- editing dialogs ---------- */
@@ -332,12 +344,13 @@ function openPrep(eid){
 
 /* ---------- render ---------- */
 function render(){
-  const all=[['today','Today'],['roadmap','Roadmap'],['sponsors','Sponsors'],['pipeline','Pipeline'],['contacts','Contacts'],['events','Events'],['kit','Proposal Kit'],['balance','Balance'],['score','Scoreboard'],['deals','Deals'],['decisions','Decisions'],['notes','Suggestions'],['activity','Activity'],['ask','Ask Tilly']];
-  const tabs=EDIT?all:all.filter(([k])=>(CONTRIB?['today','sponsors','pipeline','contacts','events','score','decisions','notes']:['today','score','decisions','notes']).includes(k));
-  if(!tabs.some(([k])=>k===S.tab)) S.tab=tabs[0][0];
+  applyTarget();
+  const all=[['today','Today'],['roadmap','Roadmap'],['sponsors','Sponsors'],['pipeline','Pipeline'],['contacts','Contacts'],['events','Events'],['kit','Proposal Kit'],['balance','Balance'],['score','Scoreboard'],['deals','Deals'],['decisions','Decisions'],['ask','Ask Tilly'],['activity','Activity']];
+  const tabs=EDIT?all:all.filter(([k])=>(CONTRIB?['today','sponsors','pipeline','contacts','events','score','decisions']:['today','score','decisions']).includes(k));
+  if(S.tab!=='notes'&&!tabs.some(([k])=>k===S.tab)) S.tab=tabs[0][0];
   const bc=EDIT?balanceChecks().filter(x=>x.level!=='info').length:0,nc=EDIT?S.notes.filter(x=>x.status==='New').length:0;
-  $('#nav').innerHTML=tabs.map(([k,l])=>`<button data-act="tab" data-id="${k}" ${S.tab===k?'aria-current="true"':''}>${l}${k==='balance'&&bc?' ('+bc+')':''}${k==='notes'&&nc?' ('+nc+')':''}</button>`).join('');$('#tools').hidden=!(EDIT||CONTRIB);$('#tillybtn').hidden=!EDIT;
-  $('#sub').textContent=new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})+' · Target: one partnership by 7 December'+(S.demo?' · Demo mode: saved in this browser only':'');
+  $('#nav').innerHTML=tabs.map(([k,l])=>`<button data-act="tab" data-id="${k}" ${S.tab===k?'aria-current="true"':''}>${l}${k==='balance'&&bc?' ('+bc+')':''}</button>`).join('');const nb=$('#notesbtn');nb.textContent='Suggestions'+(nc?' ('+nc+')':'');nb.setAttribute('aria-current',S.tab==='notes'?'true':'false');$('#tools').hidden=!(EDIT||CONTRIB);$('#tillybtn').hidden=!EDIT;
+  {const T=tgt(),l=dd(TODAY,END);$('#sub').innerHTML=esc(new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'}))+' · Target: '+esc(T.label)+' by '+esc(DL())+` <span class="pill ${l<0?'warn':'gold'}">${l<0?'Target date passed':l===0?'Target day':l+(l===1?' day left':' days left')}</span>`+(S.demo?' · Demo mode: saved in this browser only':'')}
   renderUndo();
   if(!S.pipe.length&&!S.tasks.length){
     $('#main').innerHTML=`<section class="box"><h2>No data yet</h2><p class="meta">${EDIT?'Choose your seed.json file to load the plan, pipeline and events.':'The plan has not been loaded yet.'}</p>${EDIT?'<input type="file" id="seedfile" accept=".json" aria-label="seed.json">':''}</section>`;return}
@@ -348,11 +361,11 @@ function render(){
 /* ---------- AI ---------- */
 const STYLE='You write for Sade Ademola at The Leisurely Life Journal, a global luxury publication for the discerning African reader. Use only facts in DATA. Never invent contacts, dates, figures, prices or sponsors; leave unknowns in [square brackets]. Warm, professional, exact. Short sentences joined with conjunctions. No em dashes. No lists of three. No "not X but Y". No hedging words (perhaps, maybe, might). Never use these words: quiet, explore, journey, craft, landscape, vibrant, showcase, elevate, leverage, seamless, unlock, ensure, essential, global, innovative. Write The Leisurely Life Journal in full, never TLLJ, in anything external.';
 const SIGN='\n\nSade Ademola\nThe Leisurely Life Journal\nwww.theleisurelylifejournal.com\nhttps://www.instagram.com/theleisurelylifejournal/';
-const ctx=()=>JSON.stringify({today:TODAY,deadline:END,openSteps:open().map(t=>({id:t.id,action:t.action,due:t.due,owner:t.owner})),sponsors:S.pipe.map(p=>({id:p.id,group:p.group,category:p.category,status:p.status,next:p.next,nextDate:p.nextDate,owner:p.owner,score:p.score,contacts:contactsOf(p.id).map(c=>({name:c.name,email:c.email,phone:c.phone})),log:logsOf(p.id).slice(0,4).map(l=>({type:l.type,date:l.date,summary:l.summary}))})),events:S.events.map(e=>({id:e.id,name:e.name,start:e.start,end:e.end,status:e.status,reach:e.reach})),deals:S.deals,decisionsOpen:S.decisions.filter(d=>!d.answer).map(d=>d.n+'. '+d.decision)});
+const ctx=()=>JSON.stringify({today:TODAY,deadline:END,target:tgt(),openSteps:open().map(t=>({id:t.id,action:t.action,due:t.due,owner:t.owner})),sponsors:S.pipe.map(p=>({id:p.id,group:p.group,category:p.category,status:p.status,next:p.next,nextDate:p.nextDate,owner:p.owner,score:p.score,contacts:contactsOf(p.id).map(c=>({name:c.name,email:c.email,phone:c.phone})),log:logsOf(p.id).slice(0,4).map(l=>({type:l.type,date:l.date,summary:l.summary}))})),events:S.events.map(e=>({id:e.id,name:e.name,start:e.start,end:e.end,status:e.status,reach:e.reach})),deals:S.deals,decisionsOpen:S.decisions.filter(d=>!d.answer).map(d=>d.n+'. '+d.decision)});
 async function aiText(prompt,onText,opts){if(!sample){toast('Tilly is not available in this view.');throw new Error('none')}const r=await sample(prompt,{cache:false,onText:u=>onText&&onText(u.text),...(opts||{})});return r.text}
 async function aiJson(prompt){if(!sample){toast('Tilly is not available in this view.');throw new Error('none')}return sample.json(prompt,{cache:false})}
 async function brief(){const out=$('#brief');out.textContent='Reading the desk…';try{S.ai.brief=await aiText(STYLE+'\nWrite a brief for today in at most 170 words: the three most important actions in order, what is overdue, what to chase from the outreach log, and the next event to prepare for. Plain text, short lines starting with a dash.\nDATA: '+ctx(),t=>out.textContent=t);out.textContent=S.ai.brief}catch(e){out.textContent='Tilly could not answer: '+(e.message||e.code)}}
-async function aisugg(){toast('Asking Tilly…');try{const r=await aiJson(STYLE+'\nSuggest up to 6 concrete next steps that are NOT already in openSteps, each grounded in DATA (log gaps, silent sponsors, missing contacts, events, deals, the 7 December deadline and the cash fallbacks). Return JSON only: [{"text":"","why":"one sentence from the data","due":"YYYY-MM-DD","pid":"sponsor id or empty"}].\nDATA: '+ctx());S.ai.sugg=(Array.isArray(r)?r:[]).filter(x=>x&&x.text).map(x=>({text:String(x.text),why:String(x.why||''),due:dOK(x.due)?x.due:TODAY,pid:get('pipe',x.pid)?x.pid:''}));render()}catch(e){toast('Tilly could not suggest steps: '+(e.message||e.code))}}
+async function aisugg(){toast('Asking Tilly…');try{const r=await aiJson(STYLE+'\nSuggest up to 6 concrete next steps that are NOT already in openSteps, each grounded in DATA (log gaps, silent sponsors, missing contacts, events, deals, the target deadline (DATA.target) and the cash fallbacks). Return JSON only: [{"text":"","why":"one sentence from the data","due":"YYYY-MM-DD","pid":"sponsor id or empty"}].\nDATA: '+ctx());S.ai.sugg=(Array.isArray(r)?r:[]).filter(x=>x&&x.text).map(x=>({text:String(x.text),why:String(x.why||''),due:dOK(x.due)?x.due:TODAY,pid:get('pipe',x.pid)?x.pid:''}));render()}catch(e){toast('Tilly could not suggest steps: '+(e.message||e.code))}}
 async function weekly(){const box=$('#wk');box.value='Writing…';const moved=S.log.filter(l=>l.date>=addDays(TODAY,-7)).map(l=>{const p=get('pipe',l.pipeId);return {sponsor:p&&p.group,type:l.type,date:l.date,summary:l.summary}});
   try{S.ai.weekly=await aiText(STYLE+`\nWrite a short WhatsApp-style update from Sade to Fatimah. Warm, conversational, a natural Nigerian register, never stiff. Rules: no "Done" section and nothing presented as done unless it is in movedThisWeek; one sentence on what moved and one on what is stuck; then "Today" as plain bullet points of tasks Sade still has to do; then ONE short merged section for questions, views needed and reminders for Fatimah (use decisionsOpen and any pending approvals). Keep it under 170 words. No sign-off block.\nDATA: ${ctx()}\nmovedThisWeek: ${JSON.stringify(moved)}`,t=>box.value=t);box.value=S.ai.weekly}catch(e){box.value='Tilly could not write the update: '+(e.message||e.code)}}
 async function draft(kind,pid){
@@ -410,6 +423,9 @@ async function applyInner(){
 document.addEventListener('click',async e=>{
   const el=e.target.closest('[data-act]');if(!el) return;
   const a=el.dataset.act,id=el.dataset.id,col=el.dataset.col;
+  if(a==='askq'){await askq();return}
+  if(a==='tillytest'){const o=$('#tt');o.textContent='Testing…';try{const t=await aiText('Reply with the single word: ready');o.textContent='Tilly works. Reply: '+t.trim().slice(0,60)}catch(e){o.textContent='Tilly failed: '+(e.message||e)}return}
+  if(a==='tgnext'){const T=tgt();const sg=S.pipe.filter(p=>p.status==='Agreed').length;const n={...T,history:[...(T.history||[]),{label:T.label,goal:T.goal,start:T.start,date:T.date,signed:sg}],start:TODAY,date:addDays(TODAY,42)};await act('Start next target',()=>save('kit','target',n));render();toast('New target started. Edit the label and number if needed.');return}
   if(a==='tab'){S.tab=id;render();return}
   if(a==='close'){$('#dlg').close();return}
   if(a==='copy'){const t=document.getElementById(el.dataset.t);try{await navigator.clipboard.writeText(t.value);toast('Copied')}catch(er){t.select();toast('Press Ctrl+C to copy')}return}
@@ -459,7 +475,7 @@ document.addEventListener('click',async e=>{
   if(a==='addsug'){const s=(el.dataset.k==='ai'?S.ai.sugg:sug())[+id];if(!s) return;const p=get('pipe',s.pid);
     await act('Add step',()=>save('tasks',uid('t'),{week:'Added',dates:'',goal:'Suggested',action:s.text,target:p?p.group:'',owner:'Sade',done:false,due:s.due}));if(el.dataset.k==='ai') S.ai.sugg.splice(+id,1);render();toast('Added to the plan');return}
   if(a==='quickc'){const g=el.closest('[data-pid]');const f=k=>g.querySelector(`[data-f="${k}"]`).value.trim();if(!f('n')&&!f('e')&&!f('p')){toast('Enter a name, email or phone');return}
-    await act('Add contact',()=>addContact(id,{name:f('n'),role:f('r'),email:f('e'),phone:f('p'),route:f('w')}));render();toast('Contact added');return}
+    await act('Add contact',()=>addContact(id,{name:f('n'),email:f('e'),phone:f('p')}));render();toast('Contact added');return}
   if(a==='addcontact'){const c={name:$('#cn').value.trim(),role:$('#cr').value.trim(),email:$('#ce').value.trim(),phone:$('#cp').value.trim()};if(!c.name&&!c.email&&!c.phone){toast('Enter a name, email or phone');return}
     await act('Add contact',()=>addContact(id,c));openSponsor(id,true);return}
   if(a==='delc'){const c0=get('contacts',id);await guard('contacts',c0,null,'Remove contact',async()=>{await remove('contacts',id)},true);openSponsor(el.dataset.p,true);return}
@@ -494,6 +510,8 @@ document.addEventListener('click',async e=>{
 });
 document.addEventListener('input',e=>{if(e.target.id==='gq'){const r=$('#gres');if(r) r.innerHTML=searchHtml(e.target.value)}});
 document.addEventListener('change',async e=>{
+  {const t=e.target;if(t.dataset&&t.dataset.tg&&EDIT){const T=tgt(),k=t.dataset.tg;let v=t.value;if(k==='goal'){v=Math.max(1,parseInt(v,10)||1)}if((k==='date'||k==='start')&&!/^\d{4}-\d\d-\d\d$/.test(v)){render();return}
+    const n={...T,[k]:v};if(n.date<n.start){toast('The deadline must be after the start');render();return}await act('Change target',()=>save('kit','target',n));render();toast('Target updated');return}}
   const t=e.target;
   if(t.dataset&&t.dataset.cell&&(EDIT||(CONTRIB&&t.dataset.cell==='pipe'))){const col=t.dataset.cell,id=t.dataset.id,k=t.dataset.k,old=get(col,id);let v=t.value;if(!old) return;if(k==='score'){v=Number(v);if(isNaN(v)){toast('Score must be a number');render();return}}if(k==='group'&&!String(v).trim()){toast('A sponsor needs a name');render();return}const nw={...old,[k]:v};await guard(col,old,nw,'Edit '+String(old.group||'').slice(0,24),async()=>{await save(col,id,nw);if(EDIT&&col==='pipe'&&k==='status'&&v==='Agreed'&&!S.deals.some(d=>d.pipeId===id)) await newDeal(id)});render();return}
   if(t.id==='ap'){S.ap=t.value;render()}
@@ -536,13 +554,13 @@ function ripple(col,old,nw,del){
       if(['Declined','On hold'].includes(nw.status)&&ACTIVE.includes(old.status)){
         const left=S.pipe.filter(p=>p.id!==nw.id&&ACTIVE.includes(p.status)).length;
         if(left===0){const nb=S.pipe.filter(p=>p.id!==nw.id&&p.status==='Not started').sort((a,b)=>b.score-a.score)[0];
-          w('No other sponsor is active, and the target needs one by 7 December.',nb?{label:`Start ${nb.group} (next best, score ${nb.score})`,col:'pipe',id:nb.id,patch:{status:'Finding the contact',nextDate:addDays(TODAY,1),next:'Find the contact route and send the first message.'}}:null)}
+          w('No other sponsor is active, and the target needs one by '+DL()+'.',nb?{label:`Start ${nb.group} (next best, score ${nb.score})`,col:'pipe',id:nb.id,patch:{status:'Finding the contact',nextDate:addDays(TODAY,1),next:'Find the contact route and send the first message.'}}:null)}
         if(nw.nextDate) t('This sponsor still has a next-step date. Clear it so it stops showing on Today.',{label:'Clear its next step',col:'pipe',id:nw.id,patch:{nextDate:null,next:''}})}
     }
     if(nw.category!==(old||{}).category&&ACTIVE.includes(nw.status)) catActive(nw).forEach(q=>w(`${q.group} in the new category is already ${q.status.toLowerCase()}.`));
     if(nw.nextDate&&(!old||nw.nextDate!==old.nextDate)){
       if(nw.nextDate<TODAY) w(`${fmt(nw.nextDate)} is in the past, so this shows as overdue.`);
-      if(nw.nextDate>END) w('That date is after 7 December, the target date.');
+      if(nw.nextDate>END) w('That date is after '+DL()+', the target date.');
       const n=loadOn(nw.nextDate,nw.id);if(n>=3){const d=lighterDay(nw.nextDate,nw.id);w(`${n} other things are already due on ${fmt(nw.nextDate)}.`,d?{label:`Move this to ${fmt(d)}`,col:'pipe',id:nw.id,patch:{nextDate:d}}:null)}}
     if(old&&nw.owner!==old.owner){const L=ownerLoad(nw.id),add=o=>{if(o==='Both'){L.Sade+=.5;L.Fatimah+=.5}else if(L[o]!=null) L[o]++;};if(ACTIVE.includes(nw.status)||true) add(nw.owner);const tot=L.Sade+L.Fatimah;const top=L.Sade>=L.Fatimah?'Sade':'Fatimah';
       if(tot>=6&&L[top]/tot>.7) w(`${top} would hold ${Math.round(L[top])} of ${Math.round(tot)} open items.`,nw.owner!=='Both'?{label:'Set the owner to Both',col:'pipe',id:nw.id,patch:{owner:'Both'}}:null)}
@@ -553,7 +571,7 @@ function ripple(col,old,nw,del){
     if(del){if(!old.done) t('This step is not done. Removing it takes it out of the roadmap and the week count.');return W}
     if(nw.due&&(!old||nw.due!==old.due)&&!nw.done){
       if(nw.due<TODAY) w(`${fmt(nw.due)} is in the past, so this shows as overdue.`);
-      if(nw.due>END) w('That date is after 7 December.',{label:'Set it to 7 December',col:'tasks',id:nw.id,patch:{due:END}});
+      if(nw.due>END) w('That date is after '+DL()+'.',{label:'Set it to '+DL(),col:'tasks',id:nw.id,patch:{due:END}});
       const n=loadOn(nw.due,nw.id);if(n>=3){const d=lighterDay(nw.due,nw.id);w(`${n} other things are already due on ${fmt(nw.due)}.`,d?{label:`Move this to ${fmt(d)}`,col:'tasks',id:nw.id,patch:{due:d}}:null)}
       const mates=S.tasks.filter(x=>x.week===nw.week&&x.id!==nw.id&&x.due).map(x=>x.due).sort();
       if(mates.length>1&&(nw.due<mates[0]||nw.due>mates[mates.length-1])) t(`Other steps in ${nw.week} fall between ${fmt(mates[0])} and ${fmt(mates[mates.length-1])}. Check the week label.`)}
@@ -616,7 +634,7 @@ function balanceChecks(){
   S.pipe.filter(p=>!['Not started','Finding the contact','Declined'].includes(p.status)&&!hasContact(p.id)).slice(0,3).forEach(p=>add('warn',`${p.group} has no contact`,`Status is ${p.status}, but no email or phone is entered.`,'pipe',p.id));
   S.pipe.filter(p=>ACTIVE.includes(p.status)&&p.status!=='Agreed'&&(()=>{const l=logsOf(p.id)[0];return !l||dd(l.date,TODAY)>7})()).slice(0,3).forEach(p=>add('warn',`${p.group} has been quiet for a week`,'Send a follow-up or log what happened.','pipe',p.id));
   const evs=S.events.slice().sort((a,b)=>a.start<b.start?-1:1);for(let i=0;i<evs.length;i++)for(let j=i+1;j<evs.length;j++){const a=evs[i],b=evs[j];if(a.start<=b.end&&a.end>=b.start&&a.end>=TODAY&&a.who===b.who&&a.who&&a.who!=='To decide'&&a.who!=='Both') add('warn',`${a.name} overlaps ${b.name}`,`${a.who} is down for both.`,'events',a.id)}
-  const late=S.tasks.filter(t=>!t.done&&t.due>END);if(late.length) add('warn',`${late.length} plan step${late.length===1?'':'s'} after 7 December`,String(late[0].action).slice(0,90),'tasks',late[0].id);
+  const late=S.tasks.filter(t=>!t.done&&t.due>END);if(late.length) add('warn',`${late.length} plan step${late.length===1?'':'s'} after ${DL()}`,String(late[0].action).slice(0,90),'tasks',late[0].id);
   REGIONS.forEach(r=>{const a=S.pipe.filter(p=>p.tab===r);if(a.length&&!a.some(p=>p.status!=='Not started')&&r!=='Global') add('info',`Nothing has started in ${r}`,`${a.length} sponsor groups wait there. Highest score: ${a.slice().sort((x,y)=>y.score-x.score)[0].group}.`,'pipe',a.slice().sort((x,y)=>y.score-x.score)[0].id)});
   return out;
 }
@@ -689,7 +707,7 @@ function reportText(since){
   L.push(a.length+' recorded actions.');
   sec('Sponsors moved',status);sec('Outreach logged',sent);sec('Contacts added',cons);sec('Plan steps completed',done);sec('Decisions answered',decs);sec('Events updated',evs);sec('Added to the plan',adds);
   const od=S.tasks.filter(t=>!t.done&&t.due&&t.due<TODAY).length,nx=S.tasks.filter(t=>!t.done&&t.due&&t.due>=TODAY&&t.due<=addDays(TODAY,7)).sort(byDue).slice(0,5);
-  L.push('');L.push('Where things stand');L.push('- '+dd(TODAY,END)+' days to 7 December. '+(n=>n+' live conversation'+(n===1?'':'s'))(S.pipe.filter(p=>LIVE.includes(p.status)).length)+', '+S.pipe.filter(p=>p.status==='Agreed').length+' agreed.');
+  L.push('');L.push('Where things stand');L.push('- '+dd(TODAY,END)+' days to '+DL()+'. '+(n=>n+' live conversation'+(n===1?'':'s'))(S.pipe.filter(p=>LIVE.includes(p.status)).length)+', '+S.pipe.filter(p=>p.status==='Agreed').length+' agreed.');
   L.push('- '+od+' plan step'+(od===1?'':'s')+' overdue.');
   if(nx.length){L.push('- Next seven days:');nx.forEach(t=>L.push('  '+fmt(t.due)+': '+String(t.action).slice(0,90)))}
   return L.join('\n');
@@ -707,7 +725,19 @@ function vActivity(){
 }
 
 
-const TEXTFIX=[["the decisions on the For Fatimah tab", "the decisions in the Decisions tab"], ["Fill the yellow contact cells on Start Here for", "Add the missing contacts in the Contacts tab for"], ["Log every conversation on the Pipeline tab within 24 hours.", "Log every conversation in the sponsor's outreach log within 24 hours."], ["add any sponsor that fits to the workbook", "add any sponsor that fits to the Sponsors tab"], ["(yellow cell)", "(add it in the Contacts tab)"], ["in Start Here order", "in score order"], ["Update the Pipeline and the Fact Check Log, plan", "Update every sponsor's status, plan"], ["the one-line description is still to come from Fatimah.", "the proposed one-line description is below."], ["Fatimah decides which figures go in proposals and approves the wording and the period they cover.", "Fatimah decides which figures go in proposals and approves the wording and the period they cover. Proposed description: \"a luxury and culture publication for the discerning African reader\". Fatimah approves or rewords it."], ["Decide who attends which event, one event per person per day.", "One event per person per day. ART X passes are held for 7 and 8 November, and no application has gone to CANEX WKND yet."], [" The Six-Week Plan sets this for Thursday 29 October.", ""], ["Fatimah reviews this tab and the rate card on Thursday 29 October.", "Fatimah reviews the sponsor list, the rate card and these decisions."], ["on the Pipeline tab.", "in the Sponsors tab."], ["Accreditation request unanswered; follow-up sent to press@lagosfashionweek.ng.", "Press accreditation approved for one media pass. Collect it at the Balmoral Hall desk."], ["TLLJ applied and has had no reply.", "TLLJ applied and was approved for one media pass."],[" No contact has been found.", ""],[" No direct email found.", ""],[" No email or phone found.", ""],[" No contact is published.", ""],[" No current contact has been found.", ""],["No email or phone found. Confirm the name through Globacom's head office before writing.", "Confirm the name through Globacom's head office before writing."],[" No named contact found.", ""],["No contact is published for either. Find a work address first.", "Find a work address for each first."],["No direct route found. Write through the hotel's marketing contact once found.", "Write through the hotel's marketing contact."],["(no named contact yet)", "(add a named contact when known)"],["(to be found)", "(add a name when known)"],[" No contact is published, so find it first (add it in the Contacts tab).", " Add the contact in the Contacts tab when you have one."],[" No contact is published, so find one first (add it in the Contacts tab).", " Add the contact in the Contacts tab when you have one."],[" No marketing contact is published, so find it first (add it in the Contacts tab).", " Add the contact in the Contacts tab when you have one."],[" No Nigerian contact is published, so find it first (add it in the Contacts tab).", " Add the contact in the Contacts tab when you have one."],["once a contact is found", "once you have a contact"],["route and deadline: not found.", "route and deadline: to confirm."],["Contact route: not found.", "Contact route: to confirm."],["press route and contact: not found.", "press route and contact: to confirm."],["press contact: not found.", "press contact: to confirm."],["Accreditation route and contact: not found.", "Accreditation route and contact: to confirm."],["Not found. No sponsors or partners are listed on the pages checked.", "To confirm. No sponsors or partners are listed on the pages checked."],["Not found. The page checked names no sponsors.", "To confirm. The page checked names no sponsors."]];
+const TEXTFIX=[["the decisions on the For Fatimah tab", "the decisions in the Decisions tab"], ["Fill the yellow contact cells on Start Here for", "Add the missing contacts in the Contacts tab for"], ["Log every conversation on the Pipeline tab within 24 hours.", "Log every conversation in the sponsor's outreach log within 24 hours."], ["add any sponsor that fits to the workbook", "add any sponsor that fits to the Sponsors tab"], ["(yellow cell)", "(add it in the Contacts tab)"], ["in Start Here order", "in score order"], ["Update the Pipeline and the Fact Check Log, plan", "Update every sponsor's status, plan"], ["the one-line description is still to come from Fatimah.", "the proposed one-line description is below."], ["Fatimah decides which figures go in proposals and approves the wording and the period they cover.", "Fatimah decides which figures go in proposals and approves the wording and the period they cover. Proposed description: \"a luxury and culture publication for the discerning African reader\". Fatimah approves or rewords it."], ["Decide who attends which event, one event per person per day.", "One event per person per day. ART X passes are held for 7 and 8 November, and no application has gone to CANEX WKND yet."], [" The Six-Week Plan sets this for Thursday 29 October.", ""], ["Fatimah reviews this tab and the rate card on Thursday 29 October.", "Fatimah reviews the sponsor list, the rate card and these decisions."], ["on the Pipeline tab.", "in the Sponsors tab."], ["Accreditation request unanswered; follow-up sent to press@lagosfashionweek.ng.", "Press accreditation approved for one media pass. Collect it at the Balmoral Hall desk."], ["TLLJ applied and has had no reply.", "TLLJ applied and was approved for one media pass."],[" No contact has been found.", ""],[" No direct email found.", ""],[" No email or phone found.", ""],[" No contact is published.", ""],[" No current contact has been found.", ""],["No email or phone found. Confirm the name through Globacom's head office before writing.", "Confirm the name through Globacom's head office before writing."],[" No named contact found.", ""],["No contact is published for either. Find a work address first.", "Find a work address for each first."],["No direct route found. Write through the hotel's marketing contact once found.", "Write through the hotel's marketing contact."],["(no named contact yet)", "(add a named contact when known)"],["(to be found)", "(add a name when known)"],[" No contact is published, so find it first (add it in the Contacts tab).", " Add the contact in the Contacts tab when you have one."],[" No contact is published, so find one first (add it in the Contacts tab).", " Add the contact in the Contacts tab when you have one."],[" No marketing contact is published, so find it first (add it in the Contacts tab).", " Add the contact in the Contacts tab when you have one."],[" No Nigerian contact is published, so find it first (add it in the Contacts tab).", " Add the contact in the Contacts tab when you have one."],["once a contact is found", "once you have a contact"],["route and deadline: not found.", "route and deadline: to confirm."],["Contact route: not found.", "Contact route: to confirm."],["press route and contact: not found.", "press route and contact: to confirm."],["press contact: not found.", "press contact: to confirm."],["Accreditation route and contact: not found.", "Accreditation route and contact: to confirm."],["Not found. No sponsors or partners are listed on the pages checked.", "To confirm. No sponsors or partners are listed on the pages checked."],["Not found. The page checked names no sponsors.", "To confirm. The page checked names no sponsors."],["Yes, with the three cash fallbacks logged (Coscharis, a Robert Taylor Media client, Leadway) and the cash target moved to Q1 2027.", "Yes, with the cash fallbacks on the Scoreboard logged and the cash target moved to Q1 2027."]];
+async function ensureRecords(){
+  if(!db||!EDIT||lsGet('tllj_seed_cchbc')) return;
+  if(!S.pipe.length) return;
+  const P={"id": "pcchbc", "n": 37, "group": "Coca-Cola HBC", "tab": "Nigeria", "category": "Beverages", "score": 5, "chance": "Possible", "size": "Bigger", "owner": "Sade", "status": "Finding the contact", "when": "Start now", "first": "Kofo Akingbola, marketing lead at Coca-Cola HBC and a friend of Sade. Phone only for now; ask him for his email.", "next": "Call or message Kofo Akingbola, ask for his email, and ask whether Coca-Cola HBC sponsors publications.", "nextDate": "2026-11-02", "propose": "Ask Kofo whether Coca-Cola HBC sponsors publications and who decides. If it does, send a one-page proposal for one paid feature, priced from the approved rate card.", "why": "Sade has a direct route in through a friend. Whether Coca-Cola HBC sponsors publications has not been confirmed.", "notes": null, "outcome": null},C={"id": "ccchbc", "pipeId": "pcchbc", "name": "Kofo Akingbola", "role": "Marketing lead, Coca-Cola HBC; friend of Sade", "email": "", "phone": "+2348180779488", "route": "Phone: +2348180779488. Ask him for his email. He may also introduce Hammed Adebiyi (The Macallan row), who works at Coca-Cola HBC."};
+  try{
+    if(!S.pipe.some(p=>/coca-?cola/i.test(p.group))){P.n=Math.max(0,...S.pipe.map(p=>p.n||0))+1;P.id='pcchbc';C.pipeId=P.id;C.id='ccchbc';
+      await db.collection('pipe').doc(P.id).set(P);local('pipe',P.id,P);await db.collection('contacts').doc(C.id).set(C);local('contacts',C.id,C)}
+    const h=S.contacts.find(c=>c.route==='Hammed Adebiyi directly.'||c.route==='Hammed Adebiyi directly');
+    if(h){const nh={...h,route:'Hammed Adebiyi directly, or through Kofo Akingbola (marketing lead, Coca-Cola HBC), who may introduce him.'};await db.collection('contacts').doc(h.id).set(nh);local('contacts',h.id,nh)}
+    lsSet('tllj_seed_cchbc','1');render();
+  }catch(e){}
+}
 async function fixWording(){
   if(!db||!EDIT) return;
   let n=0;
@@ -832,12 +862,14 @@ function openSearch(){
 function openTilly(){
   const d=$('#dlg');d.innerHTML=`<h2 style="margin-bottom:6px">Tilly</h2><p class="meta">Tell Tilly what happened or what you need, in your own words. Tilly proposes the changes across the whole board, and nothing is saved until you press Apply all changes. Tick the box to have Tilly search the web instead.</p>
   <textarea id="dpaste" placeholder="For example: Zain replied. Jessica Adetu is attending Andrea Iyamah's event on 1 November. Move the Coscharis follow-up to Monday." style="min-height:110px"></textarea>
-  <label class="meta" style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="checkbox" id="dweb"> Search the web for this</label>
+  <label class="meta" style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="checkbox" id="dweb"> Search the web for this</label><label class="meta" style="display:flex;gap:8px;align-items:center;margin-top:4px"><input type="checkbox" id="dask"> This is a question (about the app or anything else), not an update</label>
   <div class="row" style="margin-top:8px"><button class="btn pri" data-act="tillygo">Go</button><button class="btn" data-act="close">Close</button></div><div id="dprops" class="ai" style="margin-top:10px"></div>`;
   d.dataset.col='';d.dataset.id='';d.showModal();$('#dpaste').focus();
 }
 async function tillyGo(){
   const q=$('#dpaste').value.trim();if(!q){toast('Type something first');return}
+  if($('#dask').checked){if(!gem()){needKey();return}const box=$('#dprops');box.textContent='Thinking…';
+    try{const t=await aiText(STYLE+'\nAnswer QUESTION. If it is about how this app works, use only APP GUIDE and DATA. Otherwise use what you know, and search the web only if asked; name sources and say what you cannot confirm.\nQUESTION: '+q+'\nAPP GUIDE: '+APPGUIDE+'\nDATA: '+ctx(),x=>box.textContent=x,$('#dweb').checked?{search:true}:undefined);box.textContent=t}catch(e){box.textContent='Tilly could not answer: '+(e.message||e.code)}return}
   if($('#dweb').checked){
     if(!gem()){needKey();return}
     const box=$('#dprops');box.textContent='Searching…';
@@ -847,6 +879,7 @@ async function tillyGo(){
 
 /* steady screen: no jumping, no lost focus */
 function editingInMain(){const a=document.activeElement;return !!(a&&a!==document.body&&$('#main').contains(a)&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))}
+setInterval(()=>{const n=iso(new Date());if(n!==TODAY){TODAY=n;softRender()}},60000);document.addEventListener('visibilitychange',()=>{const n=iso(new Date());if(!document.hidden&&n!==TODAY){TODAY=n;softRender()}});
 function softRender(){if(editingInMain()||$('#dlg').open||$('#dlg2').open){S.pending=true;return}render()}
 document.addEventListener('focusout',()=>{if(S.pending) setTimeout(()=>{if(!editingInMain()&&!$('#dlg').open&&!$('#dlg2').open){S.pending=false;render()}},250)});
 function focusKey(){const a=document.activeElement;if(!a||!$('#main').contains(a)||!/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return null;
@@ -860,7 +893,7 @@ async function startApp(env){
   $('#signout').hidden=!env.auth;
   render();
   if(!db) return;
-  for(const c of COLS){db.collection(c).onSnapshot(s=>{S[c]=s.docs.map(d=>({...d.data(),id:d.id}));S.loaded[c]=true;softRender();if(EDIT&&!S.fixed&&['tasks','pipe','decisions','kit','evsug','activity'].every(k=>S.loaded[k])&&S.pipe.length){S.fixed=true;fixWording().then(()=>{pruneActivity();return dailyEvents()})}},e=>toast('Could not load '+c+': '+(e.code||e.message||'')))}
+  for(const c of COLS){db.collection(c).onSnapshot(s=>{S[c]=s.docs.map(d=>({...d.data(),id:d.id}));S.loaded[c]=true;softRender();if(EDIT&&!S.fixed&&['tasks','pipe','decisions','kit','evsug','activity'].every(k=>S.loaded[k])&&S.pipe.length){S.fixed=true;fixWording().then(()=>ensureRecords()).then(()=>{pruneActivity();return dailyEvents()})}},e=>toast('Could not load '+c+': '+(e.code||e.message||'')))}
 }
 function lsGet(k){try{return localStorage.getItem(k)||''}catch(e){return ''}}
 function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
@@ -901,6 +934,11 @@ function makeSample(){
     let r;for(let t=0;t<4;t++){r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(m)+':generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':k},body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],...(search?{tools:[{google_search:{}}]}:{})})});
     if(r.status!==503&&r.status!==429) break; await new Promise(z=>setTimeout(z,1500*(t+1)));}
     const j=await r.json();
+    if(!r.ok&&(r.status===404||r.status===400)&&/model|not found|not supported/i.test((j.error&&j.error.message)||'')&&!call.retried){
+      try{const ml=await (await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=100',{headers:{'x-goog-api-key':k}})).json();
+        const ok=(ml.models||[]).filter(x=>(x.supportedGenerationMethods||[]).includes('generateContent')&&/flash/.test(x.name)&&!/(lite|image|tts|live|preview|exp|thinking)/.test(x.name)).map(x=>x.name.replace('models/',''));
+        if(ok.length){window.lsSet('tllj_gemini_model',ok[0]);call.retried=true;try{return await call(prompt,search)}finally{call.retried=false}}}catch(e){}
+    }
     if(!r.ok) throw new Error((j.error&&j.error.message)||('Gemini error '+r.status));
     const parts=(((j.candidates||[])[0]||{}).content||{}).parts||[];
     return parts.map(p=>p.text||'').join('');
