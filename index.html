@@ -598,7 +598,8 @@ if(!configured){
       if(started){location.reload();return}
       if(!user){
         main.innerHTML='<section class="box"><h2>Sign in</h2><p class="meta">Use the Google account that was given access.</p><button class="btn pri" id="login">Sign in with Google</button></section>';
-        document.getElementById('login').onclick=()=>Au.signInWithPopup(auth,new Au.GoogleAuthProvider()).catch(e=>window.alert&&0);
+        const note=t=>{let n=document.getElementById('lerr');if(!n){n=document.createElement('p');n.id='lerr';n.className='meta';document.getElementById('login').after(n)}n.textContent=t};
+        document.getElementById('login').onclick=()=>{note('');Au.signInWithPopup(auth,new Au.GoogleAuthProvider()).catch(e=>{const c=e.code||'';note('Sign-in stopped ('+c+'). '+(c==='auth/unauthorized-domain'?'Add '+location.hostname+' under Authentication, Settings, Authorized domains.':c==='auth/operation-not-allowed'?'Turn on the Google provider under Authentication, Sign-in method.':c==='auth/popup-blocked'?'Allow pop-ups for this site and try again.':c==='auth/api-key-not-valid.-please-pass-a-valid-api-key.'||c==='auth/invalid-api-key'?'The apiKey in firebase-config.js is wrong.':(e.message||'')))})};
         return;
       }
       const email=(user.email||'').toLowerCase(),edit=lower(C.editors).includes(email),view=lower(C.viewers).includes(email);
