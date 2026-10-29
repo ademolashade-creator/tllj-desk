@@ -135,3 +135,9 @@ dialog h2{font-weight:500;color:var(--accent)}
 .toast{border-radius:99px;padding:10px 20px;box-shadow:var(--shadow)}
 .item .t:hover{text-decoration:none;color:var(--accent)}
 @media(max-width:600px){.top h1{font-size:22px}section.box{padding:14px 14px}main{padding-top:14px}}
+
+html{scroll-behavior:auto}body{overflow-anchor:none}
+#tools{display:inline-flex}
+details.box>summary{list-style:none}details.box>summary::-webkit-details-marker{display:none}
+a{color:var(--accent)}
+body.contrib [data-act="prepopen"]{display:none}

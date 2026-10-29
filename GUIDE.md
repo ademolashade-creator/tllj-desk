@@ -39,3 +39,17 @@ You will do four things: set up Firebase (database and sign-in), edit two small 
 - **AI buttons do nothing**: the Gemini key or model name (steps 18 and 19).
 
 Fatimah signs in with her own Google account. She sees Today, Scoreboard and Decisions, and can update Decisions only.
+
+## Added later: Tilly, searching and suggestions
+- **Tilly** is the assistant. Use the **Tilly** button at the top on any tab, or the Ask Tilly tab. It needs the Gemini key in Settings.
+- **Morning event search.** The first time you open the app each day, Tilly searches the web for events and lists them under Events as suggestions. Nothing is added until you press Add to events. It only runs when someone with edit access opens the app.
+- **Finding contacts and new sponsors.** Use Find contact details with Tilly inside a sponsor, and Find new sponsors on the Sponsors tab. Always check the source link before using anything.
+- **Suggestions tab.** Fatimah can write suggestions there. For this to work she must be on the rules list, and you must republish the updated `firestore.rules` (Firestore Database, Rules tab, paste, Publish).
+
+## Giving Fatimah more access
+Open `firebase-config.js`. Three lists decide what each person can do:
+- `editors`: everything (you).
+- `contributors`: add and change sponsors, contacts and events, answer decisions and write suggestions. They cannot delete, and they do not see Tilly, the plan, the Proposal Kit, Deals, Balance or Activity.
+- `viewers`: Today, Scoreboard, Decisions and Suggestions only.
+
+Put Fatimah's Google email in `contributors`. Then open `firestore.rules` and replace `PASTE_FATIMAH_EMAIL@gmail.com` with the same email, copy the whole file into Firestore Database, Rules tab, and click Publish. If you use `viewers`, replace `PASTE_VIEWER_EMAIL@gmail.com` the same way.

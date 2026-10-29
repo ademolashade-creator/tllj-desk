@@ -2,12 +2,16 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null && request.auth.token.email_verified == true; }
-    function editor() { return signedIn() && request.auth.token.email in ['mycashierai@gmail.com']; }
-    function reader() { return editor() || (signedIn() && request.auth.token.email in ['PASTE_FATIMAH_EMAIL@gmail.com']); }
+    function editor() { return signedIn() && request.auth.token.email in ['ademolashade@gmail.com']; }
+    function contributor() { return signedIn() && request.auth.token.email in ['sagirfatimah@gmail.com']; }
+    function viewer() { return signedIn() && request.auth.token.email in ['folashade.tllj@gmail.com']; }
+    function reader() { return editor() || contributor() || viewer(); }
     match /decisions/{id} { allow read, write: if reader(); }
+    match /notes/{id} { allow read, write: if reader(); }
     match /{col}/{id} {
       allow read: if reader();
-      allow write: if editor();
+      allow create, update: if editor() || (contributor() && col in ['pipe', 'contacts', 'events', 'log']);
+      allow delete: if editor();
     }
   }
 }
