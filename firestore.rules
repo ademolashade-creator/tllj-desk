@@ -1,0 +1,13 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null && request.auth.token.email_verified == true; }
+    function editor() { return signedIn() && request.auth.token.email in ['ademolashade@gmail.com']; }
+    function reader() { return editor() || (signedIn() && request.auth.token.email in ['PASTE_FATIMAH_EMAIL@gmail.com']); }
+    match /decisions/{id} { allow read, write: if reader(); }
+    match /{col}/{id} {
+      allow read: if reader();
+      allow write: if editor();
+    }
+  }
+}

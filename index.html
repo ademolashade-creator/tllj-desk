@@ -1,0 +1,617 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>TLLJ Partnerships Desk</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Instrument+Sans:wght@400;500;600&display=swap">
+<style>
+[hidden]{display:none!important}body{margin:0}img{max-width:100%}
+
+/* Layout: sticky header with ten views; Today is a two-column desk; Roadmap is a 42-day grid; sponsors open in one panel holding contacts, outreach log, drafts and deal */
+:root{color-scheme:light;--bg:#F2F4F6;--surface:#FFFFFF;--ink:#14202E;--mute:#5B6877;--line:#D9DEE4;--accent:#1F5F5B;--accent-ink:#FFFFFF;--soft:#E3EFEE;--warn:#B4531A;--warn-soft:#FBEBDD;--ok:#2E7D4F;--ok-soft:#E1F1E7;--gold:#8A6A12;--serif:'Newsreader',Georgia,serif;--sans:'Instrument Sans',system-ui,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0E151D;--surface:#17212C;--ink:#E8EDF2;--mute:#98A5B3;--line:#2A3745;--accent:#5CC2BA;--accent-ink:#0E151D;--soft:#1B3433;--warn:#F0925A;--warn-soft:#3A2517;--ok:#6FCB93;--ok-soft:#173223;--gold:#E0BD5A;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0E151D;--surface:#17212C;--ink:#E8EDF2;--mute:#98A5B3;--line:#2A3745;--accent:#5CC2BA;--accent-ink:#0E151D;--soft:#1B3433;--warn:#F0925A;--warn-soft:#3A2517;--ok:#6FCB93;--ok-soft:#173223;--gold:#E0BD5A;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--sans);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+.wrap{max-width:1120px;margin:0 auto}
+h1,h2,h3{font-family:var(--serif);font-weight:600;margin:0;text-wrap:balance}
+header{position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);z-index:5;padding:14px 0 0;border-bottom:1px solid var(--line)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:10}
+.top{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:baseline;justify-content:space-between}
+.top h1{font-size:24px}.top .sub{color:var(--mute);font-size:13px}
+nav{display:flex;gap:2px;overflow-x:auto;margin-top:10px}
+nav button{background:none;border:0;border-bottom:3px solid transparent;padding:9px 12px;font:500 14px var(--sans);color:var(--mute);cursor:pointer;white-space:nowrap}
+nav button[aria-current="true"]{color:var(--ink);border-color:var(--accent)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+main{padding-top:20px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:18px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+.stat b{display:block;font:600 26px var(--serif);font-variant-numeric:tabular-nums}.stat span{font-size:12px;color:var(--mute);text-transform:uppercase;letter-spacing:.06em}
+.stat.bad b{color:var(--warn)}.stat.good b{color:var(--ok)}
+.banner{background:var(--warn-soft);color:var(--warn);border:1px solid var(--warn);border-radius:6px;padding:10px 14px;margin-bottom:16px;font-weight:500}
+.cols{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:20px}
+.cols2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+@media(max-width:800px){.cols{grid-template-columns:minmax(0,1fr)}}
+section.box{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:14px 16px;margin-bottom:16px;min-width:0}
+section.box h2{font-size:18px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+section.box h2 small{font:400 12px var(--sans);color:var(--mute)}
+.item{display:grid;grid-template-columns:22px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid var(--line)}
+.item:first-of-type{border-top:0}
+.item input[type=checkbox]{width:18px;height:18px;margin-top:3px;accent-color:var(--accent)}
+.item .t{cursor:pointer;overflow-wrap:anywhere}.item .t:hover{text-decoration:underline}
+.meta{font-size:12px;color:var(--mute);display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:2px;overflow-wrap:anywhere}
+.pill{display:inline-block;font-size:11px;font-weight:600;padding:1px 8px;border-radius:99px;background:var(--soft);color:var(--accent);letter-spacing:.02em}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}.pill.ok{background:var(--ok-soft);color:var(--ok)}.pill.gold{background:var(--warn-soft);color:var(--gold)}
+.empty{color:var(--mute);font-style:italic;padding:6px 0}
+.btn{font:500 13px var(--sans);border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:6px 12px;border-radius:5px;cursor:pointer}
+.btn.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.del{color:var(--warn)}.btn:disabled{opacity:.5;cursor:default}
+.btn.sm{padding:3px 9px;font-size:12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.ev{padding:9px 0;border-top:1px solid var(--line);cursor:pointer}.ev:first-of-type{border-top:0}
+.ev b{display:block}
+.board{display:flex;gap:12px;overflow-x:auto;padding-bottom:10px;align-items:flex-start}
+.lane{flex:0 0 250px;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:10px}
+.lane h3{font-size:15px;display:flex;justify-content:space-between;margin-bottom:8px}
+.card{border:1px solid var(--line);border-radius:5px;padding:8px 10px;margin-bottom:8px;cursor:pointer;background:var(--bg)}
+.card b{display:block;overflow-wrap:anywhere}.card:hover{border-color:var(--accent)}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+select,input[type=text],input[type=date],textarea{font:14px var(--sans);background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:7px 9px;width:100%;max-width:100%}
+.filters select{width:auto}
+textarea{min-height:90px;resize:vertical}
+.rm{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px}
+.rmi{min-width:900px;position:relative}
+.rmh,.rmr{display:grid;grid-template-columns:150px repeat(42,1fr);align-items:center}
+.rmh div{font-size:11px;color:var(--mute);text-align:center;border-left:1px solid var(--line);padding:2px 0}
+.rmh .wk{grid-column:span 7;font-weight:600;color:var(--ink);text-align:left;padding-left:6px}
+.rmr{min-height:34px;border-top:1px solid var(--line)}
+.rmr .lab{font-size:12px;padding-right:8px;overflow-wrap:anywhere}
+.rmr .cell{position:relative;height:34px;grid-column:2/-1;display:grid;grid-template-columns:repeat(42,1fr);align-items:center}
+.bar{background:var(--accent);color:var(--accent-ink);border-radius:4px;font-size:11px;padding:2px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;height:22px;line-height:18px;border:0;text-align:left;font-family:var(--sans)}
+.dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--accent);background:var(--surface);justify-self:center;cursor:pointer;padding:0}
+.dot.done{background:var(--ok);border-color:var(--ok)}.dot.late{border-color:var(--warn);background:var(--warn-soft)}
+.today-line{position:absolute;top:0;bottom:0;width:2px;background:var(--warn);pointer-events:none}
+.legend{font-size:12px;color:var(--mute);margin:10px 0;display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;border:2px solid var(--accent);margin-right:4px;vertical-align:-2px}
+.week{margin-top:14px}.week h3{font-size:17px}
+.prog{height:6px;background:var(--line);border-radius:3px;margin:6px 0 4px;overflow:hidden}.prog i{display:block;height:100%;background:var(--ok)}
+dialog{border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);padding:18px;width:min(680px,calc(100vw - 32px));max-height:90vh;overflow:auto}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+.fld{margin-bottom:10px}.fld label{display:block;font-size:12px;color:var(--mute);margin-bottom:3px;text-transform:uppercase;letter-spacing:.05em}
+.g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
+.ai{white-space:pre-wrap;overflow-wrap:anywhere}
+.guide ol{padding-left:20px;margin:6px 0}.guide li{margin-bottom:6px}
+.toast{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:6px;font-size:13px;z-index:20}
+.sec{border-top:1px solid var(--line);margin-top:14px;padding-top:12px}
+.sec h3{font-size:16px;margin-bottom:6px}
+.tbl{overflow-x:auto}.tbl table{border-collapse:collapse;width:100%;min-width:560px}.tbl th,.tbl td{border-top:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top;font-size:13px}.tbl th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mute)}
+.funnel{display:grid;gap:6px}.funnel div{display:grid;grid-template-columns:140px 1fr 28px;gap:8px;align-items:center;font-size:13px}.funnel i{display:block;height:12px;border-radius:3px;background:var(--accent)}
+pre.draft{white-space:pre-wrap;overflow-wrap:anywhere;font:14px/1.55 var(--sans);margin:0}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style></head><body>
+<div class="wrap">
+<header>
+ <div class="top"><h1>TLLJ Partnerships Desk</h1><div class="row"><div class="sub" id="sub"></div><button class="btn" id="undo" data-act="undo" disabled>Undo</button><button class="btn" data-act="settings">Settings</button><button class="btn" id="signout" data-act="signout" hidden>Sign out</button></div></div>
+ <nav id="nav"></nav>
+</header>
+<main id="main"><p class="empty">Loading the plan, pipeline and events.</p></main>
+</div>
+<dialog id="dlg"></dialog>
+<div id="toast" class="toast" hidden></div>
+<script>
+const END='2026-12-07', START='2026-10-27';
+const STATUSES=['Not started','Finding the contact','Contact found','First message sent','In conversation','Proposal sent','Negotiating','Agreed','Declined','On hold'];
+const ACTIVE=['First message sent','In conversation','Proposal sent','Negotiating','Agreed'];
+const LIVE=['In conversation','Proposal sent','Negotiating'];
+const COLS=['tasks','events','pipe','log','contacts','kit','prep','deals','decisions'];
+const S={loaded:{},tab:'today',fo:'All',fw:'All',fs:'All',fc:'Missing',ai:{}};
+COLS.forEach(c=>S[c]=[]);
+let db=null,sample=null,EDIT=true;
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pd=s=>{const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const TODAY=iso(new Date());
+const dd=(a,b)=>Math.round((pd(b)-pd(a))/864e5);
+const addDays=(s,n)=>{const d=pd(s);d.setDate(d.getDate()+n);return iso(d)};
+const fmt=s=>s?pd(s).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}):'No date';
+const rel=s=>{const n=dd(TODAY,s);return n===0?'today':n===1?'tomorrow':n===-1?'yesterday':n<0?(-n)+' days overdue':'in '+n+' days'};
+const uid=p=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+const dOK=v=>/^\d{4}-\d\d-\d\d$/.test(v||'');
+const get=(c,id)=>S[c].find(x=>x.id===id);
+function toast(t){const e=$('#toast');e.textContent=t;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>e.hidden=true,2800)}
+
+/* ---------- data layer with undo ---------- */
+let cur=null;const hist=[];
+function rec(col,id){if(cur){const p=get(col,id);cur.push({col,id,prev:p?{...p}:null})}}
+function renderUndo(){const b=$('#undo');if(!b) return;const h=hist[hist.length-1];b.hidden=!EDIT;b.disabled=!h;b.textContent=h?'Undo: '+h.label:'Undo';b.title='Undo the last change (Ctrl+Z)'}
+async function act(label,fn){cur=[];try{await fn()}finally{if(cur.length){hist.push({label,items:cur});if(hist.length>30)hist.shift()}cur=null;renderUndo()}}
+function local(col,id,d){const i=S[col].findIndex(x=>x.id===id);if(d==null){if(i>=0) S[col].splice(i,1)}else if(i<0) S[col].push({...d});else S[col][i]={...d}}
+async function undo(){const b=hist.pop();renderUndo();if(!b){toast('Nothing to undo');return}
+  try{for(const it of b.items.slice().reverse()){const r=db.collection(it.col).doc(it.id);if(it.prev){await r.set(it.prev);local(it.col,it.id,it.prev)}else{await r.delete();local(it.col,it.id,null)}}toast('Undid: '+b.label);if(!$('#dlg').open) render()}catch(e){toast('Could not undo: '+(e.message||''))}}
+async function save(col,id,data){
+  if(!db){toast('Saving is not available in this view.');return false}
+  rec(col,id);
+  try{await db.collection(col).doc(id).set({...data,id});local(col,id,{...data,id});return true}catch(e){toast('Not saved: '+(e.message||'check edit access'));return false}
+}
+async function patch(col,id,p){const c=get(col,id)||{};return save(col,id,{...c,...p})}
+async function remove(col,id){rec(col,id);try{await db.collection(col).doc(id).delete();local(col,id,null)}catch(e){toast('Not deleted: '+(e.message||''))}}
+
+/* ---------- facts ---------- */
+const open=()=>S.tasks.filter(t=>!t.done);
+const byDue=(a,b)=>(a.due||'9')<(b.due||'9')?-1:1;
+const logsOf=id=>S.log.filter(l=>l.pipeId===id).sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:0);
+const contactsOf=id=>S.contacts.filter(c=>c.pipeId===id);
+const hasContact=id=>contactsOf(id).some(c=>c.email||c.phone);
+function lastOf(id,types){const l=logsOf(id).find(x=>types.includes(x.type));return l?l.date:null}
+const conflictFor=p=>p.category?S.pipe.filter(q=>q.id!==p.id&&q.category===p.category&&ACTIVE.includes(q.status)):[];
+function conflicts(){const m={};S.pipe.filter(p=>p.category&&ACTIVE.includes(p.status)).forEach(p=>(m[p.category]=m[p.category]||[]).push(p));return Object.entries(m).filter(([,a])=>a.length>1)}
+function stdPrep(e){
+  const f=addDays(e.end,2);
+  return [
+   ['Before',`Confirm access: ${e.status||'status not recorded'}`],['Before',`Decide who goes (now: ${e.who||'To decide'}) and which day`],
+   ['Before',`Choose the people to meet from: ${(e.reach||'no names recorded').slice(0,160)}`],['Before','Write three questions for each person on the meeting list'],
+   ['Before','Pack the one-line description, the reach figures Fatimah has approved and one sample feature link'],
+   ['During','Collect passes or register on arrival'],['During','Meet the people on the list and ask the questions'],['During','Log every conversation in the sponsor\'s outreach log the same day'],
+   ['After',`Send follow-up emails by ${fmt(f)} (within 48 hours of the end)`],['After','Log replies and update each sponsor\'s next step'],['After','Add coverage and photos to the editorial plan']
+  ].map(([phase,text])=>({phase,text}));
+}
+function sug(){
+  const out=[];const add=(text,why,due,pid)=>{if(!S.tasks.some(t=>!t.done&&t.action===text)&&!out.some(o=>o.text===text)) out.push({text,why,due:due||TODAY,pid})};
+  for(const p of S.pipe){
+    if(['Declined','On hold','Agreed'].includes(p.status)) continue;
+    const out_=lastOf(p.id,['Email sent']),in_=lastOf(p.id,['Email received','Call','Meeting']);
+    if(out_&&(!in_||in_<out_)){const n=dd(out_,TODAY);if(n>=7) add(`Chase ${p.group}: no reply in ${n} days`,`Last email sent ${fmt(out_)}. Nothing received since.`,TODAY,p.id)}
+    if(p.status==='In conversation'&&in_&&dd(in_,TODAY)>=3&&(!out_||out_<=in_)) add(`Reply to ${p.group} or send the proposal`,`They last responded ${fmt(in_)}. No email from us since.`,TODAY,p.id);
+    if(p.status==='Not started'&&p.when==='Start now'&&!hasContact(p.id)) add(`Find a contact route for ${p.group}`,'Marked Start now, with no email or phone entered.',addDays(TODAY,1),p.id);
+    if(p.status==='Contact found') add(`Send the first email to ${p.group}`,'A contact is entered and no message has gone.',TODAY,p.id);
+    if(p.nextDate&&p.nextDate<TODAY) add(`Do the overdue step for ${p.group}: ${p.next}`.slice(0,200),`Due ${fmt(p.nextDate)}.`,TODAY,p.id);
+  }
+  for(const e of S.events){
+    const n=dd(TODAY,e.start),pr=S.prep.filter(x=>x.eventId===e.id);
+    if(n>=0&&n<=3&&(!pr.length||pr.some(x=>x.phase==='Before'&&!x.done))) add(`Finish prep for ${e.name}`,`Starts ${rel(e.start)}${pr.length?'':'. No checklist yet.'}`,TODAY);
+    if(e.end<=TODAY&&dd(e.end,TODAY)<=2&&pr.some(x=>x.phase==='After'&&!x.done)) add(`Send follow-up emails after ${e.name}`,`Due by ${fmt(addDays(e.end,2))}.`,addDays(e.end,2));
+  }
+  for(const d of S.deals){const p=get('pipe',d.pipeId);if(!p) continue;
+    if(dOK(d.publishDate)&&d.publishDate<=TODAY&&d.invoice==='Not invoiced') add(`Invoice ${p.group}`,`Published ${fmt(d.publishDate)}. No invoice recorded.`,TODAY,p.id);
+    if(dOK(d.renewal)&&dd(TODAY,d.renewal)<=30&&dd(TODAY,d.renewal)>=0) add(`Open the renewal conversation with ${p.group}`,`Renewal ${fmt(d.renewal)}.`,TODAY,p.id)}
+  const signed=S.pipe.some(p=>p.status==='Agreed'),pend=S.pipe.some(p=>['Proposal sent','Negotiating'].includes(p.status));
+  if(!signed&&!pend&&dd(TODAY,END)<=21){const fb=(get('kit','fallbacks')||{items:[]}).items.map(f=>S.pipe.find(p=>p.group===f.group)).find(p=>p&&!ACTIVE.includes(p.status));if(fb) add(`Send the proposal to ${fb.group}`,`No proposal is out and ${dd(TODAY,END)} days remain. ${fb.group} is a named cash fallback.`,TODAY,fb.id)}
+  return out;
+}
+
+/* ---------- list pieces ---------- */
+function taskItem(t){
+  const late=!t.done&&t.due&&t.due<TODAY;
+  return `<div class="item"><input type="checkbox" data-act="tick" data-id="${t.id}" ${t.done?'checked':''} ${EDIT?'':'disabled'} aria-label="Done"><div><div class="t" data-act="edit" data-col="tasks" data-id="${t.id}">${esc(t.action)}</div><div class="meta"><span class="pill ${late?'warn':''}">${esc(fmt(t.due))}${t.due&&!t.done?' · '+rel(t.due):''}</span><span>${esc(t.owner)}</span><span>${esc(t.target)}</span></div></div></div>`;
+}
+function pipeItem(p){
+  const late=p.nextDate&&p.nextDate<TODAY;
+  return `<div class="item"><span></span><div><div class="t" data-act="edit" data-col="pipe" data-id="${p.id}"><b>${esc(p.group)}</b>: ${esc(p.next)}</div><div class="meta"><span class="pill ${late?'warn':'gold'}">${esc(fmt(p.nextDate))}${p.nextDate?' · '+rel(p.nextDate):''}</span><span>${esc(p.owner)}</span><span>${esc(p.status)}</span></div></div></div>`;
+}
+function evRow(e){
+  const live=e.start<=TODAY&&e.end>=TODAY,pr=S.prep.filter(x=>x.eventId===e.id),dn=pr.filter(x=>x.done).length;
+  return `<div class="ev" data-act="edit" data-col="events" data-id="${e.id}"><b>${esc(e.name)}</b><div class="meta"><span class="pill ${live?'ok':''}">${live?'On now':fmt(e.start)+' · '+rel(e.start)}</span><span>${esc(fmt(e.start))} to ${esc(fmt(e.end))}</span><span>${esc(e.where)}</span></div><div class="meta">${esc(e.status||'')}</div><div class="meta"><button class="btn sm" data-act="prepopen" data-id="${e.id}">Prep ${pr.length?dn+'/'+pr.length:''}</button></div></div>`;
+}
+function sugItem(s,i,k){
+  return `<div class="item"><span></span><div><b>${esc(s.text)}</b><div class="meta"><span>${esc(s.why||'')}</span></div><div class="meta"><span class="pill gold">${esc(fmt(s.due))}</span>${EDIT?`<button class="btn sm" data-act="addsug" data-k="${k}" data-id="${i}">Add to plan</button>`:''}${s.pid&&EDIT?`<button class="btn sm" data-act="edit" data-col="pipe" data-id="${s.pid}">Open sponsor</button>`:''}</div></div></div>`;
+}
+
+/* ---------- views ---------- */
+function vToday(){
+  const t=open().sort(byDue);
+  const overdue=t.filter(x=>x.due&&x.due<TODAY),todayT=t.filter(x=>x.due===TODAY);
+  const week=t.filter(x=>x.due&&x.due>TODAY&&dd(TODAY,x.due)<=7);
+  const pOpen=S.pipe.filter(p=>p.nextDate&&!['Agreed','Declined','On hold'].includes(p.status)).sort((a,b)=>a.nextDate<b.nextDate?-1:1);
+  const pDue=pOpen.filter(p=>p.nextDate<=TODAY),pWeek=pOpen.filter(p=>p.nextDate>TODAY&&dd(TODAY,p.nextDate)<=7);
+  const evs=S.events.filter(e=>e.end>=TODAY&&dd(TODAY,e.start)<=21).sort((a,b)=>a.start<b.start?-1:1);
+  const opp=S.pipe.filter(p=>p.status==='Not started'&&p.when==='Start now').sort((a,b)=>b.score-a.score).slice(0,5);
+  const late=overdue.length+pDue.filter(p=>p.nextDate<TODAY).length;
+  const live=S.pipe.filter(p=>LIVE.includes(p.status)).length,signed=S.pipe.filter(p=>p.status==='Agreed').length;
+  const sg=sug(),L=(a,f,m)=>a.length?a.map(f).join(''):`<div class="empty">${m}</div>`;
+  const ask=S.ai.sugg||[];
+  const pend=S.decisions.filter(d=>!d.answer).length;
+  return `${late?`<div class="banner" role="status">${late} overdue. Clear these first.</div>`:''}
+  <div class="stats">
+   <div class="stat"><b>${Math.max(0,dd(TODAY,END))}</b><span>days to 7 Dec</span></div>
+   <div class="stat ${late?'bad':''}"><b>${late}</b><span>overdue</span></div>
+   <div class="stat"><b>${todayT.length+pDue.filter(p=>p.nextDate===TODAY).length}</b><span>due today</span></div>
+   <div class="stat"><b>${live}</b><span>live conversations</span></div>
+   <div class="stat ${signed?'good':''}"><b>${signed}</b><span>signed</span></div>
+   ${pend?`<div class="stat"><b>${pend}</b><span>decisions open</span></div>`:''}
+  </div>
+  <div class="cols"><div>
+   <section class="box"><h2>Suggested next steps <small>from the log, contacts, events and deals</small></h2>${L(sg,(s,i)=>sugItem(s,i,'local'),'Nothing extra suggested. The plan covers today.')}${ask.length?`<div class="meta" style="margin-top:8px"><b>From Claude</b></div>`+ask.map((s,i)=>sugItem(s,i,'ai')).join(''):''}${EDIT?`<div class="row" style="margin-top:8px"><button class="btn" data-act="aisugg">Ask Claude for more</button></div>`:''}</section>
+   <section class="box"><h2>Due now <small>${fmt(TODAY)}</small></h2>${L([...overdue,...todayT],taskItem,'Nothing overdue or due today.')}${pDue.map(pipeItem).join('')}</section>
+   <section class="box"><h2>Next 7 days</h2>${L(week,taskItem,'No plan steps in the next 7 days.')}${pWeek.map(pipeItem).join('')}</section>
+  </div><div>
+   <section class="box"><h2>Events <small>next 3 weeks</small></h2>${L(evs,evRow,'No events in the next 3 weeks.')}</section>
+   <section class="box"><h2>Opportunities <small>start now, by score</small></h2>${L(opp,p=>`<div class="ev" data-act="edit" data-col="pipe" data-id="${p.id}"><b>${esc(p.group)}</b><div class="meta"><span class="pill">Score ${esc(p.score)}</span><span>${esc(p.chance)}</span><span>${esc(p.owner)}</span></div><div class="meta">${esc(p.propose)}</div></div>`,'No unstarted groups marked Start now.')}</section>
+  </div></div>`;
+}
+
+function vRoadmap(){
+  const days=[...Array(42)].map((_,i)=>addDays(START,i));
+  const col=s=>Math.min(42,Math.max(1,dd(START,s)+1));
+  const weeks=[...new Set(S.tasks.map(t=>t.week))];
+  const tl=dd(START,TODAY);
+  const head=`<div class="rmh"><div></div>${[0,1,2,3,4,5].map(i=>`<div class="wk">Week ${i+1} · ${fmt(days[i*7]).replace(/^\w+ /,'')}</div>`).join('')}</div><div class="rmh"><div></div>${days.map(d=>`<div>${pd(d).getDate()}</div>`).join('')}</div>`;
+  const evRows=S.events.slice().sort((a,b)=>a.start<b.start?-1:1).map(e=>`<div class="rmr"><div class="lab">${esc(e.name)}</div><div class="cell"><button class="bar" data-act="edit" data-col="events" data-id="${e.id}" style="grid-column:${col(e.start)}/${Math.min(42,col(e.end))+1}" title="${esc(e.name)}">${esc(e.name)}</button></div></div>`).join('');
+  const wkRows=weeks.map(w=>{const ts=S.tasks.filter(t=>t.week===w);return `<div class="rmr"><div class="lab"><b>${esc(w)}</b></div><div class="cell">${ts.filter(t=>t.due).map(t=>`<button class="dot ${t.done?'done':t.due<TODAY?'late':''}" style="grid-column:${col(t.due)}" data-act="edit" data-col="tasks" data-id="${t.id}" title="${esc(fmt(t.due))}: ${esc(t.action)}" aria-label="${esc(t.action)}"></button>`).join('')}</div></div>`}).join('');
+  const pRow=`<div class="rmr"><div class="lab"><b>Sponsor next steps</b></div><div class="cell">${days.map(d=>{const n=S.pipe.filter(p=>p.nextDate===d&&!['Agreed','Declined'].includes(p.status)).length;return n?`<span class="pill gold" style="grid-column:${col(d)};justify-self:center" title="${n} next steps on ${esc(fmt(d))}">${n}</span>`:''}).join('')}</div></div>`;
+  const line=tl>=0&&tl<42?`<div class="today-line" style="left:calc(150px + (100% - 150px) * ${(tl+.5)/42})"></div>`:'';
+  const lists=weeks.map(w=>{const ts=S.tasks.filter(t=>t.week===w).sort(byDue),n=ts.filter(t=>t.done).length,g=ts[0]||{};return `<section class="box week"><h3>${esc(w)} <small style="font:400 13px var(--sans);color:var(--mute)">${esc(g.dates)}</small></h3><div class="meta">${esc(g.goal)} · ${n} of ${ts.length} done</div><div class="prog"><i style="width:${ts.length?100*n/ts.length:0}%"></i></div>${ts.map(taskItem).join('')}</section>`}).join('');
+  return `<div class="legend"><span><i></i>Plan step due</span><span><i style="background:var(--ok);border-color:var(--ok)"></i>Done</span><span><i style="border-color:var(--warn);background:var(--warn-soft)"></i>Overdue</span><span><span class="pill" style="background:var(--accent);color:var(--accent-ink)">Bar</span> Event</span></div>
+  <div class="rm"><div class="rmi">${head}${evRows}${wkRows}${pRow}${line}</div></div>
+  <div class="row" style="margin:14px 0"><button class="btn pri" data-act="new" data-col="tasks">Add plan step</button><button class="btn" data-act="new" data-col="events">Add event</button></div>${lists}`;
+}
+
+function vPipeline(){
+  const owners=['All','Sade','Fatimah','Both'];
+  const p=S.pipe.filter(x=>(S.fo==='All'||x.owner===S.fo)&&(S.fw==='All'||x.when===S.fw));
+  const whens=['All',...new Set(S.pipe.map(x=>x.when))];
+  const lanes=STATUSES.filter(s=>S.fs==='All'||s===S.fs).map(s=>{
+    const c=p.filter(x=>x.status===s).sort((a,b)=>b.score-a.score);
+    return `<div class="lane"><h3>${esc(s)} <span class="pill">${c.length}</span></h3>${c.map(x=>{const cf=conflictFor(x).length&&ACTIVE.includes(x.status);return `<div class="card" data-act="edit" data-col="pipe" data-id="${x.id}"><b>${esc(x.group)}</b><div class="meta"><span>Score ${esc(x.score)}</span><span>${esc(x.owner)}</span><span>${esc(x.category||x.tab)}</span>${cf?'<span class="pill warn">Same category active</span>':''}</div>${x.next?`<div class="meta">${x.nextDate?esc(fmt(x.nextDate))+': ':''}${esc(x.next.slice(0,110))}${x.next.length>110?'…':''}</div>`:''}</div>`}).join('')||'<div class="empty">None</div>'}</div>`}).join('');
+  const opt=(a,v)=>a.map(o=>`<option ${o===v?'selected':''}>${esc(o)}</option>`).join('');
+  return `<div class="filters"><select id="fo" aria-label="Owner">${opt(owners,S.fo)}</select><select id="fw" aria-label="When to approach">${opt(whens,S.fw)}</select><select id="fs" aria-label="Status">${opt(['All',...STATUSES],S.fs)}</select><button class="btn pri" data-act="new" data-col="pipe">Add sponsor</button></div><div class="board">${lanes}</div>`;
+}
+
+function vContacts(){
+  let list=S.pipe.slice().sort((a,b)=>b.score-a.score);
+  const miss=list.filter(p=>!hasContact(p.id));
+  if(S.fc==='Missing') list=miss;
+  return `<div class="filters"><select id="fc" aria-label="Show"><option ${S.fc==='Missing'?'selected':''}>Missing</option><option ${S.fc==='All'?'selected':''}>All</option></select><span class="meta" style="align-self:center">${miss.length} of ${S.pipe.length} sponsors have no email or phone. Adding one moves the sponsor to Contact found and sets the next step to send the first email.</span></div>
+  <section class="box">${list.map(p=>{const cs=contactsOf(p.id);return `<div class="sec" style="margin-top:0;border-top:1px solid var(--line)"><div class="row" style="justify-content:space-between"><b data-act="edit" data-col="pipe" data-id="${p.id}" style="cursor:pointer">${esc(p.group)}</b><span class="pill ${hasContact(p.id)?'ok':'warn'}">${hasContact(p.id)?'Contact entered':'Contact needed'}</span></div>
+  <div class="meta">${cs.map(c=>esc([c.name,c.email,c.phone].filter(Boolean).join(' · '))).join(' | ')||'No contact entered'}</div>
+  <div class="meta">${esc((cs[0]&&cs[0].route)||p.first||'')}</div>
+  ${EDIT?`<div class="g2" style="margin-top:6px" data-pid="${p.id}"><input type="text" placeholder="Name" data-f="n" aria-label="Name"><input type="text" placeholder="Email" data-f="e" aria-label="Email"><input type="text" placeholder="Phone" data-f="p" aria-label="Phone"><button class="btn pri" data-act="quickc" data-id="${p.id}">Add contact</button></div>`:''}</div>`}).join('')||'<div class="empty">Every sponsor has a contact entered.</div>'}</section>`;
+}
+
+function vEvents(){
+  const e=S.events.slice().sort((a,b)=>a.start<b.start?-1:1);
+  return `<div class="row" style="margin-bottom:12px"><button class="btn pri" data-act="new" data-col="events">Add event</button></div><section class="box">${e.map(x=>{const pr=S.prep.filter(q=>q.eventId===x.id);return `<div class="ev" data-act="edit" data-col="events" data-id="${x.id}"><b>${esc(x.name)}</b><div class="meta"><span class="pill ${x.end<TODAY?'':x.start<=TODAY?'ok':''}">${x.end<TODAY?'Past':x.start<=TODAY?'On now':rel(x.start)}</span><span>${esc(fmt(x.start))} to ${esc(fmt(x.end))}</span><span>${esc(x.where)}</span><span>Who goes: ${esc(x.who)}</span></div><div class="meta">${esc(x.reach||'')}</div><div class="meta"><b>Access:</b> ${esc(x.status||'')}</div><div class="meta">${esc(x.how||'')} ${esc(x.note||'')}</div><div class="meta"><button class="btn sm" data-act="prepopen" data-id="${x.id}">Prep checklist ${pr.length?pr.filter(q=>q.done).length+'/'+pr.length:''}</button><span>Follow-ups due ${esc(fmt(addDays(x.end,2)))}</span></div></div>`}).join('')||'<div class="empty">No events yet. Add the first one.</div>'}</section>`;
+}
+
+function vKit(){
+  const tpls=['tplA','tplB','tplC'].map(id=>get('kit',id)).filter(Boolean),rates=get('kit','rates');
+  const chk=['The contact is still in the role.','No other name in the same category has been offered the same slot (see Scoreboard, Conflicts).','The reach figures and the one-line description are approved by Fatimah.','The price comes from the approved rate card.','A sample feature or sample page is attached.','The pipeline shows the owner and the next step.','The story passes the north star with the sponsor taken out.'];
+  return `<section class="box"><h2>Rate card <small>${rates&&rates.rows.some(r=>r.price)?'Prices entered':'Prices stay blank until Fatimah sends the card'}</small></h2><div class="tbl"><table><tr><th>Package</th><th>Included</th><th>Price</th><th>Approved on</th></tr>${rates?rates.rows.map((r,i)=>`<tr><td>${esc(r.pkg)}</td><td>${esc(r.incl)}</td><td><input type="text" data-rate="${i}" data-k="price" value="${esc(r.price)}" placeholder="Fill in" ${EDIT?'':'disabled'} aria-label="Price"></td><td><input type="date" data-rate="${i}" data-k="approved" value="${esc(r.approved)}" ${EDIT?'':'disabled'} aria-label="Approved on"></td></tr>`).join(''):''}</table></div></section>
+  <div class="cols2">${tpls.map(t=>`<section class="box"><h2>${esc(t.title)}</h2><div class="meta" style="margin-bottom:6px">${esc(t.forText||'')}</div><textarea id="tp_${t.id}" style="min-height:300px" ${EDIT?'':'disabled'}>${esc(t.body)}</textarea><div class="row" style="margin-top:6px"><button class="btn pri" data-act="tplsave" data-id="${t.id}">Save template</button><button class="btn" data-act="copy" data-t="tp_${t.id}">Copy</button></div></section>`).join('')}</div>
+  <section class="box"><h2>Before any proposal is sent</h2>${chk.map(c=>`<div class="item"><span>☐</span><div>${esc(c)}</div></div>`).join('')}</section>`;
+}
+
+function vScore(){
+  const by=s=>S.pipe.filter(p=>p.status===s);
+  const signed=by('Agreed'),pend=[...by('Proposal sent'),...by('Negotiating')],live=S.pipe.filter(p=>LIVE.includes(p.status));
+  const money=S.deals.reduce((a,d)=>a+(parseFloat(String(d.amount||'').replace(/[^\d.]/g,''))||0),0);
+  const mx=Math.max(1,...STATUSES.map(s=>by(s).length));
+  const fb=(get('kit','fallbacks')||{items:[]}).items;
+  const cf=conflicts();
+  const left=dd(TODAY,END);
+  const verdict=signed.length?'A partnership is agreed. Confirm it in writing and move to the deal tracker.':`No partnership is signed yet. ${left} days remain. If nothing signs by 7 December, the six weeks are recorded as pipeline built, not revenue secured.`;
+  return `<div class="stats"><div class="stat ${signed.length?'good':'bad'}"><b>${signed.length}</b><span>signed (target 1)</span></div><div class="stat"><b>${pend.length}</b><span>proposals pending</span></div><div class="stat"><b>${live.length}</b><span>live conversations</span></div><div class="stat"><b>${money?'₦'+money.toLocaleString('en-NG'):'Not entered'}</b><span>signed value</span></div><div class="stat"><b>${left}</b><span>days to 7 Dec</span></div></div>
+  <section class="box"><h2>The one number</h2><p style="margin:0">${esc(verdict)}</p></section>
+  <div class="cols2"><section class="box"><h2>Pipeline by status</h2><div class="funnel">${STATUSES.map(s=>`<div><span>${esc(s)}</span><span><i style="width:${100*by(s).length/mx}%"></i></span><b>${by(s).length}</b></div>`).join('')}</div></section>
+  <section class="box"><h2>Cash fallbacks <small>in order</small></h2>${fb.map((f,i)=>{const p=S.pipe.find(q=>q.group===f.group);return `<div class="item"><span>${i+1}.</span><div><b>${esc(f.group)}</b> <span class="pill">${esc(p?p.status:'Not in pipeline')}</span><div class="meta">${esc(f.text)}</div></div></div>`}).join('')}</section></div>
+  <section class="box"><h2>Conflicts <small>same category, both active</small></h2>${cf.length?cf.map(([c,a])=>`<div class="item"><span>⚠</span><div><b>${esc(c)}</b><div class="meta">${a.map(p=>esc(p.group+' ('+p.status+')')).join(' | ')}</div><div class="meta">Do not offer these the same slot.</div></div></div>`).join(''):'<div class="empty">No two active sponsors share a category.</div>'}</section>
+  ${EDIT?`<section class="box"><h2>Weekly update for Fatimah</h2><div class="row"><button class="btn pri" data-act="weekly">Write this week's update</button><button class="btn" data-act="copy" data-t="wk">Copy</button></div><textarea id="wk" style="margin-top:8px;min-height:220px">${esc(S.ai.weekly||'')}</textarea></section>`:''}`;
+}
+
+function vDeals(){
+  const ids=new Set(S.deals.map(d=>d.pipeId));
+  const cand=S.pipe.filter(p=>!ids.has(p.id)).sort((a,b)=>(a.status==='Agreed'?-1:0)-(b.status==='Agreed'?-1:0)||b.score-a.score);
+  return `<div class="filters"><select id="dealpick" aria-label="Sponsor">${cand.map(p=>`<option value="${p.id}">${esc(p.group)}${p.status==='Agreed'?' (Agreed)':''}</option>`).join('')}</select><button class="btn pri" data-act="dealnew">Start a deal tracker</button></div>
+  ${S.deals.map(d=>{const p=get('pipe',d.pipeId)||{group:d.pipeId};return `<section class="box" data-deal="${d.id}"><h2>${esc(p.group)} <small>${esc(p.status||'')}</small></h2><div class="g2">
+   <div class="fld"><label>Deliverables</label><textarea data-k="deliverables">${esc(d.deliverables)}</textarea></div>
+   <div><div class="fld"><label>Publish date</label><input type="date" data-k="publishDate" value="${esc(d.publishDate)}"></div><div class="fld"><label>Amount (₦)</label><input type="text" data-k="amount" value="${esc(d.amount)}"></div></div>
+   <div><div class="fld"><label>Invoice</label><select data-k="invoice">${['Not invoiced','Invoiced','Paid'].map(o=>`<option ${o===d.invoice?'selected':''}>${o}</option>`).join('')}</select></div><div class="fld"><label>Renewal date</label><input type="date" data-k="renewal" value="${esc(d.renewal)}"></div></div>
+   <div class="fld"><label>Notes</label><textarea data-k="notes">${esc(d.notes)}</textarea></div></div>
+   <div class="row"><button class="btn pri" data-act="dealsave" data-id="${d.id}">Save</button><button class="btn del" data-act="dealdel" data-id="${d.id}">Remove tracker</button></div></section>`}).join('')||'<div class="empty">No deals yet. When a sponsor says yes, start its tracker here: deliverables, publish dates, invoice and payment status, and the renewal date.</div>'}`;
+}
+
+function vDecisions(){
+  const dd_=S.decisions.slice().sort((a,b)=>a.n-b.n);
+  return `<section class="box"><h2>Decisions for Fatimah <small>${dd_.filter(d=>d.answer).length} of ${dd_.length} answered</small></h2>${dd_.map(d=>`<div class="sec" style="margin-top:0"><b>${d.n}. ${esc(d.decision)}</b> ${d.answer?`<span class="pill ${d.answer==='Approved'?'ok':'warn'}">${esc(d.answer)}</span>`:''}<div class="meta">${esc(d.why)}</div><div class="meta"><b>Proposed:</b> ${esc(d.proposed)}</div>
+   <div class="fld" style="margin-top:6px"><textarea data-dc="${d.id}" placeholder="Comment" style="min-height:56px">${esc(d.comment)}</textarea></div>
+   <div class="row"><button class="btn pri sm" data-act="decide" data-id="${d.id}" data-v="Approved">Approve</button><button class="btn sm" data-act="decide" data-id="${d.id}" data-v="Changes needed">Changes needed</button><button class="btn sm" data-act="decide" data-id="${d.id}" data-v="">Clear</button></div></div>`).join('')}</section>`;
+}
+
+function vAsk(){
+  const A=S.ai;
+  return `<div class="cols"><div>
+  <section class="box"><h2>Brief me</h2><p class="meta">Claude reads the plan, pipeline, outreach log, contacts and events and says what to do first.</p><div class="row"><button class="btn pri" data-act="brief">Brief me for today</button></div><div class="ai" id="brief" style="margin-top:10px">${esc(A.brief||'')}</div></section>
+  <section class="box"><h2>Tell Claude what happened</h2><p class="meta">Paste a reply, call notes, contact details or a line on what you did. Claude proposes updates across pipeline, outreach log, contacts, plan steps, events and deals. Nothing changes until you press Apply all changes. Undo reverses the whole batch.</p><textarea id="paste" placeholder="Paste text here">${esc(A.paste||'')}</textarea><div class="row" style="margin-top:8px"><button class="btn pri" data-act="propose">Propose updates</button></div><div id="props" style="margin-top:10px"></div></section>
+  </div><div>
+  <section class="box guide"><h2>How this works</h2><ol><li><b>Today</b> shows what is due and the next steps Claude suggests from facts in the log.</li><li><b>Pipeline</b> opens each sponsor with contacts, an outreach log, one-click drafts and the deal tracker.</li><li><b>Contacts</b> lists the blanks. Type a name, email or phone to fill one.</li><li><b>Proposal Kit</b> holds the templates and the rate card.</li><li><b>Scoreboard</b> shows signed, pending and live counts, fallbacks and conflicts, and writes the weekly note to Fatimah.</li><li><b>Decisions</b> is where Fatimah approves or comments.</li><li>A daily scheduled run adds new events to Events.</li></ol></section></div></div>`;
+}
+
+/* ---------- editing dialogs ---------- */
+const FIELDS={
+ tasks:[['action','Action','area'],['week','Week','text'],['target','Target','text'],['owner','Owner','sel:Sade,Fatimah,Both'],['due','Due','date'],['done','Done','sel:No,Yes']],
+ events:[['name','Event','text'],['start','Starts','date'],['end','Ends','date'],['where','Where','text'],['who','Who goes','text'],['reach','Sponsors and contacts it reaches','area'],['how','How TLLJ gets in','area'],['status','Access status','text'],['note','Note','area']],
+ pipe:[['group','Sponsor group','text'],['category','Category','text'],['owner','Owner','sel:Sade,Fatimah,Both']]
+};
+function fieldHtml(f,cur){return f.map(([k,l,t])=>{const v=cur[k]==null?'':cur[k];
+  const ctl=t==='area'?`<textarea id="f_${k}">${esc(v)}</textarea>`:t==='date'?`<input type="date" id="f_${k}" value="${esc(v)}">`:t.startsWith('sel:')?`<select id="f_${k}">${t.slice(4).split(',').map(o=>`<option ${o===v?'selected':''}>${esc(o)}</option>`).join('')}</select>`:`<input type="text" id="f_${k}" value="${esc(v)}">`;
+  return `<div class="fld"><label for="f_${k}">${l}</label>${ctl}</div>`}).join('')}
+function openEdit(col,id){
+  if(!EDIT) return;
+  if(col==='pipe'&&id) return openSponsor(id);
+  const isNew=!id,cur=isNew?{}:{...get(col,id)};
+  if(col==='tasks') cur.done=cur.done?'Yes':'No';
+  const f=FIELDS[col];
+  $('#dlg').innerHTML=`<h2 style="margin-bottom:12px">${isNew?'Add':'Edit'}</h2><form id="frm">${fieldHtml(f,cur)}<div class="row"><button class="btn pri" type="submit">Save</button><button class="btn" type="button" data-act="close">Cancel</button>${isNew?'':'<button class="btn del" type="button" data-act="del">Delete</button>'}</div></form>`;
+  const dlg=$('#dlg');dlg.dataset.col=col;dlg.dataset.id=id||'';dlg.showModal();
+  $('#frm').onsubmit=async ev=>{ev.preventDefault();
+    const o=isNew?{id:col[0]+Date.now().toString(36)}:{...get(col,id)};
+    f.forEach(([k,,t])=>{const v=$('#f_'+k).value;o[k]=t==='date'&&!v?null:v});
+    if(col==='tasks'){o.done=o.done==='Yes';if(isNew){o.dates='';o.goal=''}}
+    if(col==='pipe'&&isNew){Object.assign(o,{score:0,when:'Added',tab:'',chance:'',why:'',status:'Not started',next:'',nextDate:null,first:'',propose:'',notes:'',outcome:''})}
+    let ok=false;await act((isNew?'Add ':'Edit ')+(o.name||o.group||'step').slice(0,24),async()=>{ok=await save(col,o.id,o)});if(ok){dlg.close();toast('Saved')}};
+}
+
+function openSponsor(id,keep){
+  const p=get('pipe',id);if(!p) return;
+  const cs=contactsOf(id),ls=logsOf(id),cf=ACTIVE.includes(p.status)||true?conflictFor(p):[],dl=S.deals.find(d=>d.pipeId===id);
+  const tplGuess=/media partnership/i.test(p.propose||'')?'tplB':/Hotels|Clubs/.test(p.category||'')?'tplC':'tplA';
+  const dlg=$('#dlg');
+  const keepDraft=keep&&$('#draftout')?$('#draftout').value:'';
+  dlg.innerHTML=`<h2>${esc(p.group)}</h2><div class="meta"><span class="pill">Score ${esc(p.score)}</span><span>${esc(p.category||'')}</span><span>${esc(p.tab)}</span><span>${esc(p.chance)}</span></div>
+  ${cf.length?`<div class="banner" style="margin-top:10px">Same category, already active: ${cf.map(q=>esc(q.group+' ('+q.status+')')).join(', ')}. Do not offer the same slot.</div>`:''}
+  <div class="meta" style="margin-top:8px"><b>Write to first:</b> ${esc(p.first)}</div><div class="meta"><b>Propose first:</b> ${esc(p.propose)}</div><div class="meta"><b>Why they should care:</b> ${esc(p.why)}</div>
+  <form id="frm" class="sec"><div class="g2"><div class="fld"><label for="s_status">Status</label><select id="s_status">${STATUSES.map(o=>`<option ${o===p.status?'selected':''}>${o}</option>`).join('')}</select></div><div class="fld"><label for="s_owner">Owner</label><select id="s_owner">${['Sade','Fatimah','Both'].map(o=>`<option ${o===p.owner?'selected':''}>${o}</option>`).join('')}</select></div></div>
+  <div class="fld"><label for="s_next">Next step</label><textarea id="s_next" style="min-height:60px">${esc(p.next)}</textarea></div>
+  <div class="g2"><div class="fld"><label for="s_nd">Next-step date</label><input type="date" id="s_nd" value="${esc(p.nextDate)}"></div><div class="fld"><label for="s_cat">Category</label><input type="text" id="s_cat" value="${esc(p.category)}"></div></div>
+  <div class="fld"><label for="s_notes">Notes</label><textarea id="s_notes" style="min-height:60px">${esc(p.notes)}</textarea></div><div class="fld"><label for="s_out">Outcome or what was agreed</label><textarea id="s_out" style="min-height:60px">${esc(p.outcome)}</textarea></div>
+  <div class="row"><button class="btn pri" type="submit">Save</button><button class="btn" type="button" data-act="close">Close</button></div></form>
+  <div class="sec"><h3>Contacts</h3>${cs.map(c=>`<div class="item"><span></span><div><b>${esc(c.name||'No name')}</b> ${esc(c.role)}<div class="meta">${esc([c.email,c.phone].filter(Boolean).join(' · ')||'No email or phone')}</div><div class="meta"><button class="btn sm del" data-act="delc" data-id="${c.id}" data-p="${id}">Remove</button></div></div></div>`).join('')||'<div class="empty">No contact entered.</div>'}
+   <div class="g2" id="cform"><input type="text" id="cn" placeholder="Name" aria-label="Name"><input type="text" id="cr" placeholder="Role" aria-label="Role"><input type="text" id="ce" placeholder="Email" aria-label="Email"><input type="text" id="cp" placeholder="Phone" aria-label="Phone"></div><div class="row" style="margin-top:6px"><button class="btn" data-act="addcontact" data-id="${id}">Add contact</button></div></div>
+  <div class="sec"><h3>Outreach log</h3>${ls.map(l=>`<div class="item"><span></span><div><span class="pill">${esc(l.type)}</span> <b>${esc(fmt(l.date))}</b><div class="meta">${esc(l.summary)}</div><div class="meta"><button class="btn sm del" data-act="dell" data-id="${l.id}" data-p="${id}">Remove</button></div></div></div>`).join('')||'<div class="empty">Nothing logged yet.</div>'}
+   <div class="g2"><select id="lt" aria-label="Type">${['Email sent','Email received','Call','Meeting','Note'].map(o=>`<option>${o}</option>`).join('')}</select><input type="date" id="ld" value="${TODAY}" aria-label="Date"></div><input type="text" id="lsum" placeholder="What was said or sent" aria-label="Summary" style="margin-top:6px"><div class="row" style="margin-top:6px"><button class="btn" data-act="addlog" data-id="${id}">Add to log</button></div></div>
+  <div class="sec"><h3>Draft with Claude</h3><div class="row"><select id="dtpl" aria-label="Template" style="width:auto">${[['tplA','Template A. Series'],['tplB','Template B. Media partnership'],['tplC','Template C. Edition']].map(([v,l])=>`<option value="${v}" ${v===tplGuess?'selected':''}>${l}</option>`).join('')}</select><button class="btn pri" data-act="draft" data-k="first" data-id="${id}">First email</button><button class="btn" data-act="draft" data-k="follow" data-id="${id}">Follow-up</button><button class="btn" data-act="draft" data-k="proposal" data-id="${id}">Proposal</button></div>
+   <textarea id="draftout" style="min-height:240px;margin-top:8px" placeholder="The draft appears here. Only facts in the pipeline are used; gaps stay in [brackets].">${esc(keepDraft)}</textarea><div class="row" style="margin-top:6px"><button class="btn" data-act="copy" data-t="draftout">Copy</button></div></div>
+  <div class="sec"><h3>Deal</h3>${dl?'<div class="meta">A deal tracker exists. Open the Deals tab.</div>':`<button class="btn" data-act="dealfrom" data-id="${id}">Start deal tracker</button>`}</div>`;
+  dlg.dataset.col='pipe';dlg.dataset.id=id;if(!dlg.open) dlg.showModal();
+  $('#frm').onsubmit=async ev=>{ev.preventDefault();
+    const np={status:$('#s_status').value,owner:$('#s_owner').value,next:$('#s_next').value,nextDate:$('#s_nd').value||null,category:$('#s_cat').value,notes:$('#s_notes').value,outcome:$('#s_out').value};
+    let ok=false;await act('Edit '+p.group.slice(0,24),async()=>{ok=await patch('pipe',id,np);if(ok&&np.status==='Agreed'&&!S.deals.some(d=>d.pipeId===id)) await newDeal(id)});
+    if(ok){toast('Saved');openSponsor(id,true)}};
+}
+async function newDeal(pid){return save('deals',uid('dl'),{pipeId:pid,deliverables:'',publishDate:null,amount:'',invoice:'Not invoiced',renewal:null,notes:''})}
+
+/* contacts and log with automatic moves */
+async function advanceOnContact(pid,c){
+  const p=get('pipe',pid);if(!p||!(c.email||c.phone)) return;
+  if(['Not started','Finding the contact'].includes(p.status)) await patch('pipe',pid,{status:'Contact found',next:`Send the first email to ${c.name||p.group}`,nextDate:TODAY});
+}
+async function addContact(pid,c){const o={id:uid('c'),pipeId:pid,name:c.name||'',role:c.role||'',email:c.email||'',phone:c.phone||'',route:''};const ok=await save('contacts',o.id,o);if(ok) await advanceOnContact(pid,o);return ok}
+async function advanceOnLog(pid,l){
+  const p=get('pipe',pid);if(!p) return;
+  if(l.type==='Email sent'&&['Not started','Finding the contact','Contact found'].includes(p.status)) await patch('pipe',pid,{status:'First message sent',next:'Chase if there is no reply in 7 days',nextDate:addDays(l.date,7)});
+  else if(['Email received','Call','Meeting'].includes(l.type)&&['First message sent','Contact found','Not started','Finding the contact'].includes(p.status)) await patch('pipe',pid,{status:'In conversation'});
+}
+async function addLog(pid,l){const o={id:uid('l'),pipeId:pid,type:l.type,date:dOK(l.date)?l.date:TODAY,summary:l.summary||''};const ok=await save('log',o.id,o);if(ok) await advanceOnLog(pid,o);return ok}
+
+function openPrep(eid){
+  const e=get('events',eid);if(!e) return;
+  const pr=S.prep.filter(x=>x.eventId===eid),dlg=$('#dlg');
+  dlg.innerHTML=`<h2>${esc(e.name)}: prep</h2><div class="meta">${esc(fmt(e.start))} to ${esc(fmt(e.end))} · follow-ups due ${esc(fmt(addDays(e.end,2)))}</div>
+  ${['Before','During','After'].map(ph=>`<div class="sec"><h3>${ph}</h3>${pr.filter(x=>x.phase===ph).map(x=>`<div class="item"><input type="checkbox" data-act="preptick" data-id="${x.id}" data-e="${eid}" ${x.done?'checked':''} aria-label="Done"><div>${esc(x.text)} <button class="btn sm del" data-act="prepdel" data-id="${x.id}" data-e="${eid}">Remove</button></div></div>`).join('')||'<div class="empty">Nothing yet.</div>'}</div>`).join('')}
+  <div class="sec"><div class="g2"><select id="pph" aria-label="Phase"><option>Before</option><option>During</option><option>After</option></select><input type="text" id="ptx" placeholder="Add an item" aria-label="Item"></div><div class="row" style="margin-top:6px"><button class="btn" data-act="prepadd" data-e="${eid}">Add</button><button class="btn" data-act="prepstd" data-e="${eid}">Add standard checklist</button><button class="btn pri" data-act="prepai" data-e="${eid}">Ask Claude: who to meet and what to ask</button><button class="btn" data-act="close">Close</button></div></div>`;
+  dlg.dataset.col='prep';dlg.dataset.id=eid;if(!dlg.open) dlg.showModal();
+}
+
+/* ---------- render ---------- */
+function render(){
+  const all=[['today','Today'],['roadmap','Roadmap'],['pipeline','Pipeline'],['contacts','Contacts'],['events','Events'],['kit','Proposal Kit'],['score','Scoreboard'],['deals','Deals'],['decisions','Decisions'],['ask','Ask Claude']];
+  const tabs=EDIT?all:all.filter(([k])=>['today','score','decisions'].includes(k));
+  if(!tabs.some(([k])=>k===S.tab)) S.tab=tabs[0][0];
+  $('#nav').innerHTML=tabs.map(([k,l])=>`<button data-act="tab" data-id="${k}" ${S.tab===k?'aria-current="true"':''}>${l}</button>`).join('');
+  $('#sub').textContent=new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})+' · Target: one partnership by 7 December'+(S.demo?' · Demo mode: saved in this browser only':'');
+  renderUndo();
+  if(!S.pipe.length&&!S.tasks.length){
+    $('#main').innerHTML=`<section class="box"><h2>No data yet</h2><p class="meta">${EDIT?'Choose your seed.json file to load the plan, pipeline and events.':'The plan has not been loaded yet.'}</p>${EDIT?'<input type="file" id="seedfile" accept=".json" aria-label="seed.json">':''}</section>`;return}
+  const f={today:vToday,roadmap:vRoadmap,pipeline:vPipeline,contacts:vContacts,events:vEvents,kit:vKit,score:vScore,deals:vDeals,decisions:vDecisions,ask:vAsk}[S.tab];
+  const y=scrollY;$('#main').innerHTML=f();scrollTo(0,y);
+}
+
+/* ---------- AI ---------- */
+const STYLE='You write for Sade Ademola at The Leisurely Life Journal, a global luxury publication for the discerning African reader. Use only facts in DATA. Never invent contacts, dates, figures, prices or sponsors; leave unknowns in [square brackets]. Warm, professional, exact. Short sentences joined with conjunctions. No em dashes. No lists of three. No "not X but Y". No hedging words (perhaps, maybe, might). Never use these words: quiet, explore, journey, craft, landscape, vibrant, showcase, elevate, leverage, seamless, unlock, ensure, essential, global, innovative. Write The Leisurely Life Journal in full, never TLLJ, in anything external.';
+const SIGN='\n\nSade Ademola\nThe Leisurely Life Journal\nwww.theleisurelylifejournal.com\nhttps://www.instagram.com/theleisurelylifejournal/';
+const ctx=()=>JSON.stringify({today:TODAY,deadline:END,openSteps:open().map(t=>({id:t.id,action:t.action,due:t.due,owner:t.owner})),sponsors:S.pipe.map(p=>({id:p.id,group:p.group,category:p.category,status:p.status,next:p.next,nextDate:p.nextDate,owner:p.owner,score:p.score,contacts:contactsOf(p.id).map(c=>({name:c.name,email:c.email,phone:c.phone})),log:logsOf(p.id).slice(0,4).map(l=>({type:l.type,date:l.date,summary:l.summary}))})),events:S.events.map(e=>({id:e.id,name:e.name,start:e.start,end:e.end,status:e.status,reach:e.reach})),deals:S.deals,decisionsOpen:S.decisions.filter(d=>!d.answer).map(d=>d.n+'. '+d.decision)});
+async function aiText(prompt,onText){if(!sample){toast('Ask Claude is not available in this view.');throw new Error('none')}const r=await sample(prompt,{cache:false,onText:u=>onText&&onText(u.text)});return r.text}
+async function aiJson(prompt){if(!sample){toast('Ask Claude is not available in this view.');throw new Error('none')}return sample.json(prompt,{cache:false})}
+async function brief(){const out=$('#brief');out.textContent='Reading the desk…';try{S.ai.brief=await aiText(STYLE+'\nWrite a brief for today in at most 170 words: the three most important actions in order, what is overdue, what to chase from the outreach log, and the next event to prepare for. Plain text, short lines starting with a dash.\nDATA: '+ctx(),t=>out.textContent=t);out.textContent=S.ai.brief}catch(e){out.textContent='Claude could not answer: '+(e.message||e.code)}}
+async function aisugg(){toast('Asking Claude…');try{const r=await aiJson(STYLE+'\nSuggest up to 6 concrete next steps that are NOT already in openSteps, each grounded in DATA (log gaps, silent sponsors, missing contacts, events, deals, the 7 December deadline and the cash fallbacks). Return JSON only: [{"text":"","why":"one sentence from the data","due":"YYYY-MM-DD","pid":"sponsor id or empty"}].\nDATA: '+ctx());S.ai.sugg=(Array.isArray(r)?r:[]).filter(x=>x&&x.text).map(x=>({text:String(x.text),why:String(x.why||''),due:dOK(x.due)?x.due:TODAY,pid:get('pipe',x.pid)?x.pid:''}));render()}catch(e){toast('Claude could not suggest steps: '+(e.message||e.code))}}
+async function weekly(){const box=$('#wk');box.value='Writing…';const moved=S.log.filter(l=>l.date>=addDays(TODAY,-7)).map(l=>{const p=get('pipe',l.pipeId);return {sponsor:p&&p.group,type:l.type,date:l.date,summary:l.summary}});
+  try{S.ai.weekly=await aiText(STYLE+`\nWrite a short WhatsApp-style update from Sade to Fatimah. Warm, conversational, a natural Nigerian register, never stiff. Rules: no "Done" section and nothing presented as done unless it is in movedThisWeek; one sentence on what moved and one on what is stuck; then "Today" as plain bullet points of tasks Sade still has to do; then ONE short merged section for questions, views needed and reminders for Fatimah (use decisionsOpen and any pending approvals). Keep it under 170 words. No sign-off block.\nDATA: ${ctx()}\nmovedThisWeek: ${JSON.stringify(moved)}`,t=>box.value=t);box.value=S.ai.weekly}catch(e){box.value='Claude could not write the update: '+(e.message||e.code)}}
+async function draft(kind,pid){
+  const p=get('pipe',pid),out=$('#draftout');out.value='Drafting…';
+  const tpl=get('kit',$('#dtpl').value),rates=(get('kit','rates')||{rows:[]}).rows.filter(r=>r.price).map(r=>({package:r.pkg,price:r.price,approvedOn:r.approved}));
+  const sp={group:p.group,category:p.category,status:p.status,writeToFirst:p.first,proposeFirst:p.propose,whyTheyShouldCare:p.why,contacts:contactsOf(pid).map(c=>({name:c.name,role:c.role,email:c.email})),log:logsOf(pid).slice(0,6)};
+  const how={first:'Write the first email: warm, 90 to 130 words, one clear ask (a short note asking who handles partnerships, per proposeFirst), one line on The Leisurely Life Journal as a global luxury publication for the discerning African reader. Fatimah wants to listen first, so do not pitch a format yet unless proposeFirst says to.',follow:'Write a follow-up to the last email in the log. Refer to the date it went and anything the log records. 60 to 100 words. One clear next step.',proposal:'Fill the TEMPLATE for this sponsor. Keep its structure and labels. Fill a bracket only when SPONSOR or RATES gives the fact; otherwise keep the bracket. Use the approved price only if RATES has one; otherwise write [Price from the approved rate card].'}[kind];
+  try{let t=await aiText(STYLE+`\nTask: ${how}\nStart with a Subject line. Address the first contact by name if one is in contacts, otherwise [Name].\nSPONSOR: ${JSON.stringify(sp)}\nTEMPLATE: ${tpl?tpl.body:''}\nRATES: ${JSON.stringify(rates)}`,x=>out.value=x);
+    t=t.replace(/\s*(Sade Ademola\s*)?(The Leisurely Life Journal\s*)?(www\.theleisurelylifejournal\.com.*)?$/s,m=>m.includes('www.theleisurelylifejournal.com')?'':m).trimEnd();
+    out.value=t+SIGN}catch(e){out.value='Claude could not draft: '+(e.message||e.code)}
+}
+async function prepai(eid){
+  const e=get('events',eid);toast('Asking Claude…');
+  try{const r=await aiJson(STYLE+'\nUsing only the event text in EVENT, list up to 8 prep items: who to meet (only people or organisations named in EVENT.reach or EVENT.how) and one or two questions for each, plus anything to bring. Return JSON only: [{"phase":"Before|During|After","text":""}].\nEVENT: '+JSON.stringify(e));
+    await act('Claude prep',async()=>{for(const x of (Array.isArray(r)?r:[])){if(x&&x.text) await save('prep',uid('pr'),{eventId:eid,phase:['Before','During','After'].includes(x.phase)?x.phase:'Before',text:String(x.text),done:false})}});openPrep(eid)}catch(er){toast('Claude could not build prep: '+(er.message||er.code))}
+}
+async function propose(){
+  const txt=$('#paste').value.trim();S.ai.paste=txt;if(!txt){toast('Paste a message first');return}
+  const box=$('#props');box.textContent='Reading…';
+  try{
+    const r=await aiJson(STYLE+'\nRead MESSAGE and propose updates to DATA. Return JSON only: {"summary":"one sentence","pipe":[{"id":"","status":"","next":"","nextDate":"YYYY-MM-DD","notes":""}],"log":[{"pipeId":"","type":"Email sent|Email received|Call|Meeting|Note","date":"YYYY-MM-DD","summary":""}],"contacts":[{"pipeId":"","name":"","role":"","email":"","phone":""}],"steps":[{"id":"","done":true,"due":"YYYY-MM-DD","action":""}],"newSteps":[{"action":"","due":"YYYY-MM-DD","owner":"Sade|Fatimah|Both"}],"events":[{"id":"existing id or empty for new","name":"","start":"YYYY-MM-DD","end":"YYYY-MM-DD","where":"","status":"","note":"","remove":false}],"deals":[{"pipeId":"","deliverables":"","publishDate":"YYYY-MM-DD","amount":"","invoice":"Not invoiced|Invoiced|Paid","renewal":"YYYY-MM-DD"}]}. Use only ids present in DATA. Status must be one of: '+STATUSES.join(', ')+'. Include only fields the message supports. Dates come from the message or today ('+TODAY+'). Copy emails and phone numbers exactly as written.\nMESSAGE: '+txt+'\nDATA: '+ctx());
+    S.ai.prop=r;const nm=id=>(get('pipe',id)||{}).group;let h=`<div class="meta"><b>${esc(r.summary||'')}</b></div>`;
+    h+=(r.pipe||[]).filter(x=>nm(x.id)).map(x=>`<div class="item"><span></span><div><b>${esc(nm(x.id))}</b><div class="meta">${x.status?`Status: ${esc(x.status)} · `:''}${x.nextDate?`Next: ${esc(fmt(x.nextDate))} · `:''}${esc(x.next||'')} ${esc(x.notes||'')}</div></div></div>`).join('');
+    h+=(r.log||[]).filter(x=>nm(x.pipeId)).map(x=>`<div class="item"><span></span><div><b>Log: ${esc(nm(x.pipeId))}</b><div class="meta">${esc(x.type)} · ${esc(fmt(x.date))} · ${esc(x.summary||'')}</div></div></div>`).join('');
+    h+=(r.contacts||[]).filter(x=>nm(x.pipeId)).map(x=>`<div class="item"><span></span><div><b>Contact: ${esc(nm(x.pipeId))}</b><div class="meta">${esc([x.name,x.role,x.email,x.phone].filter(Boolean).join(' · '))}</div></div></div>`).join('');
+    h+=(r.steps||[]).filter(x=>get('tasks',x.id)).map(x=>`<div class="item"><span></span><div><b>${esc(get('tasks',x.id).action)}</b><div class="meta">${x.done?'Mark done · ':''}${x.due?'New due date: '+esc(fmt(x.due))+' · ':''}${x.action?'New wording: '+esc(x.action):''}</div></div></div>`).join('');
+    h+=(r.newSteps||[]).map(x=>`<div class="item"><span></span><div>New step: ${esc(x.action)} (${esc(fmt(x.due))})</div></div>`).join('');
+    h+=(r.events||[]).map(x=>{const ex=get('events',x.id);return `<div class="item"><span></span><div><b>${x.remove?'Remove event: ':ex?'Change event: ':'New event: '}${esc(x.name||(ex&&ex.name)||'')}</b><div class="meta">${x.start?esc(fmt(x.start)):''}${x.end?' to '+esc(fmt(x.end)):''} ${esc(x.where||'')} ${esc(x.status||'')} ${esc(x.note||'')}</div></div></div>`}).join('');
+    h+=(r.deals||[]).filter(x=>nm(x.pipeId)).map(x=>`<div class="item"><span></span><div><b>Deal: ${esc(nm(x.pipeId))}</b><div class="meta">${esc([x.deliverables,x.publishDate,x.amount,x.invoice,x.renewal].filter(Boolean).join(' · '))}</div></div></div>`).join('');
+    box.innerHTML=h+`<div class="row" style="margin-top:8px"><button class="btn pri" data-act="apply">Apply all changes</button></div>`;
+  }catch(e){box.textContent='Claude could not read that: '+(e.message||e.code)}
+}
+const apply=()=>act('Claude updates',applyInner);
+async function applyInner(){
+  const r=S.ai.prop;if(!r) return;let n=0;
+  for(const x of r.contacts||[]){if(get('pipe',x.pipeId)&&(x.name||x.email||x.phone)&&await addContact(x.pipeId,x)) n++}
+  for(const x of r.log||[]){if(get('pipe',x.pipeId)&&await addLog(x.pipeId,x)) n++}
+  for(const x of r.pipe||[]){const p=get('pipe',x.id);if(!p) continue;const u={};
+    if(x.status&&STATUSES.includes(x.status)) u.status=x.status;if(x.next) u.next=x.next;if(dOK(x.nextDate)) u.nextDate=x.nextDate;
+    if(x.notes) u.notes=((p.notes?p.notes+' ':'')+x.notes).trim();
+    if(Object.keys(u).length&&await patch('pipe',p.id,u)){n++;if(u.status==='Agreed'&&!S.deals.some(d=>d.pipeId===p.id)) await newDeal(p.id)}}
+  for(const x of r.steps||[]){if(!get('tasks',x.id)) continue;const u={};if(typeof x.done==='boolean') u.done=x.done;if(dOK(x.due)) u.due=x.due;if(x.action) u.action=x.action;if(Object.keys(u).length&&await patch('tasks',x.id,u)) n++}
+  for(const x of r.newSteps||[]){if(await save('tasks',uid('t'),{week:'Added',dates:'',goal:'',action:x.action,target:'',owner:['Sade','Fatimah','Both'].includes(x.owner)?x.owner:'Sade',done:false,due:dOK(x.due)?x.due:null})) n++}
+  for(const x of r.events||[]){const ex=get('events',x.id);
+    if(x.remove){if(ex){await remove('events',ex.id);n++}continue}
+    const u={};['name','where','status','note'].forEach(k=>{if(x[k]) u[k]=x[k]});if(dOK(x.start)) u.start=x.start;if(dOK(x.end)) u.end=x.end;
+    if(ex){if(Object.keys(u).length&&await patch('events',ex.id,u)) n++}
+    else if(u.name&&u.start){if(await save('events',uid('e'),{end:u.start,who:'To decide',reach:'',how:'',...u})) n++}}
+  for(const x of r.deals||[]){if(!get('pipe',x.pipeId)) continue;const ex=S.deals.find(d=>d.pipeId===x.pipeId);const u={};['deliverables','amount'].forEach(k=>{if(x[k]) u[k]=x[k]});if(['Not invoiced','Invoiced','Paid'].includes(x.invoice)) u.invoice=x.invoice;if(dOK(x.publishDate)) u.publishDate=x.publishDate;if(dOK(x.renewal)) u.renewal=x.renewal;
+    if(!Object.keys(u).length) continue;if(ex){if(await patch('deals',ex.id,u)) n++}else if(await save('deals',uid('dl'),{pipeId:x.pipeId,deliverables:'',publishDate:null,amount:'',invoice:'Not invoiced',renewal:null,notes:'',...u})) n++}
+  S.ai.prop=null;$('#props').textContent='';toast(n+' updates applied');
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click',async e=>{
+  const el=e.target.closest('[data-act]');if(!el) return;
+  const a=el.dataset.act,id=el.dataset.id,col=el.dataset.col;
+  if(a==='tab'){S.tab=id;render();return}
+  if(a==='close'){$('#dlg').close();return}
+  if(a==='copy'){const t=document.getElementById(el.dataset.t);try{await navigator.clipboard.writeText(t.value);toast('Copied')}catch(er){t.select();toast('Press Ctrl+C to copy')}return}
+  if(a==='decide'){const d=get('decisions',id);const c=document.querySelector(`[data-dc="${id}"]`);await act('Decision '+d.n,()=>patch('decisions',id,{answer:el.dataset.v,comment:c?c.value:d.comment}));render();toast('Saved');return}
+  if(a==='settings'){openSettings();return}
+  if(a==='savesettings'){lsSet('tllj_gemini_key',$('#gk').value.trim());lsSet('tllj_gemini_model',$('#gm').value.trim());$('#dlg').close();toast('Saved');return}
+  if(a==='signout'){if(window.signOutApp) await window.signOutApp();return}
+  if(!EDIT) return;
+  if(a==='edit'){openEdit(col,id);return}
+  if(a==='new'){openEdit(col,null);return}
+  if(a==='del'){const d=$('#dlg');await act('Delete',()=>remove(d.dataset.col,d.dataset.id));d.close();toast('Deleted');return}
+  if(a==='undo'){undo();return}
+  if(a==='tick'){let ok=false;await act(el.checked?'Mark done':'Reopen step',async()=>{ok=await patch('tasks',id,{done:el.checked})});if(ok) toast(el.checked?'Marked done':'Reopened');else el.checked=!el.checked;return}
+  if(a==='brief') return brief();
+  if(a==='propose') return propose();
+  if(a==='apply') return apply();
+  if(a==='aisugg') return aisugg();
+  if(a==='weekly') return weekly();
+  if(a==='addsug'){const s=(el.dataset.k==='ai'?S.ai.sugg:sug())[+id];if(!s) return;const p=get('pipe',s.pid);
+    await act('Add step',()=>save('tasks',uid('t'),{week:'Added',dates:'',goal:'Suggested',action:s.text,target:p?p.group:'',owner:'Sade',done:false,due:s.due}));if(el.dataset.k==='ai') S.ai.sugg.splice(+id,1);render();toast('Added to the plan');return}
+  if(a==='quickc'){const g=el.closest('[data-pid]');const f=k=>g.querySelector(`[data-f="${k}"]`).value.trim();if(!f('n')&&!f('e')&&!f('p')){toast('Enter a name, email or phone');return}
+    await act('Add contact',()=>addContact(id,{name:f('n'),email:f('e'),phone:f('p')}));render();toast('Contact added');return}
+  if(a==='addcontact'){const c={name:$('#cn').value.trim(),role:$('#cr').value.trim(),email:$('#ce').value.trim(),phone:$('#cp').value.trim()};if(!c.name&&!c.email&&!c.phone){toast('Enter a name, email or phone');return}
+    await act('Add contact',()=>addContact(id,c));openSponsor(id,true);return}
+  if(a==='delc'){await act('Remove contact',()=>remove('contacts',id));openSponsor(el.dataset.p,true);return}
+  if(a==='addlog'){const l={type:$('#lt').value,date:$('#ld').value,summary:$('#lsum').value.trim()};await act('Log '+l.type,()=>addLog(id,l));openSponsor(id,true);toast('Logged');return}
+  if(a==='dell'){await act('Remove log entry',()=>remove('log',id));openSponsor(el.dataset.p,true);return}
+  if(a==='draft') return draft(el.dataset.k,id);
+  if(a==='dealfrom'){await act('Start deal',()=>newDeal(id));openSponsor(id,true);toast('Deal tracker started');return}
+  if(a==='dealnew'){const v=$('#dealpick').value;if(!v) return;await act('Start deal',()=>newDeal(v));render();return}
+  if(a==='dealsave'){const box=el.closest('[data-deal]');const u={};box.querySelectorAll('[data-k]').forEach(i=>u[i.dataset.k]=(i.type==='date'&&!i.value)?null:i.value);await act('Save deal',()=>patch('deals',id,u));toast('Saved');return}
+  if(a==='dealdel'){await act('Remove deal',()=>remove('deals',id));render();return}
+  if(a==='tplsave'){await act('Save template',()=>patch('kit',id,{body:document.getElementById('tp_'+id).value}));toast('Saved');return}
+  if(a==='prepopen'){openPrep(id);return}
+  if(a==='preptick'){await act('Prep item',()=>patch('prep',id,{done:el.checked}));return}
+  if(a==='prepdel'){await act('Remove prep item',()=>remove('prep',id));openPrep(el.dataset.e);return}
+  if(a==='prepadd'){const t=$('#ptx').value.trim();if(!t) return;await act('Add prep item',()=>save('prep',uid('pr'),{eventId:id||el.dataset.e,phase:$('#pph').value,text:t,done:false}));openPrep(el.dataset.e);return}
+  if(a==='prepstd'){const e2=get('events',el.dataset.e);await act('Standard checklist',async()=>{for(const x of stdPrep(e2)) await save('prep',uid('pr'),{eventId:e2.id,phase:x.phase,text:x.text,done:false})});openPrep(e2.id);return}
+  if(a==='prepai') return prepai(el.dataset.e);
+});
+document.addEventListener('change',async e=>{
+  const t=e.target;
+  if(t.id==='fo'){S.fo=t.value;render()}if(t.id==='fw'){S.fw=t.value;render()}if(t.id==='fs'){S.fs=t.value;render()}if(t.id==='fc'){S.fc=t.value;render()}
+  if(t.id==='seedfile'&&EDIT&&t.files[0]){await seedFrom(t.files[0])}
+  if(t.dataset&&t.dataset.rate!==undefined&&EDIT){const r=get('kit','rates');const rows=r.rows.map(x=>({...x}));rows[+t.dataset.rate][t.dataset.k]=t.value;await act('Rate card',()=>patch('kit','rates',{rows}))}
+});
+document.addEventListener('keydown',e=>{if(EDIT&&(e.ctrlKey||e.metaKey)&&!e.shiftKey&&e.key.toLowerCase()==='z'&&!e.target.closest('input,textarea,select,dialog')){e.preventDefault();undo()}});
+$('#dlg').addEventListener('close',()=>render());
+
+async function startApp(env){
+  db=env.db;sample=env.sample;EDIT=env.edit;S.demo=!!env.demo;
+  $('#signout').hidden=!env.auth;
+  render();
+  if(!db) return;
+  for(const c of COLS){db.collection(c).onSnapshot(s=>{S[c]=s.docs.map(d=>({...d.data(),id:d.id}));S.loaded[c]=true;if(!$('#dlg').open) render()},e=>toast('Could not load '+c+': '+(e.code||e.message||'')))}
+}
+function lsGet(k){try{return localStorage.getItem(k)||''}catch(e){return ''}}
+function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+function openSettings(){
+  const dlg=$('#dlg');
+  dlg.innerHTML=`<h2 style="margin-bottom:12px">Settings</h2>
+  <div class="fld"><label for="gk">Gemini API key</label><input type="password" id="gk" value="${esc(lsGet('tllj_gemini_key'))}" autocomplete="off"></div>
+  <div class="fld"><label for="gm">Gemini model</label><input type="text" id="gm" value="${esc(lsGet('tllj_gemini_model')||'gemini-2.5-flash')}"></div>
+  <p class="meta">The key stays in this browser only. It is never saved to the database or to GitHub. Without it, drafts, briefs and Ask Claude updates will not run, and everything else works.</p>
+  <div class="row"><button class="btn pri" data-act="savesettings">Save</button><button class="btn" data-act="close">Close</button></div>`;
+  dlg.dataset.col='';dlg.dataset.id='';dlg.showModal();
+}
+async function seedFrom(file){
+  let d;try{d=JSON.parse(await file.text())}catch(e){toast('That file is not valid JSON');return}
+  let n=0;toast('Loading…');
+  for(const c of COLS){for(const doc of (d[c]||[])){if(!doc.id) continue;try{await db.collection(c).doc(doc.id).set(doc);local(c,doc.id,doc);n++}catch(e){toast('Stopped: '+(e.code||e.message));render();return}}}
+  toast(n+' records loaded');render();
+}
+</script>
+<script src="firebase-config.js"></script>
+<script type="module">
+const C=window.TLLJ_CONFIG||{};
+const lower=a=>(a||[]).map(x=>String(x).trim().toLowerCase());
+function localDb(){
+  const key=c=>'tllj_'+c,subs={};
+  const read=c=>{try{return JSON.parse(localStorage.getItem(key(c))||'{}')}catch(e){return {}}};
+  const write=(c,o)=>{try{localStorage.setItem(key(c),JSON.stringify(o))}catch(e){}};
+  const emit=c=>{const o=read(c);(subs[c]||[]).forEach(cb=>cb({docs:Object.entries(o).map(([id,d])=>({id,data:()=>d}))}))};
+  return {collection:c=>({onSnapshot(cb){(subs[c]=subs[c]||[]).push(cb);setTimeout(()=>emit(c),0);return ()=>{}},
+    doc:id=>({async set(d){const o=read(c);o[id]=d;write(c,o);emit(c)},async delete(){const o=read(c);delete o[id];write(c,o);emit(c)}})})};
+}
+function makeSample(){
+  async function call(prompt){
+    const k=window.lsGet('tllj_gemini_key');
+    if(!k) throw new Error('Add your Gemini key under Settings');
+    const m=window.lsGet('tllj_gemini_model')||'gemini-2.5-flash';
+    const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(m)+':generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':k},body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}]})});
+    const j=await r.json();
+    if(!r.ok) throw new Error((j.error&&j.error.message)||('Gemini error '+r.status));
+    const parts=(((j.candidates||[])[0]||{}).content||{}).parts||[];
+    return parts.map(p=>p.text||'').join('');
+  }
+  const s=async(p,o={})=>{const text=await call(p);if(o.onText) o.onText({text});return {text}};
+  s.json=async p=>{const t=await call(p+'\nReturn valid JSON only, with no code fences.');const m=t.match(/[\[{][\s\S]*[\]}]/);return JSON.parse(m?m[0]:t)};
+  return s;
+}
+const configured=C.firebase&&C.firebase.apiKey&&!/PASTE/i.test(C.firebase.apiKey);
+if(!configured){
+  window.startApp({db:localDb(),sample:makeSample(),edit:true,demo:true});
+}else{
+  const main=document.getElementById('main');
+  try{
+    const base='https://www.gstatic.com/firebasejs/10.14.1/';
+    const [A,Au,F]=await Promise.all([import(base+'firebase-app.js'),import(base+'firebase-auth.js'),import(base+'firebase-firestore.js')]);
+    const app=A.initializeApp(C.firebase),auth=Au.getAuth(app),fs=F.getFirestore(app);
+    window.signOutApp=async()=>{await Au.signOut(auth);location.reload()};
+    const fdb={collection:c=>({
+      onSnapshot:(cb,err)=>F.onSnapshot(F.collection(fs,c),snap=>cb({docs:snap.docs.map(d=>({id:d.id,data:()=>d.data()}))}),err),
+      doc:id=>({set:d=>F.setDoc(F.doc(fs,c,id),d),delete:()=>F.deleteDoc(F.doc(fs,c,id))})})};
+    let started=false;
+    Au.onAuthStateChanged(auth,user=>{
+      if(started){location.reload();return}
+      if(!user){
+        main.innerHTML='<section class="box"><h2>Sign in</h2><p class="meta">Use the Google account that was given access.</p><button class="btn pri" id="login">Sign in with Google</button></section>';
+        document.getElementById('login').onclick=()=>Au.signInWithPopup(auth,new Au.GoogleAuthProvider()).catch(e=>window.alert&&0);
+        return;
+      }
+      const email=(user.email||'').toLowerCase(),edit=lower(C.editors).includes(email),view=lower(C.viewers).includes(email);
+      if(!edit&&!view){
+        main.innerHTML='<section class="box"><h2>No access</h2><p class="meta">'+email+' has not been given access. Ask Sade to add it.</p><button class="btn" id="out">Sign out</button></section>';
+        document.getElementById('out').onclick=()=>window.signOutApp();return;
+      }
+      started=true;
+      window.startApp({db:fdb,sample:makeSample(),edit,auth:true});
+    });
+  }catch(e){
+    main.innerHTML='<section class="box"><h2>Could not start</h2><p class="meta">'+String(e.message||e)+'</p></section>';
+  }
+}
+</script>
+</body></html>
