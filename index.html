@@ -118,6 +118,85 @@ function sugItem(s,i,k){
   return `<div class="item"><span></span><div><b>${esc(s.text)}</b><div class="meta"><span>${esc(s.why||'')}</span></div><div class="meta"><span class="pill gold">${esc(fmt(s.due))}</span>${EDIT?`<button class="btn sm" data-act="addsug" data-k="${k}" data-id="${i}">Add to plan</button>`:''}${s.pid&&EDIT?`<button class="btn sm" data-act="edit" data-col="pipe" data-id="${s.pid}">Open sponsor</button>`:''}</div></div></div>`;
 }
 
+/* ---------- Follow-ups ---------- */
+const FUS=()=>S.kit.filter(k=>k.type==='followup');
+const MON=['january','february','march','april','may','june','july','august','september','october','november','december'];
+const MON3=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+const WKD=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+const NUMW={a:1,an:1,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,twelve:12};
+function monIdx(w){w=w.replace(/\./g,'');let i=MON.indexOf(w);if(i<0&&w.length>=3){i=MON3.indexOf(w.slice(0,3));if(i>=0&&!MON[i].startsWith(w.slice(0,3)))i=-1;if(i>=0&&w.length>3&&!MON[i].startsWith(w))i=(w==='sept')?8:-1}return i}
+function lastDay(y,m){return iso(new Date(y,m+1,0))}
+function parseWhen(txt){
+  const t=' '+txt.toLowerCase().replace(/[,.;]/g,' ').replace(/\s+/g,' ')+' ',n0=pd(TODAY),Y=n0.getFullYear(),M=n0.getMonth();
+  let m;
+  if((m=t.match(/(\d{4}-\d\d-\d\d)/))) return m[1];
+  if(/ (today|tonight) /.test(t)) return TODAY;
+  if(/ tomorrow /.test(t)) return addDays(TODAY,1);
+  if((m=t.match(/ in (a|an|one|two|three|four|five|six|seven|eight|nine|ten|twelve|\d+) (day|week|month)s? /))){const k=NUMW[m[1]]||+m[1];if(m[2]==='day') return addDays(TODAY,k);if(m[2]==='week') return addDays(TODAY,7*k);const d=new Date(Y,M+k,n0.getDate());return iso(d)}
+  if((m=t.match(/ (end|late|close) of (?:the )?(month|week|\w+) /))){const w=m[2];if(w==='month') return lastDay(Y,M);if(w==='week'){const d=n0.getDay();return addDays(TODAY,(5-d+7)%7||7)}const i=monIdx(w);if(i>=0){let y=Y;if(i<M) y++;return lastDay(y,i)}}
+  if((m=t.match(/ (start|beginning|early) of (?:the )?(\w+) /))){const i=monIdx(m[2]);if(i>=0){let y=Y;if(i<M||(i===M&&n0.getDate()>1)) y++;return iso(new Date(y,i,1))}}
+  if((m=t.match(/ mid[ -]?(\w+) /))){const i=monIdx(m[1]);if(i>=0){let y=Y;if(i<M||(i===M&&n0.getDate()>15)) y++;return iso(new Date(y,i,15))}}
+  if((m=t.match(/ next (week|month) /))){if(m[1]==='week'){const d=n0.getDay();return addDays(TODAY,(8-d)%7||7)}return iso(new Date(Y,M+1,1))}
+  if((m=t.match(/ (?:next |on |this |by )?(sunday|monday|tuesday|wednesday|thursday|friday|saturday) /))){const k=WKD.indexOf(m[1]);let diff=(k-n0.getDay()+7)%7;if(diff===0||/ next /.test(t)&&diff<7&&n0.getDay()!==0&&false) diff=7;return addDays(TODAY,diff)}
+  const mp='(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sept|sep|oct|nov|dec)';
+  if((m=t.match(new RegExp(' (\\d{1,2})(?:st|nd|rd|th)?(?: of)? '+mp+' ')))||(m=null)){const i=monIdx(m[2]),d=+m[1];if(i>=0&&d>=1&&d<=31){let y=Y;let c=new Date(y,i,d);if(iso(c)<TODAY) c=new Date(y+1,i,d);return iso(c)}}
+  if((m=t.match(new RegExp(' '+mp+' (\\d{1,2})(?:st|nd|rd|th)? ')))){const i=monIdx(m[1]),d=+m[2];if(i>=0&&d>=1&&d<=31){let y=Y;let c=new Date(y,i,d);if(iso(c)<TODAY) c=new Date(y+1,i,d);return iso(c)}}
+  if((m=t.match(new RegExp(' (?:in|on|by|for|during) '+mp+' ')))&&m[1]!=='may'||(m=t.match(/ (?:in|on|by|for|during) (may) /))){const i=monIdx(m[1]);if(i>=0){let y=Y;if(i<M) y++;if(i===M) return lastDay(Y,M);return iso(new Date(y,i,1))}}
+  return '';
+}
+function parseRepeat(txt){const t=txt.toLowerCase();let m;if((m=t.match(/every (\d+) days?/))) return +m[1];if(/every (other )?week|weekly/.test(t)) return 7;if(/every day|daily/.test(t)) return 1;return 3}
+function lev(a,b){const d=[...Array(b.length+1).keys()];for(let i=1;i<=a.length;i++){let p=d[0];d[0]=i;for(let j=1;j<=b.length;j++){const t=d[j];d[j]=Math.min(d[j]+1,d[j-1]+1,p+(a[i-1]===b[j-1]?0:1));p=t}}return d[b.length]}
+function matchLink(txt){
+  const low=txt.toLowerCase(),words=low.replace(/[^a-z0-9 ]/g,' ').split(/\s+/).filter(Boolean);
+  let best={pipeId:'',who:'',score:0};
+  const bump=(pipeId,who,score)=>{if(score>best.score) best={pipeId,who,score}};
+  S.pipe.forEach(p=>{const g=p.group.toLowerCase();if(low.includes(g)) bump(p.id,'',100);const gs=slug(p.group);if(gs.length>=5){for(let n=1;n<=3;n++)for(let i=0;i+n<=words.length;i++){const w=words.slice(i,i+n).join('');if(w.length>=4&&(w===gs||(gs.length>=7&&lev(w,gs)<=Math.floor(gs.length/5)))) bump(p.id,'',80)}}});
+  S.contacts.forEach(c=>{const nm=(c.name||'').toLowerCase().trim();if(!nm||nm.length>40||/[,(]/.test(nm)||nm.split(/\s+/).length>4) return;if(low.includes(nm)) bump(c.pipeId,c.name,95);const fn=nm.split(/\s+/)[0];if(fn.length>=4&&!/^(the|from|with|team|office|head|their|your)$/.test(fn)&&words.includes(fn)) bump(c.pipeId,c.name,60)});
+  S.pipe.forEach(p=>{const fw=p.group.toLowerCase().split(/[^a-z0-9]+/)[0];if(fw.length>=5&&words.includes(fw)) bump(p.id,'',70)});
+  if(!best.who){const m=txt.match(/\bwith ([A-Z][a-zA-Z'-]+(?: [A-Z][a-zA-Z'-]+)?)/);if(m&&!S.pipe.some(p=>p.group.toLowerCase().startsWith(m[1].toLowerCase().split(' ')[0]))) best.who=m[1]}
+  return best;
+}
+function fuDue(f,t){if(f.done||!f.due) return false;if(f.due>t) return false;const n=Math.round((pd(t)-pd(f.due))/864e5),r=+f.repeat||0;return n===0||(r>0&&n%r===0)}
+function fuNext(f){const r=+f.repeat||0;if(f.due>=TODAY||r<=0) return f.due;const n=dd(f.due,TODAY);return addDays(f.due,Math.ceil(n/r)*r)}
+function fuRow(f,short){
+  const p=f.pipeId&&get('pipe',f.pipeId),late=f.due<TODAY,days=late?dd(f.due,TODAY):0;
+  const tag=f.due===TODAY?'<span class="pill gold">Today</span>':late?`<span class="pill warn">${days} day${days===1?'':'s'} overdue</span>`:`<span class="pill">${esc(fmt(f.due))}</span>`;
+  return `<div class="item" style="grid-template-columns:minmax(0,1fr)"><div><div class="row" style="align-items:center;gap:6px"><input type="text" class="ghost" data-fu="${f.id}" data-k="text" value="${esc(f.text)}" aria-label="Follow-up" style="flex:1;min-width:160px"> ${tag}</div>
+  <div class="meta">${p?`<span class="pill ok" data-act="opensp" data-id="${p.id}" style="cursor:pointer">${esc(p.group)}</span>`:''}${f.who?`<span>${esc(f.who)}</span>`:''}<input type="date" data-fu="${f.id}" data-k="due" value="${esc(f.due)}" aria-label="Due date" style="width:auto"><select data-fu="${f.id}" data-k="repeat" aria-label="Repeat" style="width:auto">${[[0,'No repeat'],[1,'Every day'],[2,'Every 2 days'],[3,'Every 3 days'],[7,'Every week']].map(([v,l])=>`<option value="${v}" ${(+f.repeat||0)===v?'selected':''}>${l}</option>`).join('')}</select>${late&&(+f.repeat||0)>0?`<span>Next reminder ${esc(fmt(fuNext(f)))}</span>`:''}</div>
+  <div class="row" style="margin-top:4px"><button class="btn sm pri" data-act="fudone" data-id="${f.id}">Done</button><button class="btn sm" data-act="fusnooze" data-id="${f.id}">+3 days</button><button class="btn sm del" data-act="fudel" data-id="${f.id}">Remove</button></div></div></div>`;
+}
+function vFollow(){
+  if(!EDIT) return '';
+  const all=FUS().filter(f=>!f.done).sort((a,b)=>a.due<b.due?-1:1),now=all.filter(f=>f.due<=TODAY),soon=all.filter(f=>f.due>TODAY);
+  return `<section class="box" id="fubox"><h2>Follow-ups <small>${now.length?now.length+' due':'none due'} · ${soon.length} coming up</small></h2>
+  <div class="row"><input type="text" id="fuin" placeholder="For example: pick up the conversation with Maria at the end of November" aria-label="Add a follow-up" style="flex:1;min-width:200px"><button class="btn pri" data-act="fuadd">Add</button></div>
+  <div id="fuprev"></div>
+  ${now.length?`<div class="meta" style="margin-top:10px"><b>Due now</b></div>${now.map(f=>fuRow(f)).join('')}`:''}
+  ${soon.length?`<div class="meta" style="margin-top:10px"><b>Coming up</b></div>${soon.slice(0,6).map(f=>fuRow(f)).join('')}${soon.length>6?`<div class="meta">${soon.length-6} more on the Roadmap.</div>`:''}`:''}
+  ${!all.length?'<div class="empty">No follow-ups. Type one above and press Enter.</div>':''}</section>`;
+}
+function fuSponsorHtml(pid){const l=FUS().filter(f=>f.pipeId===pid&&!f.done).sort((a,b)=>a.due<b.due?-1:1);return `<div class="sec"><h3>Follow-ups</h3>${l.map(f=>`<div class="item"><span></span><div><b>${esc(fmt(f.due))}</b> ${esc(f.text)}</div></div>`).join('')||'<div class="meta">None. Add one from the Follow-ups box on Today.</div>'}</div>`}
+async function fuPreview(){
+  const inp=$('#fuin'),txt=inp.value.trim();if(!txt){toast('Type a follow-up first');return}
+  let due=parseWhen(txt),text=txt,rep=parseRepeat(txt),ln=matchLink(txt);
+  if(!due&&gem()){try{const r=await aiJson('Today is '+TODAY+'. Read this follow-up and return JSON only: {"date":"YYYY-MM-DD or empty if there is no time","text":"the follow-up as a short action"}. Text: '+txt);if(r&&/^\d{4}-\d\d-\d\d$/.test(r.date||'')&&r.date>=TODAY) due=r.date;if(r&&r.text) text=String(r.text)}catch(e){}}
+  S.fu={text,due,rep,pipeId:ln.pipeId,who:ln.who};
+  const pv=$('#fuprev');
+  pv.innerHTML=`<div class="sec" style="margin-top:10px"><div class="meta"><b>Check before saving</b>${due?'':' · No date found, please pick one'}</div>
+  <div class="fld"><label for="fu_t">What</label><input type="text" id="fu_t" value="${esc(text)}"></div>
+  <div class="g2"><div class="fld"><label for="fu_d">When</label><input type="date" id="fu_d" value="${esc(due)}"></div>
+  <div class="fld"><label for="fu_r">Remind again</label><select id="fu_r">${[[0,'No repeat'],[1,'Every day'],[2,'Every 2 days'],[3,'Every 3 days'],[7,'Every week']].map(([v,l])=>`<option value="${v}" ${rep===v?'selected':''}>${l}</option>`).join('')}</select></div></div>
+  <div class="g2"><div class="fld"><label for="fu_p">Linked sponsor</label><select id="fu_p"><option value="">None</option>${S.pipe.slice().sort((a,b)=>a.group<b.group?-1:1).map(p=>`<option value="${p.id}" ${p.id===ln.pipeId?'selected':''}>${esc(p.group)}</option>`).join('')}</select></div>
+  <div class="fld"><label for="fu_w">Person</label><input type="text" id="fu_w" value="${esc(ln.who)}"></div></div>
+  <div class="row"><button class="btn pri" data-act="fusave">Save follow-up</button><button class="btn" data-act="fucancel">Cancel</button></div></div>`;
+  const dEl=$('#fu_d');if(!due) dEl.focus();
+}
+async function fuSave(){
+  const text=$('#fu_t').value.trim(),due=$('#fu_d').value;if(!text){toast('Say what the follow-up is');return}if(!due){toast('Pick a date');return}
+  const id=uid('fu');const o={id,type:'followup',text,due,repeat:+$('#fu_r').value||0,pipeId:$('#fu_p').value,who:$('#fu_w').value.trim(),done:false,created:TODAY};
+  await act('Add follow-up',()=>save('kit',id,o));$('#fuin').value='';S.fu=null;render();toast('Follow-up saved');
+}
+
 /* ---------- views ---------- */
 function vToday0(){
   const t=open().sort(byDue);
@@ -139,9 +218,10 @@ function vToday0(){
    <div class="stat"><b>${todayT.length+pDue.filter(p=>p.nextDate===TODAY).length}</b><span>due today</span></div>
    <div class="stat"><b>${live}</b><span>live conversations</span></div>
    <div class="stat ${signed?'good':''}"><b>${signed}</b><span>signed</span></div>
-   ${pend?`<div class="stat"><b>${pend}</b><span>decisions open</span></div>`:''}
+   ${EDIT?`<div class="stat ${FUS().some(f=>f.due<=TODAY&&!f.done)?'bad':''}"><b>${FUS().filter(f=>!f.done&&f.due<=TODAY).length}</b><span>follow-ups due</span></div>`:''}${pend?`<div class="stat"><b>${pend}</b><span>decisions open</span></div>`:''}
   </div>
   <div class="cols"><div>
+   ${vFollow()}
    <section class="box"><h2>Suggested next steps <small>from the log, contacts, events and deals</small></h2>${L(sg,(s,i)=>sugItem(s,i,'local'),'Nothing extra suggested. The plan covers today.')}${ask.length?`<div class="meta" style="margin-top:8px"><b>Suggested for you</b></div>`+ask.map((s,i)=>sugItem(s,i,'ai')).join(''):''}${EDIT?`<div class="row" style="margin-top:8px"><button class="btn" data-act="aisugg">Ask Tilly for more</button></div>`:''}</section>
    <section class="box"><h2>Due now <small>${fmt(TODAY)}</small></h2>${L([...overdue,...todayT],taskItem,'Nothing overdue or due today.')}${pDue.map(pipeItem).join('')}</section>
    <section class="box"><h2>Next 7 days</h2>${L(week,taskItem,'No plan steps in the next 7 days. Add one in Roadmap, or ask Tilly for more.')}${pWeek.map(pipeItem).join('')}</section>
@@ -162,10 +242,11 @@ function vRoadmap(){
   const evRows=S.events.slice().sort((a,b)=>a.start<b.start?-1:1).map(e=>`<div class="rmr"><div class="lab">${esc(e.name)}</div><div class="cell"><button class="bar" data-act="edit" data-col="events" data-id="${e.id}" style="grid-column:${col(e.start)}/${Math.min(N,col(e.end))+1}" title="${esc(e.name)}">${esc(e.name)}</button></div></div>`).join('');
   const wkRows=weeks.map(w=>{const ts=S.tasks.filter(t=>t.week===w);return `<div class="rmr"><div class="lab"><b>${esc(w)}</b></div><div class="cell">${ts.filter(t=>t.due).map(t=>`<button class="dot ${t.done?'done':t.due<TODAY?'late':''}" style="grid-column:${col(t.due)}" data-act="edit" data-col="tasks" data-id="${t.id}" title="${esc(fmt(t.due))}: ${esc(t.action)}" aria-label="${esc(t.action)}"></button>`).join('')}</div></div>`}).join('');
   const pRow=`<div class="rmr"><div class="lab"><b>Sponsor next steps</b></div><div class="cell">${days.map(d=>{const n=S.pipe.filter(p=>p.nextDate===d&&!['Agreed','Declined'].includes(p.status)).length;return n?`<span class="pill gold" style="grid-column:${col(d)};justify-self:center" title="${n} next steps on ${esc(fmt(d))}">${n}</span>`:''}).join('')}</div></div>`;
+  const fRow=FUS().filter(f=>!f.done).length?`<div class="rmr"><div class="lab"><b>Follow-ups</b></div><div class="cell">${FUS().filter(f=>!f.done).map(f=>`<button class="dot ${f.due<TODAY?'late':''}" style="grid-column:${col(f.due)}" title="${esc(fmt(f.due))}: ${esc(f.text)}" aria-label="${esc(f.text)}"></button>`).join('')}</div></div>`:'';
   const line=tl>=0&&tl<N?`<div class="today-line" style="left:calc(150px + (100% - 150px) * ${(tl+.5)/N})"></div>`:'';
   const lists=weeks.map(w=>{const ts=S.tasks.filter(t=>t.week===w).sort(byDue),n=ts.filter(t=>t.done).length,g=ts[0]||{};return `<section class="box week"><h3>${esc(w)} <small style="font:400 13px var(--sans);color:var(--mute)">${esc(g.dates)}</small></h3><div class="meta">${esc(g.goal)} · ${n} of ${ts.length} done</div><div class="prog"><i style="width:${ts.length?100*n/ts.length:0}%"></i></div>${ts.map(taskItem).join('')}</section>`}).join('');
   return `<div class="legend"><span><i></i>Plan step due</span><span><i style="background:var(--ok);border-color:var(--ok)"></i>Done</span><span><i style="border-color:var(--warn);background:var(--warn-soft)"></i>Overdue</span><span><span class="pill" style="background:var(--accent);color:var(--accent-ink)">Bar</span> Event</span></div>
-  <div class="rm" style="--n:${N}"><div class="rmi" style="min-width:${150+N*22}px">${head}${evRows}${wkRows}${pRow}${line}</div></div>
+  <div class="rm" style="--n:${N}"><div class="rmi" style="min-width:${150+N*22}px">${head}${evRows}${wkRows}${pRow}${fRow}${line}</div></div>
   <div class="row" style="margin:14px 0"><button class="btn pri" data-act="new" data-col="tasks">Add plan step</button><button class="btn" data-act="new" data-col="events">Add event</button></div>${lists}`;
 }
 
@@ -257,7 +338,7 @@ function vAsk(){
   <section class="box"><h2>Ask Tilly anything</h2><p class="meta">Ask how something in this app works, what a word means, or a general question. Tick the box to search the web.</p><textarea id="aq" placeholder="For example: what does Balance check? or Who sponsors Art X Lagos?" style="min-height:70px"></textarea><label class="meta" style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="checkbox" id="aqweb"> Search the web for this</label><div class="row" style="margin-top:8px"><button class="btn pri" data-act="askq">Ask</button></div><div class="ai" id="aqout" style="margin-top:10px"></div></section>
   <section class="box"><h2>Tell Tilly what happened</h2><p class="meta">Paste a reply, call notes, contact details or a line on what you did. Tilly proposes updates across pipeline, outreach log, contacts, plan steps, events and deals. Nothing changes until you press Apply all changes. Undo reverses the whole batch.</p><textarea id="paste" placeholder="Paste text here">${esc(A.paste||'')}</textarea><div class="row" style="margin-top:8px"><button class="btn pri" data-act="propose">Propose updates</button></div><div id="props" style="margin-top:10px"></div></section>
   </div><div>
-  <section class="box guide"><h2>How this works</h2><ol><li><b>Today</b> shows what is due and the next steps suggested from facts in the log.</li><li><b>Roadmap</b> lays the plan and events on a 42-day grid. Click a dot or bar to edit it.</li><li><b>Sponsors</b> lists every sponsor under Nigeria, Africa and Global. Every cell is editable.</li><li><b>Pipeline</b> shows the same sponsors by stage. Open one to see its contacts, outreach log, drafts, proposal checklist and deal tracker.</li><li><b>Contacts</b> lists each sponsor's contacts and who to write to first. Click a contact to edit it, or add a name, email or phone.</li><li><b>Events</b> holds the events, who goes and the prep list for each. Tilly can search for new ones.</li><li><b>Proposal Kit</b> holds the rate card, sponsorship ideas and templates.</li><li><b>Balance</b> checks that workload, dates and sponsors fit together.</li><li><b>Scoreboard</b> shows signed, pending and live counts, fallbacks and conflicts, and writes the weekly note to Fatimah.</li><li><b>Decisions</b> is where Fatimah approves or comments. Sade can edit the wording in place.</li><li><b>Ask Tilly</b> (this page) briefs you and turns pasted messages into proposed updates. The Tilly button at the top searches the web for events, contacts and sponsors.</li><li><b>Activity</b> records what you do and builds the check-out report.</li><li><b>Suggestions</b> (top right) is where Fatimah and Sade leave notes about the desk itself.</li></ol><p class="meta">Changes that affect other items warn you first, and Undo reverses the last change.</p>
+  <section class="box guide"><h2>How this works</h2><ol><li><b>Today</b> shows what is due, your follow-ups, and next steps suggested from facts in the log. Type a follow-up in plain words, such as "call Maria at the end of November", and check the date before saving. It repeats until you press Done.</li><li><b>Roadmap</b> lays the plan, events and follow-ups on a calendar that grows as dates are added. Click a dot or bar to edit it.</li><li><b>Sponsors</b> lists every sponsor under Nigeria, Africa and Global. Every cell is editable.</li><li><b>Pipeline</b> shows the same sponsors by stage. Open one to see its contacts, outreach log, drafts, proposal checklist and deal tracker.</li><li><b>Contacts</b> lists each sponsor's contacts and who to write to first. Click a contact to edit it, or add a name, email or phone.</li><li><b>Events</b> holds the events, who goes and the prep list for each. Tilly can search for new ones.</li><li><b>Proposal Kit</b> holds the rate card, sponsorship ideas and templates.</li><li><b>Balance</b> checks that workload, dates and sponsors fit together.</li><li><b>Scoreboard</b> shows signed, pending and live counts, fallbacks and conflicts, and writes the weekly note to Fatimah.</li><li><b>Decisions</b> is where Fatimah approves or comments. Sade can edit the wording in place.</li><li><b>Ask Tilly</b> (this page) briefs you and turns pasted messages into proposed updates. The Tilly button at the top searches the web for events, contacts and sponsors.</li><li><b>Activity</b> records what you do and builds the check-out report.</li><li><b>Suggestions</b> (top right) is where Fatimah and Sade leave notes about the desk itself.</li></ol><p class="meta">Changes that affect other items warn you first, and Undo reverses the last change.</p>
   <div class="row"><button class="btn sm" data-act="tillytest">Test Tilly</button></div><div class="meta" id="tt"></div></section></div></div>`;
 }
 
@@ -302,6 +383,7 @@ function openSponsor(id,keep){
   <div class="g2"><div class="fld"><label for="s_nd">Next-step date</label><input type="date" id="s_nd" value="${esc(p.nextDate)}"></div><div class="fld"><label for="s_cat">Category</label><input type="text" id="s_cat" value="${esc(p.category)}"></div></div>
   <div class="fld"><label for="s_notes">Notes</label><textarea id="s_notes" style="min-height:60px">${esc(p.notes)}</textarea></div><div class="fld"><label for="s_out">Outcome or what was agreed</label><textarea id="s_out" style="min-height:60px">${esc(p.outcome)}</textarea></div>
   <div class="row"><button class="btn pri" type="submit">Save</button><button class="btn" type="button" data-act="close">Close</button><button class="btn" type="button" data-act="editfull" data-id="${id}">Edit all details</button>${EDIT?`<button class="btn del" type="button" data-act="rmsp" data-id="${id}">Remove sponsor</button>`:''}</div></form>
+  ${fuSponsorHtml(id)}
   <div class="sec"><h3>Contacts</h3>${EDIT?`<div class="row" style="margin-bottom:6px"><button class="btn sm" type="button" data-act="findc" data-id="${id}">Find contact details with Tilly</button></div><div id="cfind"></div>`:''}${cs.map(c=>`<div class="item"><span></span><div><b>${esc(c.name||'No name')}</b> ${esc(c.role)}<div class="meta">${esc([c.email,c.phone].filter(Boolean).join(' · ')||'No email or phone')}</div><div class="meta"><button class="btn sm" data-act="edit" data-col="contacts" data-id="${c.id}">Edit</button> ${EDIT?`<button class="btn sm del" data-act="delc" data-id="${c.id}" data-p="${id}">Remove</button>`:''}</div></div></div>`).join('')||'<div class="empty">No contact entered.</div>'}
    <div class="g2" id="cform"><input type="text" id="cn" placeholder="Name" aria-label="Name"><input type="text" id="cr" placeholder="Role" aria-label="Role"><input type="text" id="ce" placeholder="Email" aria-label="Email"><input type="text" id="cp" placeholder="Phone" aria-label="Phone"></div><div class="row" style="margin-top:6px"><button class="btn" data-act="addcontact" data-id="${id}">Add contact</button></div></div>
   <div class="sec"><h3>Outreach log</h3>${ls.map(l=>`<div class="item"><span></span><div><span class="pill">${esc(l.type)}</span> <b>${esc(fmt(l.date))}</b><div class="meta">${esc(l.summary)}</div><div class="meta">${EDIT?`<button class="btn sm del" data-act="dell" data-id="${l.id}" data-p="${id}">Remove</button>`:''}</div></div></div>`).join('')||'<div class="empty">Nothing logged yet.</div>'}
@@ -426,6 +508,13 @@ document.addEventListener('click',async e=>{
   if(a==='askq'){await askq();return}
   if(a==='tillytest'){const o=$('#tt');o.textContent='Testing…';try{const t=await aiText('Reply with the single word: ready');o.textContent='Tilly works. Reply: '+t.trim().slice(0,60)}catch(e){o.textContent='Tilly failed: '+(e.message||e)}return}
   if(a==='tgnext'){const T=tgt();const sg=S.pipe.filter(p=>p.status==='Agreed').length;const n={...T,history:[...(T.history||[]),{label:T.label,goal:T.goal,start:T.start,date:T.date,signed:sg}],start:TODAY,date:addDays(TODAY,42)};await act('Start next target',()=>save('kit','target',n));render();toast('New target started. Edit the label and number if needed.');return}
+  if(a==='fuadd'){await fuPreview();return}
+  if(a==='fusave'){await fuSave();return}
+  if(a==='fucancel'){S.fu=null;$('#fuprev').innerHTML='';return}
+  if(a==='fudone'){await act('Follow-up done',()=>patch('kit',id,{done:true,doneAt:TODAY}));render();toast('Done. Undo brings it back.');return}
+  if(a==='fusnooze'){const f=get('kit',id);if(!f) return;await act('Snooze follow-up',()=>patch('kit',id,{due:addDays(TODAY,3)}));render();toast('Moved to '+fmt(addDays(TODAY,3)));return}
+  if(a==='fudel'){await act('Remove follow-up',()=>remove('kit',id));render();toast('Removed. Undo brings it back.');return}
+  if(a==='opensp'){openSponsor(id);return}
   if(a==='tab'){S.tab=id;render();return}
   if(a==='close'){$('#dlg').close();return}
   if(a==='copy'){const t=document.getElementById(el.dataset.t);try{await navigator.clipboard.writeText(t.value);toast('Copied')}catch(er){t.select();toast('Press Ctrl+C to copy')}return}
@@ -510,6 +599,7 @@ document.addEventListener('click',async e=>{
 });
 document.addEventListener('input',e=>{if(e.target.id==='gq'){const r=$('#gres');if(r) r.innerHTML=searchHtml(e.target.value)}});
 document.addEventListener('change',async e=>{
+  {const t=e.target;if(t.dataset&&t.dataset.fu&&EDIT){const k=t.dataset.k;let v=t.value;if(k==='repeat') v=+v||0;if(k==='due'&&!v){render();return}if(k==='text'&&!String(v).trim()){render();return}await act('Edit follow-up',()=>patch('kit',t.dataset.fu,{[k]:v}));render();return}}
   {const t=e.target;if(t.dataset&&t.dataset.tg&&EDIT){const T=tgt(),k=t.dataset.tg;let v=t.value;if(k==='goal'){v=Math.max(1,parseInt(v,10)||1)}if((k==='date'||k==='start')&&!/^\d{4}-\d\d-\d\d$/.test(v)){render();return}
     const n={...T,[k]:v};if(n.date<n.start){toast('The deadline must be after the start');render();return}await act('Change target',()=>save('kit','target',n));render();toast('Target updated');return}}
   const t=e.target;
@@ -520,7 +610,8 @@ document.addEventListener('change',async e=>{
   if(t.dataset&&t.dataset.idea!==undefined&&EDIT){const it=(get('kit','ideas')||{items:[]}).items.map(x=>({...x}));it[+t.dataset.idea][t.dataset.k]=t.value;await act('Edit idea',()=>save('kit','ideas',{items:it}));return}
   if(t.dataset&&t.dataset.rate!==undefined&&EDIT){const r=get('kit','rates');const rows=r.rows.map(x=>({...x}));rows[+t.dataset.rate][t.dataset.k]=t.value;await act('Rate card',()=>patch('kit','rates',{rows}))}
 });
-document.addEventListener('keydown',e=>{if(EDIT&&(e.ctrlKey||e.metaKey)&&!e.shiftKey&&e.key.toLowerCase()==='z'&&!e.target.closest('input,textarea,select,dialog')){e.preventDefault();undo()}});
+document.addEventListener('keydown',e=>{if(e.target&&e.target.id==='fuin'&&e.key==='Enter'){e.preventDefault();fuPreview();return}
+if(EDIT&&(e.ctrlKey||e.metaKey)&&!e.shiftKey&&e.key.toLowerCase()==='z'&&!e.target.closest('input,textarea,select,dialog')){e.preventDefault();undo()}});
 $('#dlg').addEventListener('close',()=>render());
 
 /* ---------- editing everywhere, ripple warnings, balance ---------- */
@@ -981,11 +1072,11 @@ async function remind(force){
   if(!('Notification' in window)||Notification.permission!=='granted') return false;
   const S=window.TLLJ_STATE&&window.TLLJ_STATE();if(!S||!S.tasks||!S.tasks.length) return false;
   const t=today(),open=S.tasks.filter(x=>!x.done&&x.due);
-  const od=open.filter(x=>x.due<t).length,dt=open.filter(x=>x.due===t);
+  const od=open.filter(x=>x.due<t).length,dt=open.filter(x=>x.due===t),fu=(S.kit||[]).filter(k=>k.type==='followup'&&window.fuDue&&window.fuDue(k,t));
   let last='';try{last=localStorage.getItem('tllj_notified')||''}catch(e){}
   if(!force&&last===t) return false;
-  if(!od&&!dt.length&&!force) return false;
-  const body=(dt.length?dt.length+' due today. ':'Nothing due today. ')+(od?od+' overdue.':'')+(dt[0]?' First: '+String(dt[0].action).slice(0,80):'');
+  if(!od&&!dt.length&&!fu.length&&!force) return false;
+  const body=(dt.length?dt.length+' due today. ':'Nothing due today. ')+(od?od+' overdue.':'')+(dt[0]?' First: '+String(dt[0].action).slice(0,80):'')+(fu.length?' Follow-up'+(fu.length===1?'':'s')+': '+String(fu[0].text).slice(0,70)+(fu.length>1?' and '+(fu.length-1)+' more.':'.'):'');
   const reg=await navigator.serviceWorker.getRegistration();
   if(reg) await reg.showNotification('TLLJ Desk',{body,icon:'icon-192.png',badge:'icon-192.png',tag:'tllj-daily'});
   try{localStorage.setItem('tllj_notified',t)}catch(e){}
