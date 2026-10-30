@@ -431,7 +431,7 @@ document.addEventListener('click',async e=>{
   if(a==='copy'){const t=document.getElementById(el.dataset.t);try{await navigator.clipboard.writeText(t.value);toast('Copied')}catch(er){t.select();toast('Press Ctrl+C to copy')}return}
   if(a==='decide'){const d=get('decisions',id);const c=document.querySelector(`[data-dc="${id}"]`);await act('Decision '+d.n,()=>patch('decisions',id,{answer:el.dataset.v,comment:c?c.value:d.comment}));render();toast('Saved');return}
   if(a==='settings'){openSettings();return}
-  if(a==='savesettings'){lsSet('tllj_gemini_key',$('#gk').value.trim());lsSet('tllj_gemini_model',$('#gm').value.trim());$('#dlg').close();toast('Saved');return}
+  if(a==='savesettings'){lsSet('tllj_gemini_key',$('#gk').value.trim());lsSet('tllj_groq_key',$('#gq').value.trim());lsSet('tllj_groq_model',$('#gqm').value.trim());lsSet('tllj_gemini_model',$('#gm').value.trim());$('#dlg').close();toast('Saved');return}
   if(a==='signout'){if(window.signOutApp) await window.signOutApp();return}
   if(a==='gotab'){$('#dlg').close();S.tab=id;render();return}
   if(a==='notesend'){const t=$('#nt_text').value.trim();if(!t){toast('Write something first');return}try{await dbSet('notes',{id:uid('n'),text:t,by:window.TLLJ_USER||'Sade',at:new Date().toISOString(),status:'New'});toast('Sent');render()}catch(e){toast('Not sent: '+(e.message||'check access'))}return}
@@ -753,10 +753,10 @@ async function fixWording(){
 
 /* ---------- Tilly: finders, search, suggestion box, steady screen ---------- */
 const slug=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'').slice(0,40);
-const gem=()=>!!lsGet('tllj_gemini_key');
+const gem=()=>!!(lsGet('tllj_gemini_key')||lsGet('tllj_groq_key'));
 const okUrl=u=>/^https?:\/\//i.test(u||'');
 function parseArr(t){const m=String(t).match(/\[[\s\S]*\]/);if(!m) return [];try{const a=JSON.parse(m[0]);return Array.isArray(a)?a:[]}catch(e){return []}}
-const needKey=()=>{toast('Add your Gemini key under Settings first');return false};
+const needKey=()=>{toast('Tilly is off until a Gemini key is added in Settings. Everything else works without it.');return false};
 async function dbSet(col,doc){await db.collection(col).doc(doc.id).set(doc);local(col,doc.id,doc)}
 
 /* daily and on-demand event search */
@@ -901,8 +901,10 @@ function openSettings(){
   const dlg=$('#dlg');
   dlg.innerHTML=`<h2 style="margin-bottom:12px">Settings</h2>
   <div class="fld"><label for="gk">Gemini API key</label><input type="password" id="gk" value="${esc(lsGet('tllj_gemini_key'))}" autocomplete="off"></div>
-  <div class="fld"><label for="gm">Gemini model</label><input type="text" id="gm" value="${esc(lsGet('tllj_gemini_model')||'gemini-2.5-flash')}"></div>
-  <p class="meta">The key stays in this browser only. It is never saved to the database or to GitHub. Without it, drafts, briefs and Ask Tilly updates will not run, and everything else works.</p>
+  <div class="fld"><label for="gm">Gemini model</label><input type="text" id="gm" value="${esc(lsGet('tllj_gemini_model')||'gemini-3.8-flash')}"></div>
+  <div class="fld"><label for="gq">Groq API key (optional, used for everything except web searches)</label><input type="password" id="gq" value="${esc(lsGet('tllj_groq_key'))}" autocomplete="off"></div>
+  <div class="fld"><label for="gqm">Groq model (leave blank for the default)</label><input type="text" id="gqm" value="${esc(lsGet('tllj_groq_model'))}" placeholder="llama-3.3-70b-versatile"></div>
+  <p class="meta">With a Groq key, briefs, drafts, pasted updates and questions use Groq. Web searches always use Gemini. If Groq fails, Tilly tries Gemini. The keys stay in this browser only. It is never saved to the database or to GitHub. Without it, drafts, briefs and Ask Tilly updates will not run, and everything else works.</p>
   <div class="fld"><label>Reminders</label><button class="btn" data-act="notif">Turn on reminders on this device</button></div>
   <div class="row"><button class="btn pri" data-act="savesettings">Save</button><button class="btn" data-act="close">Close</button></div>`;
   dlg.dataset.col='';dlg.dataset.id='';dlg.showModal();
@@ -927,21 +929,42 @@ function localDb(){
     doc:id=>({async set(d){const o=read(c);o[id]=d;write(c,o);emit(c)},async delete(){const o=read(c);delete o[id];write(c,o);emit(c)}})})};
 }
 function makeSample(){
-  async function call(prompt,search){
+  async function callGemini(prompt,search){
+    const call=callGemini;
     const k=window.lsGet('tllj_gemini_key');
-    if(!k) throw new Error('Add your Gemini key under Settings');
-    const m=window.lsGet('tllj_gemini_model')||'gemini-2.5-flash';
+    if(!k) throw new Error('Tilly is off until a Gemini key is added in Settings. Everything else works without it.');
+    const m=window.lsGet('tllj_gemini_model')||'gemini-3.8-flash';
     let r;for(let t=0;t<4;t++){r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(m)+':generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':k},body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],...(search?{tools:[{google_search:{}}]}:{})})});
-    if(r.status!==503&&r.status!==429) break; await new Promise(z=>setTimeout(z,1500*(t+1)));}
+    if(r.status!==503) break; await new Promise(z=>setTimeout(z,1500*(t+1)));}
     const j=await r.json();
-    if(!r.ok&&(r.status===404||r.status===400)&&/model|not found|not supported/i.test((j.error&&j.error.message)||'')&&!call.retried){
+    if(!r.ok&&(r.status===404||r.status===400||r.status===403)&&/model|not found|not supported|no longer available/i.test((j.error&&j.error.message)||'')&&!call.retried){
       try{const ml=await (await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=100',{headers:{'x-goog-api-key':k}})).json();
-        const ok=(ml.models||[]).filter(x=>(x.supportedGenerationMethods||[]).includes('generateContent')&&/flash/.test(x.name)&&!/(lite|image|tts|live|preview|exp|thinking)/.test(x.name)).map(x=>x.name.replace('models/',''));
+        const ok=(ml.models||[]).filter(x=>(x.supportedGenerationMethods||[]).includes('generateContent')&&/flash/.test(x.name)&&!/(lite|image|tts|live|preview|exp|thinking)/.test(x.name)).map(x=>x.name.replace('models/','')).sort((a,b)=>(/3\.8-flash$/.test(b)-/3\.8-flash$/.test(a)));
         if(ok.length){window.lsSet('tllj_gemini_model',ok[0]);call.retried=true;try{return await call(prompt,search)}finally{call.retried=false}}}catch(e){}
     }
+    if(r.status===429) throw new Error('Gemini free-tier limit reached for model '+m+' (it counts requests per day, per model). Wait for it to reset, or change the model name in Settings to another model such as gemini-3.8-flash-lite, which has their own daily allowance.');
     if(!r.ok) throw new Error((j.error&&j.error.message)||('Gemini error '+r.status));
     const parts=(((j.candidates||[])[0]||{}).content||{}).parts||[];
     return parts.map(p=>p.text||'').join('');
+  }
+  async function callGroq(prompt){
+    const k=window.lsGet('tllj_groq_key');let m=window.lsGet('tllj_groq_model')||'llama-3.3-70b-versatile';
+    const go=async mm=>{const r=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+k},body:JSON.stringify({model:mm,messages:[{role:'user',content:prompt}]})});return [r,await r.json().catch(()=>({}))]};
+    let [r,j]=await go(m);
+    if(!r.ok&&(r.status===400||r.status===404)&&/model/i.test((j.error&&j.error.message)||'')){
+      try{const ml=await (await fetch('https://api.groq.com/openai/v1/models',{headers:{'Authorization':'Bearer '+k}})).json();
+        const ok=(ml.data||[]).map(x=>x.id).filter(id=>/llama|gpt-oss|qwen|kimi/i.test(id)&&!/guard|whisper|tts|compound|safeguard/i.test(id)).sort((a,b)=>(/70b|120b/.test(b)-/70b|120b/.test(a)));
+        if(ok.length){m=ok[0];window.lsSet('tllj_groq_model',m);[r,j]=await go(m)}}catch(e){}}
+    if(r.status===429) throw new Error('Groq limit reached for now.');
+    if(!r.ok) throw new Error((j.error&&j.error.message)||('Groq error '+r.status));
+    return (((j.choices||[])[0]||{}).message||{}).content||'';
+  }
+  async function call(prompt,search){
+    const g=!!window.lsGet('tllj_gemini_key'),q=!!window.lsGet('tllj_groq_key');
+    if(!g&&!q) throw new Error('Tilly is off until a Gemini or Groq key is added in Settings. Everything else works without it.');
+    if(search){if(!g) throw new Error('Searching the web needs the Gemini key. Add it in Settings.');return callGemini(prompt,true)}
+    if(q){try{return await callGroq(prompt)}catch(e){if(!g) throw e}}
+    return callGemini(prompt,false);
   }
   const s=async(p,o={})=>{const text=await call(p,o.search);if(o.onText) o.onText({text});return {text}};
   s.json=async p=>{const t=await call(p+'\nReturn valid JSON only, with no code fences.');const m=t.match(/[\[{][\s\S]*[\]}]/);return JSON.parse(m?m[0]:t)};
