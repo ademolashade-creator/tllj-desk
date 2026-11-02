@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="styles.css"></head><body>
 <div class="wrap">
 <header>
- <div class="top"><h1>TLLJ Partnerships Desk</h1><div class="row"><div class="sub" id="sub"></div><button class="btn" id="undo" data-act="undo" disabled>Undo</button><span id="tools" class="row"><button class="btn" data-act="search">Search</button><button class="btn" id="tillybtn" data-act="tilly">Tilly</button><button class="btn" data-act="export">Export</button></span><button class="btn" id="notesbtn" data-act="tab" data-id="notes">Suggestions</button><button class="btn" id="themebtn" data-act="theme" aria-label="Switch between light and dark">Dark</button><button class="btn" data-act="settings">Settings</button><button class="btn" id="signout" data-act="signout" hidden>Sign out</button></div></div>
+ <div class="top"><h1>TLLJ Partnerships Desk</h1><div class="row"><div class="sub" id="sub"></div><button class="btn" id="undo" data-act="undo" disabled>Undo</button><span id="tools" class="row"><button class="btn" data-act="search">Search</button><button class="btn" id="tillybtn" data-act="tilly">Tilly</button><button class="btn" data-act="export">Export</button></span><button class="btn" id="notesbtn" data-act="tab" data-id="notes">Suggestions</button><button class="btn" id="themebtn" data-act="theme" aria-label="Switch between light and dark">Dark</button><button class="btn" data-act="settings">Settings</button><button class="btn" id="signout" data-act="signout" hidden aria-label="Sign out" title="Sign out"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div></div>
  <nav id="nav"></nav>
 </header>
 <main id="main"><p class="empty">Loading the plan, pipeline and events.</p></main>
@@ -159,10 +159,11 @@ function matchLink(txt){
 function fuDue(f,t){if(f.done||!f.due) return false;if(f.due>t) return false;const n=Math.round((pd(t)-pd(f.due))/864e5),r=+f.repeat||0;return n===0||(r>0&&n%r===0)}
 function fuNext(f){const r=+f.repeat||0;if(f.due>=TODAY||r<=0) return f.due;const n=dd(f.due,TODAY);return addDays(f.due,Math.ceil(n/r)*r)}
 function fuRow(f,short){
-  const p=f.pipeId&&get('pipe',f.pipeId),late=f.due<TODAY;
-  return `<div class="sec fu"><div class="row" style="align-items:center;gap:6px"><input type="text" class="ghost" data-fu="${f.id}" data-k="text" value="${esc(f.text)}" aria-label="Follow-up" style="flex:1;min-width:160px;font-weight:600"> ${fuTag(f)}</div>
-  <div class="meta" style="align-items:center">${p?`<span class="pill ok" data-act="opensp" data-id="${p.id}" style="cursor:pointer">${esc(p.group)}</span>`:''}${f.who?`<span>${esc(f.who)}</span>`:''}<input type="date" data-fu="${f.id}" data-k="due" value="${esc(f.due)}" aria-label="Due date" style="width:132px"><select data-fu="${f.id}" data-k="repeat" aria-label="Repeat" style="width:auto">${[[0,'No repeat'],[1,'Every day'],[2,'Every 2 days'],[3,'Every 3 days'],[7,'Every week']].map(([v,l])=>`<option value="${v}" ${(+f.repeat||0)===v?'selected':''}>${l}</option>`).join('')}</select>${late&&(+f.repeat||0)>0?`<span>Next reminder ${esc(fmt(fuNext(f)))}</span>`:''}</div>
-  <div class="row" style="margin-top:6px"><button class="btn sm pri" data-act="fudone" data-id="${f.id}">Done</button><button class="btn sm" data-act="fusay" data-id="${f.id}">What to say</button><button class="btn sm" data-act="fusnooze" data-id="${f.id}">+3 days</button><button class="btn sm del xbtn" data-act="fudel" data-id="${f.id}" aria-label="Remove follow-up" title="Remove">×</button></div><div id="fs_${f.id}"></div></div>`;
+  const p=f.pipeId&&get('pipe',f.pipeId),late=f.due<TODAY,n=dd(TODAY,f.due),cls=late?'late':f.due===TODAY?'today':n<=2?'soon':'',dt=pd(f.due);
+  return `<div class="fu2 ${cls}"><div class="fdate"><b>${dt.getDate()}</b><span>${MON3[dt.getMonth()]}</span></div><div class="fbody">
+  <input type="text" class="ghost" data-fu="${f.id}" data-k="text" value="${esc(f.text)}" aria-label="Follow-up" style="width:100%;font-weight:600">
+  <div class="meta" style="align-items:center">${fuTag(f)}${p?`<span class="pill ok" data-act="opensp" data-id="${p.id}" style="cursor:pointer">${esc(p.group)}</span>`:''}${f.who?`<span>${esc(f.who)}</span>`:''}${late&&(+f.repeat||0)>0?`<span>Next reminder ${esc(fmt(fuNext(f)))}</span>`:''}</div>
+  <div class="fact"><button class="btn sm pri" data-act="fudone" data-id="${f.id}">Done</button><button class="btn sm" data-act="fusay" data-id="${f.id}">What to say</button><button class="btn sm" data-act="fusnooze" data-id="${f.id}">+3 days</button><input type="date" data-fu="${f.id}" data-k="due" value="${esc(f.due)}" aria-label="Due date" style="width:128px"><select data-fu="${f.id}" data-k="repeat" aria-label="Repeat" style="width:auto">${[[0,'No repeat'],[1,'Every day'],[2,'Every 2 days'],[3,'Every 3 days'],[7,'Every week']].map(([v,l])=>`<option value="${v}" ${(+f.repeat||0)===v?'selected':''}>${l}</option>`).join('')}</select><button class="btn sm del xbtn" data-act="fudel" data-id="${f.id}" aria-label="Remove follow-up" title="Remove">×</button></div><div id="fs_${f.id}"></div></div></div>`;
 }
 function vFollow(){
   if(!EDIT) return '';
@@ -456,7 +457,7 @@ function genProposal(){
   if(t.includes('[figures from the Audience box on this tab]')) t=t.replace('[figures from the Audience box on this tab]',g.aud&&al?al:'figures from our analytics on request');
   else if(g.aud&&al) t=t.replace(/\nEditorial independence:/,'\nOur readership: '+al+'.\nEditorial independence:');
   t=t.replace(/^Subject line: /m,'Subject: ').replace(/^Opening: /m,'\n').replace(/^Sign-off: /m,'\n');
-  if(g.terms){const tm=(get('kit','terms')||{items:[]}).items;if(tm.length){const blk='\nTerms\n'+tm.map(x=>x.h+': '+x.t).join('\n')+'\n';const k=t.lastIndexOf('\nSade Ademola, The Leisurely Life Journal.');t=k>=0?t.slice(0,k)+'\n'+blk+t.slice(k):t+'\n'+blk}}
+  {const tm=(get('kit','terms')||{items:[]}).items.filter((x,i)=>(g.tsel||{})[i]!==false);if(tm.length){const blk='\nTerms\n'+tm.map(x=>x.h+': '+x.t).join('\n')+'\n';const k=t.lastIndexOf('\nSade Ademola, The Leisurely Life Journal.');t=k>=0?t.slice(0,k)+'\n'+blk+t.slice(k):t+'\n'+blk}}
   g.out=t;g.left=[...new Set(t.match(/\[[^\]]+\]/g)||[])];
   if(!c.lines.length) g.left.unshift('Price: tick at least one item above');
   return true;
@@ -465,17 +466,18 @@ function vGen(){
   const g=genState(),q=S.q||(S.q={qty:{},prod:0}),rows=((get('kit','rates')||{rows:[]}).rows),c=quoteCalc();
   if(!g.pid&&S.pipe.length){}
   const sp=S.pipe.slice().sort((a,b)=>String(a.group).localeCompare(String(b.group)));
-  const list=rows.map((r,i)=>({r,i})).filter(x=>parseN(x.r.price)!==null).map(({r,i})=>`<label class="gi"><input type="checkbox" data-qt="${i}" ${(q.qty[i]||0)>0?'checked':''} aria-label="Include ${esc(r.pkg)}"><span class="gn">${esc(r.pkg)} <small>${esc(r.price)}</small></span><input type="number" min="0" step="1" data-q="${i}" value="${q.qty[i]||''}" placeholder="0" aria-label="Quantity: ${esc(r.pkg)}" class="gq"></label>`).join('');
-  const dis=EDIT?'':'disabled';
+  const list=rows.map((r,i)=>({r,i})).filter(x=>String(x.r.price||'').trim()).map(({r,i})=>`<label class="gi"><input type="checkbox" data-qt="${i}" ${(q.qty[i]||0)>0?'checked':''} aria-label="Include ${esc(r.pkg)}"><span class="gn">${esc(r.pkg)} <small>${esc(r.price)}</small></span>${parseN(r.price)!==null?`<input type="number" min="0" step="1" data-q="${i}" value="${q.qty[i]||''}" placeholder="0" aria-label="Quantity: ${esc(r.pkg)}" class="gq">`:''}</label>`).join('');
+  const dis=EDIT?'':'disabled',tmItems=(get('kit','terms')||{items:[]}).items;
   return `<section class="box"><h2>Create a proposal <small>one click, from what is already in the app</small></h2>
   <div class="g2"><div class="fld"><label for="g_pid">Sponsor</label><select id="g_pid" ${dis}><option value="">Choose a sponsor</option>${sp.map(p=>`<option value="${p.id}" ${p.id===g.pid?'selected':''}>${esc(p.group)}</option>`).join('')}</select></div>
   <div class="fld"><label for="g_tpl">Template</label><select id="g_tpl" ${dis}>${tplList().map(t=>`<option value="${t.id}" ${t.id===g.tpl?'selected':''}>${esc(t.title)}</option>`).join('')}</select></div></div>
   <div class="g2"><div class="fld"><label for="g_title">Series, event or edition name <small>optional</small></label><input type="text" id="g_title" value="${esc(g.title)}" placeholder="For example: The Creative Economy Series" ${dis}></div>
   <div class="fld"><label for="g_when">Dates or period <small>optional</small></label><input type="text" id="g_when" value="${esc(g.when)}" placeholder="For example: 5 to 8 November 2026" ${dis}></div></div>
-  <details class="more" id="qd" ${S.qOpen?'open':''}><summary>What to include in the price (${c.lines.length} ticked)</summary><p class="meta">Tick what the sponsor is buying. Change the number if they want more than one. Items marked "Quoted to brief" are production: enter the supplier's cost below and the 10% fee is added.</p>${list}
+  <details class="more" id="qd" ${S.qOpen===false?'':'open'}><summary>What to include in the price (${c.lines.length} ticked)</summary><p class="meta">Tick every package, placement, add-on or production item the sponsor is buying. Change the number if they want more than one. Items marked "Quoted to brief" are production: tick them, then enter the supplier's cost below and the 10% fee is added.</p>${list}
   <div class="row" style="gap:8px;margin:8px 0"><label for="qprod" style="flex:none">Production cost (₦)</label><input type="number" min="0" step="1000" id="qprod" value="${q.prod||''}" placeholder="0" style="width:150px;flex:none"></div>
   <div id="qout" class="meta" style="white-space:pre-line;font-weight:600">${esc(quoteText())}</div><div class="row" style="margin-top:6px"><button class="btn sm" data-act="qclear">Clear ticks</button></div></details>
-  <div class="row" style="gap:16px;margin:8px 0"><label class="meta" style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="g_terms" ${g.terms?'checked':''} ${dis}> Include all terms</label><label class="meta" style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="g_aud" ${g.aud?'checked':''} ${dis}> Include audience figures</label></div>
+  <details class="more" open><summary>Terms to include (${tmItems.filter((x,i)=>(g.tsel||{})[i]!==false).length} of ${tmItems.length})</summary><label class="gi"><input type="checkbox" id="g_terms" ${tmItems.every((x,i)=>(g.tsel||{})[i]!==false)?'checked':''}><span class="gn"><b>All terms</b></span></label>${tmItems.map((x,i)=>`<label class="gi"><input type="checkbox" data-gt="${i}" ${(g.tsel||{})[i]!==false?'checked':''}><span class="gn">${esc(x.h)}</span></label>`).join('')}</details>
+  <label class="gi" style="margin:6px 0"><input type="checkbox" id="g_aud" ${g.aud?'checked':''} ${dis}><span class="gn">Include audience figures</span></label>
   <div class="row"><button class="btn pri" data-act="gen">Generate proposal</button><button class="btn" data-act="genai">Fill the rest with Tilly</button><button class="btn" data-act="copy" data-t="g_out">Copy</button></div>
   ${g.out?`<div class="meta" style="margin-top:8px">${g.left.length?'Still to fill by hand: '+g.left.map(esc).join(' · '):'Nothing left in brackets.'}</div>`:''}
   <textarea id="g_out" style="min-height:320px;margin-top:8px" placeholder="The proposal appears here, filled from the pipeline, rate card, audience and terms. You can edit it.">${esc(g.out)}</textarea>
@@ -523,7 +525,7 @@ async function relevantNote(text){
 }
 function parseN(s){const m=String(s||'').replace(/,/g,'').match(/₦\s*(\d+)/);return m?+m[1]:null}
 function quoteCalc(){const q=S.q||(S.q={qty:{},prod:0});const rows=((get('kit','rates')||{rows:[]}).rows);let sub=0;const lines=[];
-  rows.forEach((r,i)=>{const p=parseN(r.price),k=+q.qty[i]||0;if(p!==null&&k>0){sub+=p*k;lines.push(k+' x '+r.pkg+': '+'₦'+(p*k).toLocaleString('en-US'))}});
+  rows.forEach((r,i)=>{const p=parseN(r.price),k=+q.qty[i]||0;if(k>0){if(p!==null){sub+=p*k;lines.push(k+' x '+r.pkg+': '+'₦'+(p*k).toLocaleString('en-US'))}else if(String(r.price||'').trim()) lines.push(r.pkg+': '+String(r.price).toLowerCase())}});
   const prod=+q.prod||0,fee=Math.round(prod*0.10),tot=sub+prod+fee;
   return {lines,sub,prod,fee,tot}}
 function quoteText(){const c=quoteCalc();const f=v=>'₦'+v.toLocaleString('en-US');return ['Quote (before VAT and withholding tax)'].concat(c.lines,c.prod?['Production at cost: '+f(c.prod),'Production fee, 10%: '+f(c.fee)]:[],['Total: '+f(c.tot)]).join('\n')}
@@ -776,8 +778,10 @@ document.addEventListener('input',e=>{const t=e.target;if(!t||!t.matches) return
     else if(t.matches('[data-qt]')){const i=t.dataset.qt;q.qty[i]=t.checked?(q.qty[i]>0?q.qty[i]:1):0;const n=document.querySelector('[data-q="'+i+'"]');if(n) n.value=q.qty[i]||''}
     else{q.qty[t.dataset.q]=+t.value||0;const cb=document.querySelector('[data-qt="'+t.dataset.q+'"]');if(cb) cb.checked=q.qty[t.dataset.q]>0}
     const o=$('#qout');if(o) o.textContent=quoteText();const sm=document.querySelector('#qd>summary');if(sm) sm.textContent='What to include in the price ('+quoteCalc().lines.length+' ticked)'}
-  else if(t.id&&/^g_(pid|tpl|title|when|terms|aud|tname)$/.test(t.id)){const g=genState(),k=t.id.slice(2);
-    if(k==='terms'||k==='aud') g[k]=t.checked;else g[k==='tpl'?'tpl':k]=t.value;
+  else if(t.matches('[data-gt]')){const g=genState();(g.tsel=g.tsel||{})[t.dataset.gt]=t.checked;const all=[...document.querySelectorAll('[data-gt]')],ga=$('#g_terms');if(ga) ga.checked=all.every(x=>x.checked);const sm=ga&&ga.closest('details').querySelector('summary');if(sm) sm.textContent='Terms to include ('+all.filter(x=>x.checked).length+' of '+all.length+')'}
+  else if(t.id==='g_terms'){const g=genState();g.tsel={};document.querySelectorAll('[data-gt]').forEach(x=>{x.checked=t.checked;g.tsel[x.dataset.gt]=t.checked});const sm=t.closest('details').querySelector('summary');if(sm) sm.textContent='Terms to include ('+(t.checked?document.querySelectorAll('[data-gt]').length:0)+' of '+document.querySelectorAll('[data-gt]').length+')'}
+  else if(t.id&&/^g_(pid|tpl|title|when|aud|tname)$/.test(t.id)){const g=genState(),k=t.id.slice(2);
+    if(k==='aud') g[k]=t.checked;else g[k==='tpl'?'tpl':k]=t.value;
     if(k==='pid'){const p0=get('pipe',t.value);if(p0){g.tpl=/media partnership/i.test(p0.propose||'')?'tplB':/Hotels|Clubs/.test(p0.category||'')?'tplC':'tplA';const s=$('#g_tpl');if(s) s.value=g.tpl}}}
 });
 document.addEventListener('toggle',e=>{if(e.target&&e.target.id==='qd') S.qOpen=e.target.open},true);
@@ -1282,13 +1286,19 @@ async function ensureV26(){
       const nx={...a,stats};await db.collection('kit').doc('audience').set(nx);local('kit','audience',nx)}
     lsSet('tllj_seed_v26','1');render()}catch(e){}
 }
+async function ensureV28(){
+  if(!db||!EDIT||lsGet('tllj_seed_v28')||!S.pipe.length) return;
+  const M=[["decisions", "d1", "decision", "Rate card prices", "Package prices, add-ons and the production rule"], ["decisions", "d1", "proposed", "Fatimah confirms each card price. She approves the package prices, the add-ons and the rule that production is quoted to brief at cost plus 10%.", "Fatimah approves the package prices, the three add-ons, the 10% production rule and the Content Partner retainer."], ["decisions", "d1", "why", "No proposal can quote a figure until prices are confirmed. The card prices are Fatimah's; the package and add-on prices are built from them (see How the prices are built in the Proposal Kit).", "The card prices are Fatimah's own and are already in the Proposal Kit. The package and add-on prices are built from them (see How the prices are built). Production is quoted to brief at cost plus 10%."], ["decisions", "d11", "proposed", "Fatimah reviews the sponsor list, the rate card and these decisions.", "Fatimah reviews the sponsor list, the package prices and these decisions."], ["decisions", "d11", "why", "Nothing goes to a sponsor until Fatimah has approved the sponsor list, the rate card and the proposed answers above.", "Nothing goes to a sponsor until Fatimah has approved the sponsor list, the package prices and the proposed answers above."], ["decisions", "d12", "proposed", "1. Which three pieces had the most views? 2. What do reels reach on average? 3. Approve the add-ons, the 10% production rule and the Content Partner retainer. 4. Confirm that every placement is posted as a collaboration with the sponsor's page.", "1. Which three pieces had the most views? 2. What do reels reach on average? 3. Confirm that every placement is posted as a collaboration with the sponsor's page."], ["tasks", "t01", "action", "Get Fatimah's approval of the sponsor list, the rate card prices (including the package prices and add-ons) and the decisions in the Decisions tab. Meeting: Tue 3 Nov.", "Get Fatimah's approval of the sponsor list, the package prices and add-ons, and the decisions in the Decisions tab. Meeting: Tue 3 Nov."]];
+  try{for(const [c,id,f,o,nv] of M){const x=get(c,id);if(x&&x[f]===o){const nx={...x,[f]:nv};await db.collection(c).doc(id).set(nx);local(c,id,nx)}}
+    lsSet('tllj_seed_v28','1');render()}catch(e){}
+}
 async function fixWording(){
   if(!db||!EDIT) return;
   let n=0;
   for(const col of ['tasks','pipe','decisions','events','contacts']){
     for(const d of S[col]){
       let nd=null;
-      for(const k of Object.keys(d)){const v=d[k];if(typeof v!=='string') continue;let nv=v;for(const [a,b] of TEXTFIX) nv=nv.split(a).join(b);if(nv!==v){nd=nd||{...d};nd[k]=nv}}
+      for(const k of Object.keys(d)){const v=d[k];if(typeof v!=='string') continue;let nv=v;for(const [a,b] of TEXTFIX){if(b.includes(a)){const tail=b.slice(b.indexOf(a)+a.length);if(tail.length>8) while(nv.includes(tail+tail)) nv=nv.split(tail+tail).join(tail);if(nv.includes(b)) continue}nv=nv.split(a).join(b)}if(nv!==v){nd=nd||{...d};nd[k]=nv}}
       if(nd){try{await db.collection(col).doc(d.id).set(nd);local(col,d.id,nd);n++}catch(e){return}}
     }
   }
@@ -1437,7 +1447,7 @@ async function startApp(env){
   $('#signout').hidden=!env.auth;
   render();
   if(!db) return;
-  for(const c of COLS){db.collection(c).onSnapshot(s=>{S[c]=s.docs.map(d=>({...d.data(),id:d.id}));S.loaded[c]=true;softRender();if(EDIT&&!S.fixed&&['tasks','pipe','decisions','kit','evsug','activity'].every(k=>S.loaded[k])&&S.pipe.length){S.fixed=true;fixWording().then(()=>ensureRecords()).then(()=>ensureFocus()).then(()=>ensureFiles()).then(()=>ensureGov()).then(()=>ensureNoAlcohol()).then(()=>ensureAudience()).then(()=>ensureRates()).then(()=>ensureV25()).then(()=>ensureV26()).then(()=>ensureV27()).then(()=>{pruneActivity();return dailyEvents()})}},e=>toast('Could not load '+c+': '+(e.code||e.message||'')))}
+  for(const c of COLS){db.collection(c).onSnapshot(s=>{S[c]=s.docs.map(d=>({...d.data(),id:d.id}));S.loaded[c]=true;softRender();if(EDIT&&!S.fixed&&['tasks','pipe','decisions','kit','evsug','activity'].every(k=>S.loaded[k])&&S.pipe.length){S.fixed=true;fixWording().then(()=>ensureRecords()).then(()=>ensureFocus()).then(()=>ensureFiles()).then(()=>ensureGov()).then(()=>ensureNoAlcohol()).then(()=>ensureAudience()).then(()=>ensureRates()).then(()=>ensureV25()).then(()=>ensureV26()).then(()=>ensureV27()).then(()=>ensureV28()).then(()=>{pruneActivity();return dailyEvents()})}},e=>toast('Could not load '+c+': '+(e.code||e.message||'')))}
 }
 function lsGet(k){try{return localStorage.getItem(k)||''}catch(e){return ''}}
 function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
