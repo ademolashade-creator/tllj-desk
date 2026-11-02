@@ -74,3 +74,12 @@ TLLJ does not work with alcohol, tobacco or gambling brands, or alcohol-led even
 ## Attaching files to a sponsor
 
 The "Sponsor in focus" section on Today has a file box for each sponsor. Files go into the same database as everything else, so there is nothing to set up and no card is needed. Each file can be up to 700 KB (a PDF or Word dossier is usually well under that). Only editors can upload and remove. Everyone with access can download.
+
+## Create a proposal, export and check-ins
+
+- **Create a proposal** (top of the Proposal Kit): choose the sponsor and a template, tick what they are buying, add the production cost if there is one, and press Generate proposal. The sponsor's name, contact, audience figures, price lines and all terms are filled in; anything still in [brackets] is listed. Fill the rest with Tilly, save the result to the sponsor or save it as a new template. From a sponsor, press Create a full proposal.
+- **Export**: the Export button in the top bar downloads every tab as one Excel file (one sheet per tab) or one CSV.
+- **Suggested next steps** can be dismissed one by one with the × or all at once. Show dismissed again brings them back.
+- **Next target**: set how long it runs in days, weeks or months.
+- **Daily check-in** (Ask Tilly) writes a short note for Fatimah. **Follow-ups** have a What to say button, and reminders also announce follow-ups due in the next two days.
+- **Activity** now shows sponsor work only: emails sent, replies, calls, proposals, stage moves and which live conversations have gone quiet.
