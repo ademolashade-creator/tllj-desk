@@ -15,7 +15,7 @@
 <dialog id="dlg"></dialog><dialog id="dlg2"></dialog>
 <div id="toast" class="toast" hidden></div>
 <script>
-let END='2026-12-07', START='2026-10-27';
+let END='2026-12-14', START='2026-11-02';
 const STATUSES=['Not started','Finding the contact','Contact found','First message sent','In conversation','Proposal sent','Negotiating','Agreed','Declined','On hold'];
 const ACTIVE=['First message sent','In conversation','Proposal sent','Negotiating','Agreed'];
 const LIVE=['In conversation','Proposal sent','Negotiating'];
@@ -31,7 +31,7 @@ const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+Stri
 let TODAY=iso(new Date());
 const dd=(a,b)=>Math.round((pd(b)-pd(a))/864e5);
 const DL=()=>pd(END).toLocaleDateString('en-GB',{day:'numeric',month:'long'}),DS=()=>pd(END).toLocaleDateString('en-GB',{day:'numeric',month:'short'});
-const TG0={label:'one partnership',goal:1,date:'2026-12-07',start:'2026-10-27',history:[]};
+const TG0={label:'one partnership',goal:1,date:'2026-12-14',start:'2026-11-02',history:[]};
 const tgt=()=>({...TG0,...(get('kit','target')||{})});
 function applyTarget(){const t=tgt();if(/^\d{4}-\d\d-\d\d$/.test(t.date)) END=t.date;if(/^\d{4}-\d\d-\d\d$/.test(t.start)) START=t.start}
 const addDays=(s,n)=>{const d=pd(s);d.setDate(d.getDate()+n);return iso(d)};
@@ -232,12 +232,14 @@ function vToday0(){
 }
 
 function vRoadmap(){
+  const early=[...S.tasks.filter(t=>!t.done&&t.due).map(t=>t.due),...S.pipe.filter(p=>p.nextDate&&!['Agreed','Declined'].includes(p.status)).map(p=>p.nextDate),...S.events.filter(e=>e.end>=addDays(START,-28)).map(e=>e.start)].filter(d=>/^\d{4}-\d\d-\d\d$/.test(d||'')&&d<START&&d>=addDays(START,-28)).sort()[0];
+  const GS=early?addDays(early,-((pd(early).getDay()+6)%7)):START;
   const lastD=[END,...S.tasks.map(t=>t.due),...S.events.map(e=>e.end),...S.pipe.map(p=>p.nextDate)].filter(x=>/^\d{4}-\d\d-\d\d$/.test(x||'')).reduce((a,b)=>a>b?a:b);
-  const N=Math.min(182,Math.max(42,Math.ceil((dd(START,lastD)+8)/7)*7)),NW=N/7;
-  const days=[...Array(N)].map((_,i)=>addDays(START,i));
-  const col=s=>Math.min(N,Math.max(1,dd(START,s)+1));
+  const N=Math.min(182,Math.max(42,Math.ceil((dd(GS,lastD)+8)/7)*7)),NW=N/7;
+  const days=[...Array(N)].map((_,i)=>addDays(GS,i));
+  const col=s=>Math.min(N,Math.max(1,dd(GS,s)+1));
   const weeks=[...new Set(S.tasks.map(t=>t.week))];
-  const tl=dd(START,TODAY);
+  const tl=dd(GS,TODAY);
   const head=`<div class="rmh"><div></div>${[...Array(NW).keys()].map(i=>`<div class="wk">Week ${i+1} · ${fmt(days[i*7]).replace(/^\w+ /,'')}</div>`).join('')}</div><div class="rmh"><div></div>${days.map(d=>`<div>${pd(d).getDate()}</div>`).join('')}</div>`;
   const evRows=S.events.slice().sort((a,b)=>a.start<b.start?-1:1).map(e=>`<div class="rmr"><div class="lab">${esc(e.name)}</div><div class="cell"><button class="bar" data-act="edit" data-col="events" data-id="${e.id}" style="grid-column:${col(e.start)}/${Math.min(N,col(e.end))+1}" title="${esc(e.name)}">${esc(e.name)}</button></div></div>`).join('');
   const wkRows=weeks.map(w=>{const ts=S.tasks.filter(t=>t.week===w);return `<div class="rmr"><div class="lab"><b>${esc(w)}</b></div><div class="cell">${ts.filter(t=>t.due).map(t=>`<button class="dot ${t.done?'done':t.due<TODAY?'late':''}" style="grid-column:${col(t.due)}" data-act="edit" data-col="tasks" data-id="${t.id}" title="${esc(fmt(t.due))}: ${esc(t.action)}" aria-label="${esc(t.action)}"></button>`).join('')}</div></div>`}).join('');
@@ -468,7 +470,7 @@ async function propose(){
   const dlgMode=S.ai.pre==='d';S.ai.pre='';const txt=$(dlgMode?'#dpaste':'#paste').value.trim();if(!dlgMode) S.ai.paste=txt;if(!txt){toast('Paste a message first');return}
   const box=$(dlgMode?'#dprops':'#props');box.textContent='Reading…';
   try{
-    const r=await aiJson(STYLE+'\nRead MESSAGE and propose updates to DATA. Return JSON only: {"summary":"one sentence","pipe":[{"id":"","status":"","next":"","nextDate":"YYYY-MM-DD","notes":""}],"log":[{"pipeId":"","type":"Email sent|Email received|Call|Meeting|Note","date":"YYYY-MM-DD","summary":""}],"contacts":[{"pipeId":"","name":"","role":"","email":"","phone":""}],"steps":[{"id":"","done":true,"due":"YYYY-MM-DD","action":""}],"newSteps":[{"action":"","due":"YYYY-MM-DD","owner":"Sade|Fatimah|Both"}],"events":[{"id":"existing id or empty for new","name":"","start":"YYYY-MM-DD","end":"YYYY-MM-DD","where":"","status":"","note":"","remove":false}],"deals":[{"pipeId":"","deliverables":"","publishDate":"YYYY-MM-DD","amount":"","invoice":"Not invoiced|Invoiced|Paid","renewal":"YYYY-MM-DD"}]}. Use only ids present in DATA. Status must be one of: '+STATUSES.join(', ')+'. Include only fields the message supports. Dates come from the message or today ('+TODAY+'). Copy emails and phone numbers exactly as written.\nMESSAGE: '+txt+'\nDATA: '+ctx());
+    const r=await aiJson(STYLE+'\nRead MESSAGE and propose updates to DATA. Return JSON only: {"summary":"one sentence","pipe":[{"id":"","status":"","next":"","nextDate":"YYYY-MM-DD","notes":""}],"log":[{"pipeId":"","type":"Email sent|Email received|Call|Meeting|Note","date":"YYYY-MM-DD","summary":""}],"contacts":[{"pipeId":"","name":"","role":"","email":"","phone":""}],"steps":[{"id":"","done":true,"due":"YYYY-MM-DD","action":""}],"newSteps":[{"action":"","due":"YYYY-MM-DD","owner":"Sade|Fatimah|Both"}],"events":[{"id":"existing id or empty for new","name":"","start":"YYYY-MM-DD","end":"YYYY-MM-DD","where":"","status":"","note":"","remove":false}],"notes":[{"text":"a short past-tense line for anything done that fits nothing else above, such as attending an event or a call not tied to one sponsor","date":"YYYY-MM-DD"}],"deals":[{"pipeId":"","deliverables":"","publishDate":"YYYY-MM-DD","amount":"","invoice":"Not invoiced|Invoiced|Paid","renewal":"YYYY-MM-DD"}]}. Use only ids present in DATA. Status must be one of: '+STATUSES.join(', ')+'. Include only fields the message supports. Dates come from the message or today ('+TODAY+'). Copy emails and phone numbers exactly as written.\nMESSAGE: '+txt+'\nDATA: '+ctx());
     S.ai.prop=r;const nm=id=>(get('pipe',id)||{}).group;let h=`<div class="meta"><b>${esc(r.summary||'')}</b></div>`;
     h+=(r.pipe||[]).filter(x=>nm(x.id)).map(x=>`<div class="item"><span></span><div><b>${esc(nm(x.id))}</b><div class="meta">${x.status?`Status: ${esc(x.status)} · `:''}${x.nextDate?`Next: ${esc(fmt(x.nextDate))} · `:''}${esc(x.next||'')} ${esc(x.notes||'')}</div></div></div>`).join('');
     h+=(r.log||[]).filter(x=>nm(x.pipeId)).map(x=>`<div class="item"><span></span><div><b>Log: ${esc(nm(x.pipeId))}</b><div class="meta">${esc(x.type)} · ${esc(fmt(x.date))} · ${esc(x.summary||'')}</div></div></div>`).join('');
@@ -477,12 +479,14 @@ async function propose(){
     h+=(r.newSteps||[]).map(x=>`<div class="item"><span></span><div>New step: ${esc(x.action)} (${esc(fmt(x.due))})</div></div>`).join('');
     h+=(r.events||[]).map(x=>{const ex=get('events',x.id);return `<div class="item"><span></span><div><b>${x.remove?'Remove event: ':ex?'Change event: ':'New event: '}${esc(x.name||(ex&&ex.name)||'')}</b><div class="meta">${x.start?esc(fmt(x.start)):''}${x.end?' to '+esc(fmt(x.end)):''} ${esc(x.where||'')} ${esc(x.status||'')} ${esc(x.note||'')}</div></div></div>`}).join('');
     h+=(r.deals||[]).filter(x=>nm(x.pipeId)).map(x=>`<div class="item"><span></span><div><b>Deal: ${esc(nm(x.pipeId))}</b><div class="meta">${esc([x.deliverables,x.publishDate,x.amount,x.invoice,x.renewal].filter(Boolean).join(' · '))}</div></div></div>`).join('');
+    h+=(r.notes||[]).filter(x=>x&&x.text).map(x=>`<div class="item"><span></span><div><b>Noted for the report</b><div class="meta">${esc(x.text)}</div></div></div>`).join('');
     box.innerHTML=h+`<div class="row" style="margin-top:8px"><button class="btn pri" data-act="apply">Apply all changes</button></div>`;
   }catch(e){box.textContent='Tilly could not read that: '+(e.message||e.code)}
 }
 const apply=()=>act('Tilly updates',applyInner);
 async function applyInner(){
   const r=S.ai.prop;if(!r) return;let n=0;
+  for(const x of r.notes||[]){if(x&&x.text&&await addNote(x.text,x.date)) n++}
   for(const x of r.contacts||[]){if(get('pipe',x.pipeId)&&(x.name||x.email||x.phone)&&await addContact(x.pipeId,x)) n++}
   for(const x of r.log||[]){if(get('pipe',x.pipeId)&&await addLog(x.pipeId,x)) n++}
   for(const x of r.pipe||[]){const p=get('pipe',x.id);if(!p) continue;const u={};
@@ -508,6 +512,7 @@ document.addEventListener('click',async e=>{
   if(a==='askq'){await askq();return}
   if(a==='tillytest'){const o=$('#tt');o.textContent='Testing…';try{const t=await aiText('Reply with the single word: ready');o.textContent='Tilly works. Reply: '+t.trim().slice(0,60)}catch(e){o.textContent='Tilly failed: '+(e.message||e)}return}
   if(a==='tgnext'){const T=tgt();const sg=S.pipe.filter(p=>p.status==='Agreed').length;const n={...T,history:[...(T.history||[]),{label:T.label,goal:T.goal,start:T.start,date:T.date,signed:sg}],start:TODAY,date:addDays(TODAY,42)};await act('Start next target',()=>save('kit','target',n));render();toast('New target started. Edit the label and number if needed.');return}
+  if(a==='addnote'){const v=$('#nt_in').value.trim();if(!v){toast('Type a note first');return}if(await addNote(v)){render();toast('Noted')}return}
   if(a==='fuadd'){await fuPreview();return}
   if(a==='fusave'){await fuSave();return}
   if(a==='fucancel'){S.fu=null;$('#fuprev').innerHTML='';return}
@@ -753,7 +758,7 @@ function vSponsors0(){
 const NAMEKEY={pipe:'group',tasks:'action',events:'name',contacts:'name',decisions:'decision',kit:'title',prep:'text'};
 const FRIENDLY={pipe:'Sponsor',tasks:'Plan step',events:'Event',contacts:'Contact',decisions:'Decision',kit:'Proposal Kit',prep:'Event prep',deals:'Deal',log:'Outreach log'};
 const shortV=v=>{v=v==null||v===''?'blank':String(v);return v.length>48?v.slice(0,48)+'…':v};
-function nameOfRec(col,r){if(!r) return '';if(col==='log'||col==='deals'){const p=get('pipe',r.pipeId);return (p?p.group+': ':'')+(col==='log'?(r.type+' '+(r.summary||'')).trim():'Deal tracker')}if(col==='contacts'&&!r.name&&r.email) return r.email;return shortV(r[NAMEKEY[col]]||r.id)}
+function nameOfRec(col,r){if(!r) return '';if(col==='kit'&&r.type==='followup') return shortV(r.text);if(col==='log'||col==='deals'){const p=get('pipe',r.pipeId);return (p?p.group+': ':'')+(col==='log'?(r.type+' '+(r.summary||'')).trim():'Deal tracker')}if(col==='contacts'&&!r.name&&r.email) return r.email;return shortV(r[NAMEKEY[col]]||r.id)}
 function diffOf(col,prev,now){
   if(!prev&&now) return 'added';if(prev&&!now) return 'removed';
   const skip=new Set(['id','checks','n','rows','items','body']);const out=[];
@@ -764,13 +769,19 @@ function diffOf(col,prev,now){
   if(JSON.stringify(prev.checks)!==JSON.stringify(now.checks)&&now.checks) out.push('proposal checklist updated');
   return out.slice(0,4).join('; ')||'edited';
 }
+async function addNote(text,date){
+  if(!db||!EDIT){toast('Saving is not available in this view.');return false}
+  const d=/^\d{4}-\d\d-\d\d$/.test(date||'')&&date<=TODAY?date:TODAY,at=d===TODAY?new Date().toISOString():new Date(d+'T12:00:00').toISOString();
+  const doc={id:uid('a'),at,label:'Note',by:window.TLLJ_USER||'You',changes:[{col:'note',kind:'Note',name:String(text).slice(0,200),what:'noted'}],count:1};
+  try{await db.collection('activity').doc(doc.id).set(doc);local('activity',doc.id,doc);return true}catch(e){toast('Not saved: '+(e.message||''));return false}
+}
 function recordActivity(label,items){
   if(!db||!EDIT) return;
   if(/^(Reopen step|Proposal checklist|Prep item|Add prep|Remove prep)/.test(label)) return;
   try{
     const seen=new Set(),ch=[];
     items.forEach(it=>{const k=it.col+'/'+it.id;if(seen.has(k)||['activity','evsug'].includes(it.col)) return;seen.add(k);const now=get(it.col,it.id);
-      ch.push({col:it.col,kind:FRIENDLY[it.col]||it.col,name:nameOfRec(it.col,now||it.prev),what:diffOf(it.col,it.prev,now)})});
+      ch.push({col:it.col,kind:(it.col==='kit'&&((now||it.prev)||{}).type==='followup')?'Follow-up':(FRIENDLY[it.col]||it.col),name:nameOfRec(it.col,now||it.prev),what:diffOf(it.col,it.prev,now)})});
     if(items.length&&(!ch.length||ch.every(c=>c.what==='proposal checklist updated'))) return;
     const last=S.activity.slice().sort((a,b)=>a.at<b.at?1:-1)[0];
     if(last&&last.label===label&&Date.now()-new Date(last.at)<60000&&last.changes[0]&&ch[0]&&last.changes[0].name===ch[0].name) return;
@@ -793,10 +804,11 @@ function reportText(since){
   const evs=ch.filter(c=>c.col==='events').map(c=>c.name);
   const cons=ch.filter(c=>c.col==='contacts'&&c.what==='added').map(c=>c.name);
   const adds=ch.filter(c=>c.what==='added'&&['pipe','tasks','events','prep'].includes(c.col)).map(c=>c.kind+': '+c.name);
+  const fdone=ch.filter(c=>c.kind==='Follow-up'&&/done: [^;]*→ true/.test(c.what)).map(c=>c.name),fset=ch.filter(c=>c.kind==='Follow-up'&&c.what==='added').map(c=>c.name),noted=ch.filter(c=>c.col==='note').map(c=>c.name);
   const uniq=x=>[...new Set(x)];const sec=(t,x)=>{x=uniq(x);if(x.length){L.push('');L.push(t+' ('+x.length+')');x.forEach(y=>L.push('- '+y))}};
   L.push('Check-out report: '+(since===TODAY?fmt(TODAY):fmt(since)+' to '+fmt(TODAY)));
   L.push(a.length+' recorded actions.');
-  sec('Sponsors moved',status);sec('Outreach logged',sent);sec('Contacts added',cons);sec('Plan steps completed',done);sec('Decisions answered',decs);sec('Events updated',evs);sec('Added to the plan',adds);
+  sec('Sponsors moved',status);sec('Outreach logged',sent);sec('Contacts added',cons);sec('Plan steps completed',done);sec('Decisions answered',decs);sec('Events updated',evs);sec('Added to the plan',adds);sec('Follow-ups completed',fdone);sec('Follow-ups set',fset);sec('Also done (noted)',noted);
   const od=S.tasks.filter(t=>!t.done&&t.due&&t.due<TODAY).length,nx=S.tasks.filter(t=>!t.done&&t.due&&t.due>=TODAY&&t.due<=addDays(TODAY,7)).sort(byDue).slice(0,5);
   L.push('');L.push('Where things stand');L.push('- '+dd(TODAY,END)+' days to '+DL()+'. '+(n=>n+' live conversation'+(n===1?'':'s'))(S.pipe.filter(p=>LIVE.includes(p.status)).length)+', '+S.pipe.filter(p=>p.status==='Agreed').length+' agreed.');
   L.push('- '+od+' plan step'+(od===1?'':'s')+' overdue.');
@@ -807,7 +819,8 @@ function vActivity(){
   const per=S.ap||'Last 7 days',since=per==='Today'?TODAY:per==='Last 7 days'?addDays(TODAY,-6):per==='Last 30 days'?addDays(TODAY,-29):'2000-01-01';
   const all=activityIn(since),lim=S.alim||120,list=all.slice(0,lim),days=[...new Set(list.map(a=>fromAt(a.at)))];
   const entry=a=>`<div class="item" style="grid-template-columns:52px minmax(0,1fr)"><span class="meta" style="margin:0">${new Date(a.at).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</span><div><b>${esc(a.label)}</b>${a.changes.map(c=>`<div class="meta"><span>${esc(c.kind)}: ${esc(c.name)}</span><span>${esc(c.what)}</span></div>`).join('')}</div></div>`;
-  return `<section class="box"><h2>Check-out report <small>for Fatimah</small></h2><p class="meta">Built from what the log recorded for the period chosen below. It uses recorded facts only.</p>
+  return `${EDIT?`<section class="box"><h2>Note something done outside the app</h2><p class="meta">A call, an event, a message sent elsewhere. It goes into the check-out report. You can also tell Tilly in Ask Tilly.</p><div class="row"><input type="text" id="nt_in" placeholder="For example: attended the I.AM.ISIGO show and interviewed Bubu Ogisi" style="flex:1;min-width:200px" aria-label="Note"><button class="btn pri" data-act="addnote">Add</button></div></section>`:''}
+  <section class="box"><h2>Check-out report <small>for Fatimah</small></h2><p class="meta">Built from what the log recorded for the period chosen below. It uses recorded facts only.</p>
    <div class="row"><button class="btn pri" data-act="repmake">Build the report</button><button class="btn" data-act="repai">Write it up with Tilly</button><button class="btn" data-act="copy" data-t="rep">Copy</button></div>
    <textarea id="rep" style="min-height:260px;margin-top:8px" placeholder="Choose a period, then build the report.">${esc(S.rep||'')}</textarea></section>
   <div class="filters"><select id="ap" aria-label="Period">${['Today','Last 7 days','Last 30 days','All'].map(o=>`<option ${o===per?'selected':''}>${o}</option>`).join('')}</select><span class="meta" style="align-self:center">${all.length} recorded action${all.length===1?'':'s'}. Only real changes are recorded, not ticks. Entries older than 120 days are cleared automatically.</span></div>
