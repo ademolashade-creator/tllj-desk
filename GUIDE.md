@@ -30,7 +30,7 @@ You will do four things: set up Firebase (database and sign-in), edit two small 
 16. Open your site and click **Sign in with Google**.
 17. On the "No data yet" screen choose `seed.json` (on your computer, kept out of GitHub). Wait for "records loaded".
 18. Go to https://aistudio.google.com/apikey and create a key. In the app click **Settings**, paste the key and save. It stays in that browser only. Do this on each device you use.
-19. Check the model name in Settings against the models listed in Google AI Studio. I could not verify `gemini-2.5-flash` from here, so change it if Google lists another.
+19. Check the model name in Settings against the models listed in Google AI Studio. I could not verify `gemini-3.8-flash` from here, so change it if Google lists another.
 
 ## If something goes wrong
 - **"Could not load ..."**: the rules were not published, or your email is not in them (step 11).
@@ -53,3 +53,24 @@ Open `firebase-config.js`. Three lists decide what each person can do:
 - `viewers`: Today, Scoreboard, Decisions and Suggestions only.
 
 Put Fatimah's Google email in `contributors`. Then open `firestore.rules` and replace `PASTE_FATIMAH_EMAIL@gmail.com` with the same email, copy the whole file into Firestore Database, Rules tab, and click Publish. If you use `viewers`, replace `PASTE_VIEWER_EMAIL@gmail.com` the same way.
+
+## Optional: a Groq key for higher free limits
+1. Go to console.groq.com, sign in, open API Keys and create a key.
+2. In the app, open Settings and paste it into "Groq API key". Leave the model blank. Save.
+3. Briefs, drafts, pasted updates and questions now use Groq. Anything with "search the web" ticked, and the event and contact finders, still use Gemini. If Groq is busy, Tilly tries Gemini.
+
+## Audience and terms (Proposal Kit tab)
+
+The Audience box holds the figures and named followers sponsors are told about, and the Terms box holds the payment, cancellation and usage terms. Edit either one and Tilly uses the new wording in every draft. Paste more followers into the Audience box and use Sort with Tilly to keep only organisations and stated roles.
+
+## Prices and the quote builder (Proposal Kit tab)
+
+Placement prices are Fatimah's card prices. Package prices are "from" prices: the card prices of what the package contains, plus any add-on, plus 10%, rounded to ₦5,000. Production (photographers, videographers, sound, equipment, travel) is quoted to brief at cost plus 10%, so those rows carry no number. How the prices are built explains the rule in plain words. The Quote builder adds up quantities, the production cost and the 10% production fee, before VAT and withholding tax, and copies the result. Tilly quotes only prices from the rate card.
+
+## Who we do not approach
+
+TLLJ does not work with alcohol, tobacco or gambling brands, or alcohol-led events, so none are on the sponsor list. Tilly will not suggest them either.
+
+## Attaching files to a sponsor
+
+The "Sponsor in focus" section on Today has a file box for each sponsor. Files go into the same database as everything else, so there is nothing to set up and no card is needed. Each file can be up to 700 KB (a PDF or Word dossier is usually well under that). Only editors can upload and remove. Everyone with access can download.
