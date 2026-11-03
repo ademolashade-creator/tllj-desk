@@ -125,3 +125,10 @@ Use the toggle above the tabs to switch between Sponsorships and Partnerships. T
 - **Partner packages:** type or pick from the list. Picking a rate-card package fills in what it includes. When a package is ticked delivered, an "Add the link" button logs the coverage.
 - **Pitch pack and Coverage report** (Review and Coverage tabs): open the print window and choose Save as PDF. Internal notes are never printed.
 - **Decisions:** archive single decisions or all answered ones; show archived to restore.
+
+## Version 35: times, places, tabs
+- **Times.** Events have a start and an end time. Partner and sponsor next steps, follow-ups and packages each have an optional time beside the date. Times show wherever the date shows, in Next moves, the weekly review and the calendar file. A dated item with a time lands in your calendar at that time with a 30-minute reminder. Without a time it stays an all-day entry.
+- **Places.** Open the Events tab and scroll to Places. A place is added when you save an event with a place. It is also suggested when you type a place on the next event. Mark each place Invited, Going, Been or Considering, add the area and a note. Search finds places too.
+- **Tabs.** The tabs are centred with a soft pill around each one. The current tab is filled.
+- **Pasting an email.** The preview now has a time box beside the date. It fills in when the email gives a time.
+- **Added from your emails.** ART X: the Tokini slot on Sat 7 Nov (3pm to 4pm, 20 minutes) is the next step, and the Das or Fall interview is noted as pending. Affinity Gallery is a new partner with the materials marked received, an Affinity Gallery exhibition event (5 Nov to 31 Dec) and a place.

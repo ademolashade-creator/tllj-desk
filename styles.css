@@ -258,3 +258,18 @@ nav button,nav button:hover{padding:10px 7px;font-size:13px}
 .pdh{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #630551;padding-bottom:10px;margin-bottom:16px}.pdb{font-size:22px;color:#630551}.pds{color:#666;font-size:11px}.pdt{color:#7A5C1E;font-size:13px;text-align:right}
 #printdoc h3{color:#630551;font-size:15px;margin:18px 0 6px;border-bottom:1px solid #d9c9d5;padding-bottom:3px}.pdtb{width:100%;border-collapse:collapse}.pdtb td{padding:6px 8px 6px 0;vertical-align:top;border-bottom:1px solid #eee}.pdtb td span{color:#666;font-size:11px;word-break:break-all}
 .pdl{font-size:13px}.pdf{margin-top:24px;padding-top:8px;border-top:1px solid #d9c9d5;color:#666;font-size:11px}}
+
+/* v35: centred pill tabs, time inputs, places */
+nav{justify-content:flex-start;gap:2px;padding:2px 0}
+nav button:first-child{margin-left:auto}nav button:last-child{margin-right:auto}
+nav button,nav button:hover{padding:6px 7px;font-size:13px;border:1px solid var(--line);border-radius:99px;background:transparent;font-weight:500;transition:background .15s,border-color .15s,color .15s}
+@media(min-width:1100px){nav button{padding:6px 7px}}
+nav button:hover{background:var(--gold-soft);border-color:var(--gold);color:var(--accent)}
+nav button[aria-current="true"],nav button[aria-current="true"]:hover{background:var(--soft);border-color:var(--gold);color:var(--accent)}
+.dtp{display:flex;gap:6px;align-items:center}.dtp input{min-width:0}.dtp input[type=time]{width:112px;flex:none}
+input[type=time]{font:14px var(--sans);background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:9px 10px;max-width:100%}
+.fu2 .fact input[type=time]{padding:7px 8px;font-size:13px}
+.dtp input[type=time]{width:118px}
+.pkgrid>*{min-width:0}.pkf{flex-wrap:wrap}.pkf .dtp{flex:1;min-width:0}.pkf .dtp input[type=date]{width:100%;min-width:0;flex:1}.pkf .dtp input[type=time]{width:122px;flex:none}
+.plr{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:8px;background:var(--surface);display:grid;gap:6px}
+.plh{display:flex;gap:8px;align-items:center}.plh .ghost{flex:1;font-weight:600}.plh select{width:auto}

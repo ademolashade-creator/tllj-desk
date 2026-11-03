@@ -108,11 +108,11 @@ function taskItem(t){
 }
 function pipeItem(p){
   const late=p.nextDate&&p.nextDate<TODAY;
-  return `<div class="item"><span></span><div><div class="t" data-act="edit" data-col="pipe" data-id="${p.id}"><b>${esc(p.group)}</b>: ${esc(p.next)}</div><div class="meta"><span class="pill ${late?'warn':'gold'}">${esc(fmt(p.nextDate))}${p.nextDate?' · '+rel(p.nextDate):''}</span><span>${esc(p.owner)}</span><span>${esc(p.status)}</span></div></div></div>`;
+  return `<div class="item"><span></span><div><div class="t" data-act="edit" data-col="pipe" data-id="${p.id}"><b>${esc(p.group)}</b>: ${esc(p.next)}</div><div class="meta"><span class="pill ${late?'warn':'gold'}">${esc(dtx(p.nextDate,p.nextTime))}${p.nextDate?' · '+rel(p.nextDate):''}</span><span>${esc(p.owner)}</span><span>${esc(p.status)}</span></div></div></div>`;
 }
 function evRow(e){
   const live=e.start<=TODAY&&e.end>=TODAY,pr=S.prep.filter(x=>x.eventId===e.id),dn=pr.filter(x=>x.done).length;
-  return `<div class="ev" data-act="edit" data-col="events" data-id="${e.id}"><b>${esc(e.name)}</b><div class="meta"><span class="pill ${live?'ok':''}">${live?'On now':fmt(e.start)+' · '+rel(e.start)}</span><span>${esc(fmt(e.start))} to ${esc(fmt(e.end))}</span><span>${esc(e.where)}</span></div><div class="meta">${esc(e.status||'')}</div>${EDIT?`<div class="meta"><button class="btn sm" data-act="prepopen" data-id="${e.id}">Prep ${pr.length?dn+'/'+pr.length:''}</button></div>`:''}</div>`;
+  return `<div class="ev" data-act="edit" data-col="events" data-id="${e.id}"><b>${esc(e.name)}</b><div class="meta"><span class="pill ${live?'ok':''}">${live?'On now':fmt(e.start)+' · '+rel(e.start)}</span><span>${esc(evDates(e))}</span><span>${esc(e.where)}</span></div><div class="meta">${esc(e.status||'')}</div>${EDIT?`<div class="meta"><button class="btn sm" data-act="prepopen" data-id="${e.id}">Prep ${pr.length?dn+'/'+pr.length:''}</button></div>`:''}</div>`;
 }
 const SUGX=()=>{try{return new Set(JSON.parse(lsGet('tllj_sugx')||'[]'))}catch(e){return new Set()}};
 function sugItem(s,i,k){
@@ -164,7 +164,7 @@ function fuRow(f,short){
   return `<div class="fu2 ${cls}"><div class="fdate"><b>${dt.getDate()}</b><span>${MON3[dt.getMonth()]}</span></div><div class="fbody">
   <input type="text" class="ghost" data-fu="${f.id}" data-k="text" value="${esc(f.text)}" aria-label="Follow-up" style="width:100%;font-weight:600">
   <div class="meta" style="align-items:center">${fuTag(f)}${p?`<span class="pill ok" data-act="${p._pt?'openpt':'opensp'}" data-id="${p.id}" style="cursor:pointer">${esc(p.group)}</span>`:''}${f.who?`<span>${esc(f.who)}</span>`:''}${late&&(+f.repeat||0)>0?`<span>Next reminder ${esc(fmt(fuNext(f)))}</span>`:''}</div>
-  <div class="fact"><button class="btn sm pri" data-act="fudone" data-id="${f.id}">Done</button><button class="btn sm" data-act="fusay" data-id="${f.id}">What to say</button><button class="btn sm" data-act="fusent" data-id="${f.id}">Sent</button><button class="btn sm" data-act="fureply" data-id="${f.id}">Replied</button><button class="btn sm" data-act="funore" data-id="${f.id}">No reply, +3 days</button><input type="date" data-fu="${f.id}" data-k="due" value="${esc(f.due)}" aria-label="Due date" style="width:128px"><select data-fu="${f.id}" data-k="repeat" aria-label="Repeat" style="width:auto">${[[0,'No repeat'],[1,'Every day'],[2,'Every 2 days'],[3,'Every 3 days'],[7,'Every week']].map(([v,l])=>`<option value="${v}" ${(+f.repeat||0)===v?'selected':''}>${l}</option>`).join('')}</select><button class="btn sm del xbtn" data-act="fudel" data-id="${f.id}" aria-label="Remove follow-up" title="Remove">×</button></div><div id="fs_${f.id}"></div></div></div>`;
+  <div class="fact"><button class="btn sm pri" data-act="fudone" data-id="${f.id}">Done</button><button class="btn sm" data-act="fusay" data-id="${f.id}">What to say</button><button class="btn sm" data-act="fusent" data-id="${f.id}">Sent</button><button class="btn sm" data-act="fureply" data-id="${f.id}">Replied</button><button class="btn sm" data-act="funore" data-id="${f.id}">No reply, +3 days</button><input type="date" data-fu="${f.id}" data-k="due" value="${esc(f.due)}" aria-label="Due date" style="width:128px"><input type="time" data-fu="${f.id}" data-k="dueTime" value="${esc(f.dueTime||'')}" aria-label="Due time, optional" style="width:108px"><select data-fu="${f.id}" data-k="repeat" aria-label="Repeat" style="width:auto">${[[0,'No repeat'],[1,'Every day'],[2,'Every 2 days'],[3,'Every 3 days'],[7,'Every week']].map(([v,l])=>`<option value="${v}" ${(+f.repeat||0)===v?'selected':''}>${l}</option>`).join('')}</select><button class="btn sm del xbtn" data-act="fudel" data-id="${f.id}" aria-label="Remove follow-up" title="Remove">×</button></div><div id="fs_${f.id}"></div></div></div>`;
 }
 function vFollow(){
   if(!EDIT) return '';
@@ -317,7 +317,7 @@ function vContacts(){
 
 function vEvents0(){
   const e=S.events.slice().sort((a,b)=>(a.start||'9')<(b.start||'9')?-1:1);
-  return `<div class="row" style="margin-bottom:12px"><button class="btn pri" data-act="new" data-col="events">Add event</button></div><section class="box">${e.map(x=>{const pr=S.prep.filter(q=>q.eventId===x.id);return `<div class="ev" data-act="edit" data-col="events" data-id="${x.id}"><b>${esc(x.name)}</b><div class="meta"><span class="pill ${!x.start||x.end<TODAY?'':x.start<=TODAY?'ok':''}">${!x.start?'Dates to add':x.end<TODAY?'Past':x.start<=TODAY?'On now':rel(x.start)}</span><span>${x.start?esc(fmt(x.start))+' to '+esc(fmt(x.end||x.start)):'No dates yet'}</span><span>${esc(x.where)}</span><span>Who goes: ${esc(x.who)}</span></div><div class="meta">${esc(x.reach||'')}</div><div class="meta"><b>Access:</b> ${esc(x.status||'')}</div><div class="meta">${esc(x.how||'')} ${esc(x.note||'')}</div><div class="meta"><button class="btn sm" data-act="prepopen" data-id="${x.id}">Prep checklist ${pr.length?pr.filter(q=>q.done).length+'/'+pr.length:''}</button><span>Follow-ups due ${x.end?esc(fmt(addDays(x.end,2))):'once the dates are set'}</span></div></div>`}).join('')||'<div class="empty">No events yet. Add the first one.</div>'}</section>`;
+  return `<div class="row" style="margin-bottom:12px"><button class="btn pri" data-act="new" data-col="events">Add event</button></div><section class="box">${e.map(x=>{const pr=S.prep.filter(q=>q.eventId===x.id);return `<div class="ev" data-act="edit" data-col="events" data-id="${x.id}"><b>${esc(x.name)}</b><div class="meta"><span class="pill ${!x.start||x.end<TODAY?'':x.start<=TODAY?'ok':''}">${!x.start?'Dates to add':x.end<TODAY?'Past':x.start<=TODAY?'On now':rel(x.start)}</span><span>${x.start?esc(evDates(x)):'No dates yet'}</span><span>${esc(x.where)}</span><span>Who goes: ${esc(x.who)}</span></div><div class="meta">${esc(x.reach||'')}</div><div class="meta"><b>Access:</b> ${esc(x.status||'')}</div><div class="meta">${esc(x.how||'')} ${esc(x.note||'')}</div><div class="meta"><button class="btn sm" data-act="prepopen" data-id="${x.id}">Prep checklist ${pr.length?pr.filter(q=>q.done).length+'/'+pr.length:''}</button><span>Follow-ups due ${x.end?esc(fmt(addDays(x.end,2))):'once the dates are set'}</span></div></div>`}).join('')||'<div class="empty">No events yet. Add the first one.</div>'}</section>`;
 }
 
 const CHK=['The contact is still in the role.','No other name in the same category has been offered the same slot (see Balance).','The reach figures and the one-line description are approved by Fatimah.','The price comes from the approved rate card.','A sample feature or sample page is attached.','The pipeline shows the owner and the next step.','The story passes the north star with the sponsor taken out.'];
@@ -354,7 +354,7 @@ function sheetsData(){
   O['Sponsors']=gen(S.pipe.slice().sort((a,b)=>(a.n||0)-(b.n||0)),['checks','n']);
   O['Contacts']=gen(S.contacts);
   O['Outreach log']=gen(S.log.slice().sort((a,b)=>a.date<b.date?1:-1));
-  O['Partners']=[['Name','Type','Stage','We give','We get','Event','Event dates','Accreditation','Who attends','Contact','Next step','Next step date','Notes','TLLJ delivered','Partner delivered','Worth to TLLJ (1-5)','Would repeat','Wrapped up on','Packages delivered or received','Outcomes logged']].concat(PTS().map(x=>{const e=ptEv(x),w=x.wrap||{};return [x.name,x.kind,stLabel(x.stage),glTxt(x,'give'),glTxt(x,'get'),e?e.name:'',e?evDates(e):'',x.accred,x.attendees,x.contact,x.next,x.nextDate,x.notes,w.gave,w.got,w.worth,w.again,w.date,(x.pkgs||[]).filter(p=>p.done).length+' of '+(x.pkgs||[]).length,(x.outcomes||[]).length].map(v=>v==null?'':String(v))}));
+  O['Partners']=[['Name','Type','Stage','We give','We get','Event','Event dates','Accreditation','Who attends','Contact','Next step','Next step date','Notes','TLLJ delivered','Partner delivered','Worth to TLLJ (1-5)','Would repeat','Wrapped up on','Packages delivered or received','Outcomes logged']].concat(PTS().map(x=>{const e=ptEv(x),w=x.wrap||{};return [x.name,x.kind,stLabel(x.stage),glTxt(x,'give'),glTxt(x,'get'),e?e.name:'',e?evDates(e):'',x.accred,x.attendees,x.contact,x.next,(x.nextDate||'')+(tm(x.nextTime)?' '+tm(x.nextTime):''),x.notes,w.gave,w.got,w.worth,w.again,w.date,(x.pkgs||[]).filter(p=>p.done).length+' of '+(x.pkgs||[]).length,(x.outcomes||[]).length].map(v=>v==null?'':String(v))}));
   O['Coverage']=[['Title','Link','Where it ran','Published','For','Package delivered','Views or reach','Notes']].concat(covs().map(c=>{const pk=((get('kit',c.pipeId)||{}).pkgs||[]).find(p=>p.id===c.pkgId);return [c.title,c.url,c.where,c.date,linkName(c.pipeId),pk?pk.item:'',c.reach,c.notes].map(v=>v==null?'':String(v))}));
   O['Follow-ups']=gen(S.kit.filter(k=>k.type==='followup'),['type']);
   O['Plan steps']=gen(S.tasks.slice().sort(byDue));
@@ -613,11 +613,11 @@ function vAsk(){
 /* ---------- editing dialogs ---------- */
 const FIELDS={
  tasks:[['action','Action','area'],['week','Week','text'],['target','Target','text'],['owner','Owner','sel:Sade,Fatimah,Both'],['due','Due','date'],['done','Done','sel:No,Yes']],
- events:[['name','Event','text'],['start','Starts','date'],['end','Ends','date'],['where','Where','text'],['who','Who goes','text'],['reach','Sponsors and contacts it reaches','area'],['how','How TLLJ gets in','area'],['status','Access status','text'],['note','Note','area']],
+ events:[['name','Event','text'],['start','Starts','date'],['startTime','Start time (optional)','time'],['end','Ends','date'],['endTime','End time (optional)','time'],['where','Where','place'],['who','Who goes','text'],['reach','Sponsors and contacts it reaches','area'],['how','How TLLJ gets in','area'],['status','Access status','text'],['note','Note','area']],
  pipe:[['group','Sponsor group','text'],['category','Category','text'],['owner','Owner','sel:Sade,Fatimah,Both']]
 };
 function fieldHtml(f,cur){return f.map(([k,l,t])=>{const v=cur[k]==null?'':cur[k];
-  const ctl=t==='area'?`<textarea id="f_${k}">${esc(v)}</textarea>`:t==='date'?`<input type="date" id="f_${k}" value="${esc(v)}">`:t.startsWith('sel:')?`<select id="f_${k}">${t.slice(4).split(',').map(o=>`<option ${o===v?'selected':''}>${esc(o)}</option>`).join('')}</select>`:`<input type="text" id="f_${k}" value="${esc(v)}">`;
+  const ctl=t==='area'?`<textarea id="f_${k}">${esc(v)}</textarea>`:t==='time'?`<input type="time" id="f_${k}" value="${esc(v)}">`:t==='place'?`<input type="text" id="f_${k}" list="plist_dlg" autocomplete="off" value="${esc(v)}">${placeList('plist_dlg')}`:t==='date'?`<input type="date" id="f_${k}" value="${esc(v)}">`:t.startsWith('sel:')?`<select id="f_${k}">${t.slice(4).split(',').map(o=>`<option ${o===v?'selected':''}>${esc(o)}</option>`).join('')}</select>`:`<input type="text" id="f_${k}" value="${esc(v)}">`;
   return `<div class="fld"><label for="f_${k}">${l}</label>${ctl}</div>`}).join('')}
 function openEdit(col,id,full){
   if(!EDIT&&!(CONTRIB&&['pipe','contacts','events'].includes(col))) return;
@@ -634,7 +634,7 @@ function openEdit(col,id,full){
     if(col==='tasks'){o.done=o.done==='Yes';if(isNew){o.dates='';o.goal=''}}
     if(col==='pipe'){const n=Number(o.score);if(isNaN(n)){toast('Score must be a number');return}o.score=n;if(isNew){Object.assign(o,{n:Math.max(0,...S.pipe.map(p=>Number(p.n)||0))+1,status:'Not started',next:'',nextDate:null,notes:'',outcome:''})}}
     if(col==='decisions'){o.n=Number(o.n)||0;if(isNew){Object.assign(o,{answer:'',comment:''})}}
-    let ok=false;ok=await guard(col,old,o,(isNew?'Add ':'Edit ')+(o.name||o.group||o.decision||'step').slice(0,24),async()=>{await save(col,o.id,o)});if(ok){dlg.close();toast('Saved')}};
+    let ok=false;ok=await guard(col,old,o,(isNew?'Add ':'Edit ')+(o.name||o.group||o.decision||'step').slice(0,24),async()=>{await save(col,o.id,o)});if(ok){if(col==='events'&&EDIT) await rememberPlace(o.where,o);dlg.close();toast('Saved')}};
 }
 
 function openSponsor(id,keep){
@@ -648,7 +648,7 @@ function openSponsor(id,keep){
   <div class="meta" style="margin-top:8px"><b>Write to first:</b> ${esc(p.first)}</div><div class="meta"><b>Propose first:</b> ${esc(p.propose)}</div><div class="meta"><b>Why they should care:</b> ${esc(p.why)}</div>
   <form id="frm" class="sec"><div class="g2"><div class="fld"><label for="s_status">Status</label><select id="s_status">${STATUSES.map(o=>`<option ${o===p.status?'selected':''}>${o}</option>`).join('')}</select></div><div class="fld"><label for="s_owner">Owner</label><select id="s_owner">${['Sade','Fatimah','Both'].map(o=>`<option ${o===p.owner?'selected':''}>${o}</option>`).join('')}</select></div></div>
   <div class="fld"><label for="s_next">Next step</label><textarea id="s_next" style="min-height:60px">${esc(p.next)}</textarea></div>
-  <div class="g2"><div class="fld"><label for="s_nd">Next-step date</label><input type="date" id="s_nd" value="${esc(p.nextDate)}"></div><div class="fld"><label for="s_cat">Category</label><input type="text" id="s_cat" value="${esc(p.category)}"></div></div>
+  <div class="g2"><div class="fld"><label for="s_nd">Next-step date and time</label><div class="dtp"><input type="date" id="s_nd" value="${esc(p.nextDate)}"><input type="time" id="s_nt" value="${esc(p.nextTime||'')}" aria-label="Next-step time, optional"></div></div><div class="fld"><label for="s_cat">Category</label><input type="text" id="s_cat" value="${esc(p.category)}"></div></div>
   <div class="fld"><label for="s_notes">Notes</label><textarea id="s_notes" style="min-height:60px">${esc(p.notes)}</textarea></div><div class="fld"><label for="s_out">Outcome or what was agreed</label><textarea id="s_out" style="min-height:60px">${esc(p.outcome)}</textarea></div>
   <div class="row"><button class="btn pri" type="submit">Save</button><button class="btn" type="button" data-act="close">Close</button><button class="btn" type="button" data-act="editfull" data-id="${id}">Edit all details</button>${EDIT?`<button class="btn" type="button" data-act="mvpt" data-id="${id}">Move to Partnerships</button>`:''}${EDIT?`<button class="btn del" type="button" data-act="rmsp" data-id="${id}">Remove sponsor</button>`:''}</div></form>
   ${fuSponsorHtml(id)}
@@ -665,7 +665,7 @@ function openSponsor(id,keep){
   <div class="sec"><h3>Deal</h3>${dl?'<div class="meta">A deal tracker exists. Open the Deals tab.</div>':`<button class="btn" data-act="dealfrom" data-id="${id}">Start deal tracker</button>`}</div>`:''}`;
   dlg.dataset.col='pipe';dlg.dataset.id=id;if(!dlg.open) dlg.showModal();
   $('#frm').onsubmit=async ev=>{ev.preventDefault();
-    const np={status:$('#s_status').value,owner:$('#s_owner').value,next:$('#s_next').value,nextDate:$('#s_nd').value||null,category:$('#s_cat').value,notes:$('#s_notes').value,outcome:$('#s_out').value};
+    const np={status:$('#s_status').value,owner:$('#s_owner').value,next:$('#s_next').value,nextDate:$('#s_nd').value||null,nextTime:$('#s_nt').value||'',category:$('#s_cat').value,notes:$('#s_notes').value,outcome:$('#s_out').value};
     let ok=false;const nw={...p,...np};ok=await guard('pipe',p,nw,'Edit '+p.group.slice(0,24),async()=>{await patch('pipe',id,np);if(EDIT&&np.status==='Agreed'&&!S.deals.some(d=>d.pipeId===id)) await newDeal(id)});
     if(ok){toast('Saved');openSponsor(id,true)}};
 }
@@ -687,7 +687,7 @@ async function addLog(pid,l){const o={id:uid('l'),pipeId:pid,type:l.type,date:dO
 function openPrep(eid){
   const e=get('events',eid);if(!e) return;
   const pr=S.prep.filter(x=>x.eventId===eid),dlg=$('#dlg');
-  dlg.innerHTML=`<h2>${esc(e.name)}: prep</h2><div class="meta">${esc(fmt(e.start))} to ${esc(fmt(e.end))} · follow-ups due ${esc(fmt(addDays(e.end,2)))}</div>
+  dlg.innerHTML=`<h2>${esc(e.name)}: prep</h2><div class="meta">${esc(evDates(e))} · follow-ups due ${esc(fmt(addDays(e.end,2)))}</div>
   ${['Before','During','After'].map(ph=>`<div class="sec"><h3>${ph}</h3>${pr.filter(x=>x.phase===ph).map(x=>`<div class="item"><input type="checkbox" data-act="preptick" data-id="${x.id}" data-e="${eid}" ${x.done?'checked':''} aria-label="Done"><div>${esc(x.text)} <button class="btn sm del" data-act="prepdel" data-id="${x.id}" data-e="${eid}">Remove</button></div></div>`).join('')||'<div class="empty">Nothing yet.</div>'}</div>`).join('')}
   <div class="sec"><div class="g2"><select id="pph" aria-label="Phase"><option>Before</option><option>During</option><option>After</option></select><input type="text" id="ptx" placeholder="Add an item" aria-label="Item"></div><div class="row" style="margin-top:6px"><button class="btn" data-act="prepadd" data-e="${eid}">Add</button><button class="btn" data-act="prepstd" data-e="${eid}">Add standard checklist</button><button class="btn pri" data-act="prepai" data-e="${eid}">Ask Tilly: who to meet and what to ask</button><button class="btn" data-act="close">Close</button></div></div>`;
   dlg.dataset.col='prep';dlg.dataset.id=eid;if(!dlg.open) dlg.showModal();
@@ -706,7 +706,7 @@ function render(){
   renderUndo();
   if(!S.pipe.length&&!S.tasks.length){
     $('#main').innerHTML=`<section class="box"><h2>No data yet</h2><p class="meta">${EDIT?'Choose your seed.json file to load the plan, pipeline and events.':'The plan has not been loaded yet.'}</p>${EDIT?'<input type="file" id="seedfile" accept=".json" aria-label="seed.json">':''}</section>`;return}
-  const f={today:vToday,roadmap:vRoadmap,pipeline:vPipeline,sponsors:vSponsors,balance:vBalance,contacts:vContacts,events:vEvents,kit:vKit,score:vScore,deals:vDeals,decisions:vDecisions,notes:vNotes,activity:vActivity,ask:vAsk,review:vReview,coverage:vCoverage,events:()=>vEvents()+vEvOut(),partners:vPartners,templates:vTemplatesP,wrap:vWrap,...(MODE==='p'?{today:vTodayP,events:vEventsP}:{})}[S.tab];
+  const f={today:vToday,roadmap:vRoadmap,pipeline:vPipeline,sponsors:vSponsors,balance:vBalance,contacts:vContacts,events:vEvents,kit:vKit,score:vScore,deals:vDeals,decisions:vDecisions,notes:vNotes,activity:vActivity,ask:vAsk,review:vReview,coverage:vCoverage,events:()=>vEvents()+vEvOut()+vPlaces(),partners:vPartners,templates:vTemplatesP,wrap:vWrap,...(MODE==='p'?{today:vTodayP,events:()=>vEventsP()+vPlaces()}:{})}[S.tab];
   const main=$('#main'),y=scrollY,fk=focusKey();main.style.minHeight=main.offsetHeight+'px';main.innerHTML=f();{const vk=MODE+S.tab+(S.rv?S.rv.sub:'');if(vk!==S._vk){S._vk=vk;main.classList.remove('rise');void main.offsetWidth;main.classList.add('rise');clearTimeout(S._rt);S._rt=setTimeout(()=>main.classList.remove('rise'),420)}}restoreFocus(fk);scrollTo({top:y,behavior:'instant'});requestAnimationFrame(()=>{main.style.minHeight='';scrollTo({top:y,behavior:'instant'})});
 }
 
@@ -719,7 +719,7 @@ const PTS=()=>S.kit.filter(k=>k.type==='partner');
 const ptr=id=>{const x=id&&get('kit',id);return x&&x.type==='partner'?{id:x.id,group:x.name,_pt:true}:null};
 const linkables=()=>MODE==='p'?PTS().map(x=>({id:x.id,group:x.name})):S.pipe;
 const ptEv=x=>x&&x.eventId?get('events',x.eventId):null;
-const evDates=e=>!e?'':(e.end&&e.end!==e.start)?fmt(e.start)+' to '+fmt(e.end):fmt(e.start);
+const evDates=e=>{if(!e) return '';const m=e.end&&e.end!==e.start,a=tm(e.startTime),b=tm(e.endTime);return (m?fmt(e.start)+' to '+fmt(e.end):fmt(e.start))+(a?', '+(m?'from ':'')+a+(b&&!m?' to '+b:''):'')};
 const stLabel=k=>(PST.find(s=>s[0]===k)||[0,k])[1];
 const lines=t=>String(t||'').split(/\n|;/).map(s=>s.trim()).filter(Boolean);
 const ptCtx=x=>{const e=ptEv(x);return {id:x.id,name:x.name,kind:x.kind,stage:stLabel(x.stage),weGive:glTxt(x,'give'),weGet:glTxt(x,'get'),packages:(x.pkgs||[]).map(p=>({side:p.side==='give'?'TLLJ gives':'TLLJ gets',item:p.item,detail:p.detail,by:p.due,done:!!p.done})),outcomes:(x.outcomes||[]).slice(0,3),coverage:covOf(x.id).map(c=>({title:c.title,where:c.where,date:c.date,link:c.url})),event:e?{name:e.name,start:e.start,end:e.end,where:e.where}:null,accreditation:e?x.accred:'',attending:x.attendees||'',contact:x.contact||'',next:x.next||'',nextDate:x.nextDate||'',notes:x.notes||'',wrapUp:x.wrap||null}};
@@ -735,7 +735,7 @@ function ptCard(x){
   <div class="pth"><b>${esc(x.name)}</b><span class="pill">${esc(x.kind)}</span></div>
   <div class="pt2"><div><small>We give</small>${pkLi(x,'give')}</div><div><small>We get</small>${pkLi(x,'get')}</div></div>${(x.pkgs||[]).length?`<div class="bar" title="${(x.pkgs||[]).filter(p=>p.done).length} of ${(x.pkgs||[]).length} packages done"><i style="width:${Math.round(100*(x.pkgs||[]).filter(p=>p.done).length/(x.pkgs||[]).length)}%"></i></div>`:''}
   ${ev?`<div class="meta"><span>${esc(ev.name)}</span><span>${esc(evDates(ev))}</span>${x.accred&&x.accred!=='Not needed'?`<span class="pill ${x.accred==='Confirmed'?'ok':''}">Accreditation: ${esc(x.accred)}</span>`:''}${x.attendees?`<span>Attending: ${esc(x.attendees)}</span>`:''}</div>`:''}
-  <div class="meta">${x.next?`<span class="${late?'late-t':''}">Next: ${esc(x.next)}${x.nextDate?' · '+esc(fmt(x.nextDate)):''}</span>`:'<span>No next step yet</span>'}</div></div>`;
+  <div class="meta">${x.next?`<span class="${late?'late-t':''}">Next: ${esc(x.next)}${x.nextDate?' · '+esc(dtx(x.nextDate,x.nextTime)):''}</span>`:'<span>No next step yet</span>'}</div></div>`;
 }
 function vPartners(){
   S.ps=S.ps||'all';const L=PTS(),cnt=k=>L.filter(x=>x.stage===k).length;
@@ -756,7 +756,7 @@ function vTodayP(){
   return (EDIT&&nn?`<div class="banner" style="background:var(--gold-soft);color:var(--gold);border-color:var(--gold)">${nn} new suggestion${nn===1?'':'s'}. <button class="btn sm" data-act="tab" data-id="notes">Read</button></div>`:'')+
   ptHero()+vNextMoves()+vOutcomes()+`<section class="box"><h2>Brief and quick actions</h2>
   <div class="row"><button class="btn pri" data-act="brief">Brief me</button><button class="btn" data-act="ptnew">Add a partner</button><button class="btn" data-act="pastemail">${ICO.mail}Paste an email</button></div><pre id="brief" class="meta" style="white-space:pre-wrap;font:inherit;margin:8px 0 0"></pre></section>`+vFollow()+
-  `<section class="box"><h2>Needs a move <small>next 7 days and overdue</small></h2>${need.map(x=>ptRow(x,esc(x.next||'No next step')+' · '+esc(fmt(x.nextDate)),x.nextDate<TODAY?'late':'')).join('')||'<div class="empty">Nothing due in the next seven days.</div>'}
+  `<section class="box"><h2>Needs a move <small>next 7 days and overdue</small></h2>${need.map(x=>ptRow(x,esc(x.next||'No next step')+' · '+esc(dtx(x.nextDate,x.nextTime)),x.nextDate<TODAY?'late':'')).join('')||'<div class="empty">Nothing due in the next seven days.</div>'}
   ${nostep.length?`<p class="meta" style="margin-top:8px"><b>No next step set:</b> ${nostep.map(x=>esc(x.name)).join(', ')}.</p>`:''}</section>`+
   (false?`<section class="box"><h2>The event has passed <small>wrap these up</small></h2>${ended.map(x=>ptRow(x,esc((ptEv(x)||{}).name)+' ended '+esc(fmt((ptEv(x).end||ptEv(x).start)))+'. Record what each side delivered.')).join('')}</section>`:'')+
   (gaps.length?`<section class="box"><h2>Fill in <small>${gaps.length}</small></h2>${gaps.map(x=>ptRow(x,[!gl(x,'give').length?'what we give':'',!gl(x,'get').length?'what we get':''].filter(Boolean).join(' and ')+' is missing')).join('')}</section>`:'')+
@@ -804,7 +804,7 @@ function openPartner(id){
   ${S.addEv===id?`<div class="addev"><b>New event</b><div class="g2"><input type="text" id="ne_n" placeholder="Event name" aria-label="Event name"><input type="date" id="ne_d" aria-label="Start date, optional"></div><span class="meta">The date is optional. Add the end date and the place later under Events.</span><div class="row"><button class="btn pri sm" data-act="evcreate" data-id="${id}">Add and link</button><button class="btn sm" data-act="evcancel" data-id="${id}">Cancel</button></div></div>`:''}
   ${ev?`<div class="meta" style="margin:-4px 0 8px"><span>${esc(evDates(ev))}</span><span>${esc(ev.where||'')}</span></div>`:''}
   ${T('attendees','Who attends',x.attendees,'For example: Sade, plus a photographer')}
-  <div class="g2">${T('next','Next step',x.next,'The one thing that moves this forward')}<div class="fld"><label>Next step date</label><input type="date" data-pt="nextDate" data-pid="${id}" value="${esc(x.nextDate||'')}" ${dis}></div></div>
+  <div class="g2">${T('next','Next step',x.next,'The one thing that moves this forward')}<div class="fld"><label>Next step date and time</label><div class="dtp"><input type="date" data-pt="nextDate" data-pid="${id}" value="${esc(x.nextDate||'')}" aria-label="Next step date" ${dis}><input type="time" data-pt="nextTime" data-pid="${id}" value="${esc(x.nextTime||'')}" aria-label="Next step time, optional" ${dis}></div></div></div>
   ${T('ask','Needs a decision from Fatimah',x.ask,'Leave empty if nothing is needed')}
   ${A('notes','Notes (also feeds the collaboration proposal as the idea)',x.notes,'',70)}
   ${showW?`<div class="wrapbox"><h3>Wrap-up <small class="meta">${gl(x,'give').length+gl(x,'get').length?pkDone(x,'give').length+' of '+gl(x,'give').length+' delivered, '+pkDone(x,'get').length+' of '+gl(x,'get').length+' received':''}</small></h3><div class="g2">${`<div class="fld"><label>What TLLJ delivered</label><textarea data-ptw="gave" data-pid="${id}" placeholder="${esc(doneTxt(x,'give'))}" style="min-height:80px" ${dis}>${esc(w.gave||'')}</textarea></div><div class="fld"><label>What ${esc(x.name)} delivered</label><textarea data-ptw="got" data-pid="${id}" placeholder="${esc(doneTxt(x,'get'))}" style="min-height:80px" ${dis}>${esc(w.got||'')}</textarea></div>`}</div>
@@ -876,7 +876,7 @@ function pkLi(x,side){const L=gl(x,side);return L.length?'<ul class="pkl">'+L.sl
 function pkRow(x,p,dis){const lab=p.side==='give'?'Delivered':'Received',d=`data-pk="${p.id}" data-pid="${x.id}"`;
   return `<div class="pk ${p.done?'done':''}"><div class="pkh"><label class="radio" title="${lab}"><input type="checkbox" ${d} data-pkk="done" ${p.done?'checked':''} aria-label="${lab}" ${dis}><span class="meta">${lab}</span></label><input type="text" class="ghost" ${d} data-pkk="item" list="pkl_${p.side}" autocomplete="off" value="${esc(p.item)}" placeholder="Package, for example: Instagram feature" aria-label="Package" ${dis}></div>
   <textarea ${d} data-pkk="detail" placeholder="What exactly, how many, any conditions" aria-label="Detail" style="min-height:46px" ${dis}>${esc(p.detail||'')}</textarea>
-  <div class="pkf"><input type="date" ${d} data-pkk="due" value="${esc(p.due||'')}" aria-label="By when" ${dis}>${EDIT&&p.side==='give'&&p.done&&!covs().some(c=>c.pkgId===p.id)?`<button class="btn sm" data-act="covpk" data-id="${x.id}" data-k="${p.id}">Add the link</button>`:''}${EDIT?`<button class="btn sm" data-act="pkdel" data-id="${x.id}" data-k="${p.id}" aria-label="Remove package">&#10005;</button>`:''}</div></div>`}
+  <div class="pkf"><span class="dtp"><input type="date" ${d} data-pkk="due" value="${esc(p.due||'')}" aria-label="By when" ${dis}><input type="time" ${d} data-pkk="dueTime" value="${esc(p.dueTime||'')}" aria-label="Time, optional" ${dis}></span>${EDIT&&p.side==='give'&&p.done&&!covs().some(c=>c.pkgId===p.id)?`<button class="btn sm" data-act="covpk" data-id="${x.id}" data-k="${p.id}">Add the link</button>`:''}${EDIT?`<button class="btn sm" data-act="pkdel" data-id="${x.id}" data-k="${p.id}" aria-label="Remove package">&#10005;</button>`:''}</div></div>`}
 function pkCol(x,side,dis){const dl=`<datalist id="pkl_${side}">${pkOpts(side).map(o=>`<option value="${esc(o)}"></option>`).join('')}</datalist>`;const L=(x.pkgs||[]).filter(p=>p.side===side);
   return `<div class="pkcol">${dl}<h3>${side==='give'?'We give':'We get'} <small>${L.filter(p=>p.done).length}/${L.length} ${side==='give'?'delivered':'received'}</small></h3>${L.map(p=>pkRow(x,p,dis)).join('')||'<div class="meta">Nothing listed yet.</div>'}${EDIT?`<button class="btn sm" data-act="pkadd" data-id="${x.id}" data-s="${side}">Add a package</button>`:''}</div>`}
 
@@ -950,8 +950,8 @@ async function pasteRead(){
   const t=$('#pe_t').value.trim();if(t.length<20){toast('Paste the email first');return}
   const o=$('#pe_o');o.innerHTML='<p class="meta">Tilly is reading\u2026</p>';
   let r=null;
-  try{r=await aiJson(STY()+`\nToday is ${TODAY}. Read the EMAIL and return JSON only, using only what the email says. Use "" or [] when it does not say. Shape: {"partner":"the organisation or event","kind":"one of ${PKINDS.join(', ')}","contact":"the sender, with email or phone if given","event":"event name if any","give":[{"item":"short name","detail":"what exactly","due":"YYYY-MM-DD or empty"}],"get":[{"item":"short name","detail":"what exactly","due":"YYYY-MM-DD or empty"}],"next":"the single next step for Sade","nextDate":"YYYY-MM-DD or empty","notes":"one or two sentences on anything else that matters, such as what is postponed"}. "give" is what TLLJ offers or is asked to provide. "get" is what TLLJ is offered or receives. A date without a year takes the current year.\nEMAIL:\n`+t)}catch(e){r=null}
-  const fail=!r;if(!r) r={partner:'',kind:'Other',contact:'',event:'',give:[],get:[],next:'',nextDate:'',notes:''};
+  try{r=await aiJson(STY()+`\nToday is ${TODAY}. Read the EMAIL and return JSON only, using only what the email says. Use "" or [] when it does not say. Shape: {"partner":"the organisation or event","kind":"one of ${PKINDS.join(', ')}","contact":"the sender, with email or phone if given","event":"event name if any","give":[{"item":"short name","detail":"what exactly","due":"YYYY-MM-DD or empty"}],"get":[{"item":"short name","detail":"what exactly","due":"YYYY-MM-DD or empty"}],"next":"the single next step for Sade","nextDate":"YYYY-MM-DD or empty","nextTime":"HH:MM in 24-hour time, or empty","notes":"one or two sentences on anything else that matters, such as what is postponed"}. "give" is what TLLJ offers or is asked to provide. "get" is what TLLJ is offered or receives. A date without a year takes the current year.\nEMAIL:\n`+t)}catch(e){r=null}
+  const fail=!r;if(!r) r={partner:'',kind:'Other',contact:'',event:'',give:[],get:[],next:'',nextDate:'',nextTime:'',notes:''};
   const nm=String(r.partner||'').trim(),low=nm.toLowerCase();
   const ex=low?PTS().find(x=>x.name.toLowerCase().includes(low)||low.includes(x.name.toLowerCase())):null;
   const ev=r.event?S.events.find(e=>e.name.toLowerCase().includes(String(r.event).toLowerCase())||String(r.event).toLowerCase().includes(e.name.toLowerCase())):null;
@@ -964,20 +964,20 @@ async function pasteRead(){
   <div class="g2"><div class="fld"><label for="pe_ev">Event</label><select id="pe_ev"><option value="">None</option>${S.events.slice().sort((a,b)=>a.start<b.start?-1:1).map(e=>`<option value="${e.id}" ${ev&&ev.id===e.id?'selected':''}>${esc(e.name)}</option>`).join('')}</select></div><div class="fld"><label for="pe_en">Or add a new event</label><div class="row"><input type="text" id="pe_en" placeholder="Event name" style="flex:1"><input type="date" id="pe_ed" aria-label="Start date, optional" style="width:140px"></div></div></div>
   <div class="g2"><div class="fld"><label for="pe_g">We give (one per line: item \u2014 detail (by YYYY-MM-DD))</label><textarea id="pe_g" style="min-height:110px">${esc((r.give||[]).map(p=>pkLine({item:p.item||'',detail:p.detail||'',due:dOk(p.due)})).join('\n'))}</textarea></div>
   <div class="fld"><label for="pe_e">We get</label><textarea id="pe_e" style="min-height:110px">${esc((r.get||[]).map(p=>pkLine({item:p.item||'',detail:p.detail||'',due:dOk(p.due)})).join('\n'))}</textarea></div></div>
-  <div class="g2"><div class="fld"><label for="pe_x">Next step</label><input type="text" id="pe_x" value="${esc(r.next||'')}"></div><div class="fld"><label for="pe_d">Date</label><input type="date" id="pe_d" value="${esc(dOk(r.nextDate))}"></div></div>
+  <div class="g2"><div class="fld"><label for="pe_x">Next step</label><input type="text" id="pe_x" value="${esc(r.next||'')}"></div><div class="fld"><label for="pe_d">Date and time</label><div class="dtp"><input type="date" id="pe_d" value="${esc(dOk(r.nextDate))}"><input type="time" id="pe_t" value="${esc(tOk(r.nextTime))}" aria-label="Time, optional"></div></div></div>
   <div class="fld"><label for="pe_o2">Notes</label><textarea id="pe_o2" style="min-height:70px">${esc(fail?t.slice(0,600):(r.notes||''))}</textarea></div>
   <div class="row"><button class="btn pri" data-act="pastesave">Save</button><button class="btn" data-act="ptclose">Cancel</button></div>`;
 }
 async function pasteSave(){
   const nm=$('#pe_n').value.trim();if(!nm){toast('Give the partner a name');return}
-  const pid=$('#pe_p').value,give=pkParse('give',$('#pe_g').value),got=pkParse('get',$('#pe_e').value),next=$('#pe_x').value.trim(),nd=$('#pe_d').value,notes=$('#pe_o2').value.trim(),contact=$('#pe_c').value.trim(),kind=$('#pe_k').value;
+  const pid=$('#pe_p').value,give=pkParse('give',$('#pe_g').value),got=pkParse('get',$('#pe_e').value),next=$('#pe_x').value.trim(),nd=$('#pe_d').value,nt=$('#pe_t').value,notes=$('#pe_o2').value.trim(),contact=$('#pe_c').value.trim(),kind=$('#pe_k').value;
   let id=pid;
   if(!pid&&PTS().some(x=>x.name.toLowerCase()===nm.toLowerCase())){toast(nm+' is already a partner. Choose it under Add to, so nothing is duplicated.');return}
   await act('Paste an email: '+nm,async()=>{
     let eid=$('#pe_ev').value;const en=$('#pe_en').value.trim();if(en){const d0=S.events.find(e=>e.name.toLowerCase()===en.toLowerCase());eid=d0?d0.id:await mkEvent(en,$('#pe_ed').value)}
     if(pid){const x=get('kit',pid),have=new Set((x.pkgs||[]).map(p=>p.side+'|'+p.item.toLowerCase())),add=give.concat(got).filter(p=>!have.has(p.side+'|'+p.item.toLowerCase()));
-      await patch('kit',pid,{pkgs:[...(x.pkgs||[]),...add],...(next?{next,nextDate:nd}:{}),contact:x.contact||contact,eventId:eid||x.eventId,notes:[x.notes,notes].filter(Boolean).join(' ')})}
-    else{id=uid('pt');await save('kit',id,{type:'partner',name:nm,kind,stage:'approached',pkgs:give.concat(got),eventId:eid,accred:'Not needed',attendees:'',contact,next,nextDate:nd,notes,ask:'',wrap:{},outcomes:[],created:TODAY})}});
+      await patch('kit',pid,{pkgs:[...(x.pkgs||[]),...add],...(next?{next,nextDate:nd,nextTime:nt}:{}),contact:x.contact||contact,eventId:eid||x.eventId,notes:[x.notes,notes].filter(Boolean).join(' ')})}
+    else{id=uid('pt');await save('kit',id,{type:'partner',name:nm,kind,stage:'approached',pkgs:give.concat(got),eventId:eid,accred:'Not needed',attendees:'',contact,next,nextDate:nd,nextTime:nt,notes,ask:'',wrap:{},outcomes:[],created:TODAY})}});
   toast('Saved.');openPartner(id);
 }
 
@@ -996,14 +996,14 @@ function rvData(a,b){
     if(x.stage==='wrapped'&&x.wrap&&inR(x.wrap.date)){D.p.wrapped++;D.p.moved.push({t:x.name,s:'Wrapped up'+(x.wrap.worth?' \u00b7 worth '+x.wrap.worth+' of 5':''),a:'openpt',id:x.id})}
     (x.pkgs||[]).forEach(p=>{if(!p.done&&p.due&&p.due<TODAY&&x.stage!=='wrapped') D.p.stuck.push({t:x.name,s:'Package overdue: '+p.item+' (was due '+fmt(p.due)+')',a:'openpt',id:x.id})});
     if(x.stage!=='wrapped'){if(x.nextDate&&x.nextDate<TODAY) D.p.stuck.push({t:x.name,s:'Next step overdue: '+shortV(x.next||'no wording')+' (was '+fmt(x.nextDate)+')',a:'openpt',id:x.id});else if(!x.nextDate) D.p.stuck.push({t:x.name,s:'No next step date',a:'openpt',id:x.id});
-      if(x.nextDate&&x.nextDate>=TODAY&&x.nextDate<=wk) D.p.next.push({t:x.name,s:shortV(x.next||'Next step')+' \u00b7 '+fmt(x.nextDate),a:'openpt',id:x.id});
+      if(x.nextDate&&x.nextDate>=TODAY&&x.nextDate<=wk) D.p.next.push({t:x.name,s:shortV(x.next||'Next step')+' \u00b7 '+dtx(x.nextDate,x.nextTime),a:'openpt',id:x.id});
       const e=ptEv(x);if(e&&!e.start) D.p.stuck.push({t:x.name,s:'The dates for '+e.name+' are still to add',a:'openpt',id:x.id});if(e&&x.accred==='To request'&&e.start>=TODAY&&dd(TODAY,e.start)<=7) D.p.stuck.push({t:x.name,s:'Accreditation still to request for '+e.name,a:'openpt',id:x.id});
       if(x.ask) D.asks.push({t:x.name,s:x.ask,a:'openpt',id:x.id})}});
   acts.filter(c=>c.kind==='Partner'&&/stage:/.test(c.what||'')).forEach(c=>D.p.moved.push({t:c.name,s:'Stage '+((c.what.match(/stage: ([^;]*)/)||[0,''])[1])}));
   S.pipe.forEach(p=>{if(FINAL.includes(p.status)) return;
     if(p.nextDate&&p.nextDate<TODAY) D.s.stuck.push({t:p.group,s:'Next step overdue: '+shortV(p.next||'no wording')+' (was '+fmt(p.nextDate)+')',a:'opensp',id:p.id});
     else if(ACTIVE.includes(p.status)){const l=lastOf(p.id,['Email sent','Email received','Call','Meeting']);if(!l||dd(l,TODAY)>14) D.s.stuck.push({t:p.group,s:'Active but no contact for '+(l?dd(l,TODAY)+' days':'as long as the log goes back'),a:'opensp',id:p.id})}
-    if(p.nextDate&&p.nextDate>=TODAY&&p.nextDate<=wk) D.s.next.push({t:p.group,s:shortV(p.next||'Next step')+' \u00b7 '+fmt(p.nextDate),a:'opensp',id:p.id})});
+    if(p.nextDate&&p.nextDate>=TODAY&&p.nextDate<=wk) D.s.next.push({t:p.group,s:shortV(p.next||'Next step')+' \u00b7 '+dtx(p.nextDate,p.nextTime),a:'opensp',id:p.id})});
   covs().filter(c=>inR(c.date)).forEach(c=>{const tgt=(get('kit',c.pipeId)&&get('kit',c.pipeId).type==='partner')?D.p:D.s;tgt.pub++;tgt.moved.push({t:c.title,s:'Published on '+(c.where||'Other')+(linkName(c.pipeId)?' for '+linkName(c.pipeId):'')+' \u00b7 '+fmt(c.date)})});
   S.events.filter(e=>e.outcome&&e.outcome.result&&inR(e.outcome.at)).forEach(e=>D.ev.push({t:e.name,s:shortV(e.outcome.result)+' \u00b7 '+fmt(e.outcome.at)}));
   S.decisions.filter(d=>!d.answer&&!d.archived).sort((x,y)=>(x.n||0)-(y.n||0)).forEach(d=>D.dec.push({t:d.n+'. '+d.decision,s:shortV(d.proposed||''),a:'tab',id:'decisions'}));
@@ -1041,15 +1041,15 @@ function icsBuild(items){
   const e2=s=>String(s==null?'':s).replace(/\\/g,'\\\\').replace(/;/g,'\;').replace(/,/g,'\\,').replace(/\r?\n/g,'\\n'),fold=l=>{const o=[];while(l.length>73){o.push(l.slice(0,73));l=' '+l.slice(73)}o.push(l);return o.join('\r\n')};
   const st=new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d+Z$/,'Z'),dy=d=>d.replace(/-/g,'');
   const L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//TLLJ//Partnerships Desk//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH','X-WR-CALNAME:TLLJ Partnerships Desk'];
-  items.forEach(i=>{L.push('BEGIN:VEVENT','UID:'+i.uid+'@tllj-desk','DTSTAMP:'+st,'DTSTART;VALUE=DATE:'+dy(i.date),'DTEND;VALUE=DATE:'+dy(addDays(i.end||i.date,1)),'SUMMARY:'+e2(i.title),'DESCRIPTION:'+e2(i.desc||''),'BEGIN:VALARM','TRIGGER:PT9H','ACTION:DISPLAY','DESCRIPTION:'+e2(i.title),'END:VALARM','END:VEVENT')});
+  items.forEach(i=>{L.push('BEGIN:VEVENT','UID:'+i.uid+'@tllj-desk','DTSTAMP:'+st,...icsT(i),'SUMMARY:'+e2(i.title),...(i.loc?['LOCATION:'+e2(i.loc)]:[]),'DESCRIPTION:'+e2(i.desc||''),'BEGIN:VALARM',(tOk(i.time)?'TRIGGER:-PT30M':'TRIGGER:PT9H'),'ACTION:DISPLAY','DESCRIPTION:'+e2(i.title),'END:VALARM','END:VEVENT')});
   L.push('END:VCALENDAR');return L.map(fold).join('\r\n')+'\r\n';
 }
 function icsItems(all){
   const I=[],ok=d=>/^\d{4}-\d\d-\d\d$/.test(d||'');
-  if(MODE==='p'||all) PTS().filter(x=>x.stage!=='wrapped').forEach(x=>{if(ok(x.nextDate)) I.push({uid:'pt-'+x.id,date:x.nextDate,title:x.name+': '+(x.next||'next step'),desc:'Partnership with '+x.name+'. Stage: '+stLabel(x.stage)+'.'});(x.pkgs||[]).forEach(p=>{if(!p.done&&ok(p.due)) I.push({uid:'pk-'+p.id,date:p.due,title:x.name+': '+(p.side==='give'?'deliver ':'receive ')+p.item,desc:p.detail||''})})});
-  if(MODE!=='p'||all) S.pipe.filter(p=>!FINAL.includes(p.status)&&ok(p.nextDate)).forEach(p=>I.push({uid:'sp-'+p.id,date:p.nextDate,title:p.group+': '+(p.next||'next step'),desc:'Sponsor. Status: '+p.status+'.'}));
-  S.kit.filter(k=>k.type==='followup'&&!k.done&&ok(k.due)&&(all||FUS().includes(k))).forEach(f=>I.push({uid:'fu-'+f.id,date:f.due,title:'Follow-up: '+f.text,desc:f.who||''}));
-  S.events.filter(e=>ok(e.start)&&(e.end||e.start)>=TODAY).forEach(e=>I.push({uid:'ev-'+e.id,date:e.start,end:ok(e.end)?e.end:e.start,title:'Event: '+e.name,desc:e.where||''}));
+  if(MODE==='p'||all) PTS().filter(x=>x.stage!=='wrapped').forEach(x=>{if(ok(x.nextDate)) I.push({uid:'pt-'+x.id,date:x.nextDate,time:x.nextTime,title:x.name+': '+(x.next||'next step'),desc:'Partnership with '+x.name+'. Stage: '+stLabel(x.stage)+'.'});(x.pkgs||[]).forEach(p=>{if(!p.done&&ok(p.due)&&!(p.due===x.nextDate&&(p.dueTime||'')===(x.nextTime||''))) I.push({uid:'pk-'+p.id,date:p.due,time:p.dueTime,title:x.name+': '+(p.side==='give'?'deliver ':'receive ')+p.item,desc:p.detail||''})})});
+  if(MODE!=='p'||all) S.pipe.filter(p=>!FINAL.includes(p.status)&&ok(p.nextDate)).forEach(p=>I.push({uid:'sp-'+p.id,date:p.nextDate,time:p.nextTime,title:p.group+': '+(p.next||'next step'),desc:'Sponsor. Status: '+p.status+'.'}));
+  S.kit.filter(k=>k.type==='followup'&&!k.done&&ok(k.due)&&(all||FUS().includes(k))).forEach(f=>I.push({uid:'fu-'+f.id,date:f.due,time:f.dueTime,title:'Follow-up: '+f.text,desc:f.who||''}));
+  S.events.filter(e=>ok(e.start)&&(e.end||e.start)>=TODAY).forEach(e=>I.push({uid:'ev-'+e.id,date:e.start,time:(e.end&&e.end!==e.start&&!e.endTime)?'':e.startTime,etime:e.endTime,loc:e.where||'',end:ok(e.end)?e.end:e.start,title:'Event: '+e.name,desc:e.where||''}));
   return I;
 }
 function icsDownload(items,name){
@@ -1069,6 +1069,62 @@ async function ptExtra(a,id,el){
   if(a==='icsall'){icsDownload(icsItems(false),'tllj-desk-calendar.ics');return true}
   if(a==='icspt'){const x=get('kit',id);if(!x) return true;const I=icsItems(true).filter(i=>i.uid==='pt-'+id||(x.pkgs||[]).some(p=>i.uid==='pk-'+p.id));icsDownload(I,x.name.replace(/[^a-z0-9]+/gi,'-').toLowerCase()+'.ics');return true}
   return false;
+}
+
+/* ---------- v35: times and places ---------- */
+const tm=t=>{const m=/^(\d{1,2}):(\d\d)$/.exec(t||'');if(!m) return '';let h=+m[1];const ap=h>=12?'pm':'am';h=h%12||12;return h+(m[2]==='00'?'':':'+m[2])+ap};
+const dtx=(d,t)=>d?fmt(d)+(tm(t)?', '+tm(t):''):'No date';
+const tOk=v=>/^\d{1,2}:\d\d$/.test(v||'')?v.padStart(5,'0'):'';
+const PLS=['Invited','Going','Been','Considering'];
+const places=()=>S.kit.filter(k=>k.type==='place').sort((a,b)=>String(a.name).toLowerCase()<String(b.name).toLowerCase()?-1:1);
+const placeNames=()=>[...new Set(places().map(p=>p.name).concat(S.events.map(e=>(e.where||'').trim()).filter(Boolean)))].sort((a,b)=>a.toLowerCase()<b.toLowerCase()?-1:1);
+const placeList=id=>`<datalist id="${id}">${placeNames().map(n=>`<option value="${esc(n)}"></option>`).join('')}</datalist>`;
+async function rememberPlace(name,ev,st){
+  name=String(name||'').trim();if(name.length<2||name.length>120) return;
+  if(places().some(p=>String(p.name).toLowerCase()===name.toLowerCase())) return;
+  const id=uid('pl'),d=ev&&(ev.end||ev.start),past=d&&d<TODAY;
+  await save('kit',id,{id,type:'place',name,area:'',status:st||(past?'Been':'Considering'),note:'',added:TODAY});
+}
+function vPlaces(){
+  const L=places(),dis=EDIT?'':'disabled';
+  return `<section class="box"><h2>Places <small>where we go and where we are invited</small></h2>
+  <p class="meta">A place is added when you save an event with a place. Places you have typed before are suggested the next time.</p>
+  ${L.map(p=>{const n=S.events.filter(e=>(e.where||'').trim().toLowerCase()===String(p.name).toLowerCase()).length;return `<div class="plr"><div class="plh"><input type="text" class="ghost" data-pl="${p.id}" data-k="name" value="${esc(p.name)}" aria-label="Place name" ${dis}><select data-pl="${p.id}" data-k="status" aria-label="Status" ${dis}>${PLS.map(s=>`<option ${p.status===s?'selected':''}>${s}</option>`).join('')}</select>${EDIT?`<button class="btn sm del xbtn" data-act="pldel" data-id="${p.id}" aria-label="Remove place" title="Remove">&times;</button>`:''}</div>
+  <input type="text" data-pl="${p.id}" data-k="area" value="${esc(p.area||'')}" placeholder="Area or address" aria-label="Area or address" ${dis}>
+  <textarea data-pl="${p.id}" data-k="note" placeholder="Who invited us, what happened, what to remember" aria-label="Note" style="min-height:44px" ${dis}>${esc(p.note||'')}</textarea>${n?`<div class="meta"><span>${n} event${n===1?'':'s'} here</span></div>`:''}</div>`}).join('')||'<div class="empty">No places yet. Save an event with a place and it will be remembered.</div>'}
+  ${EDIT?`<div class="row" style="margin-top:10px"><input type="text" id="pl_new" list="plist_tab" autocomplete="off" placeholder="Add a place, for example: Affinity Gallery" aria-label="New place" style="flex:1;min-width:200px"><button class="btn pri sm" data-act="pladd">Add place</button>${placeList('plist_tab')}</div>`:''}</section>`;
+}
+async function ptExtra5(a,id,el){
+  if(a==='pladd'){const i=$('#pl_new'),n=i?i.value.trim():'';if(n.length<2){toast('Type the name of the place first.');return true}
+    if(places().some(p=>String(p.name).toLowerCase()===n.toLowerCase())){toast(n+' is already in Places.');return true}
+    const pid=uid('pl');await act('Add place',()=>save('kit',pid,{id:pid,type:'place',name:n,area:'',status:'Invited',note:'',added:TODAY}));render();return true}
+  if(a==='pldel'){const p=get('kit',id);if(!p) return true;await act('Remove place '+p.name,()=>remove('kit',id));toast('Removed. Undo brings it back.');render();return true}
+  return false;
+}
+function icsT(i){
+  const z=(d,t)=>d.replace(/-/g,'')+'T'+t.replace(':','')+'00',h1=t=>{const [h,m]=t.split(':').map(Number);return h>=23?'23:59':String(h+1).padStart(2,'0')+':'+String(m).padStart(2,'0')};
+  if(!tOk(i.time)) return ['DTSTART;VALUE=DATE:'+i.date.replace(/-/g,''),'DTEND;VALUE=DATE:'+addDays(i.end||i.date,1).replace(/-/g,'')];
+  const ed=i.end&&tOk(i.etime)?i.end:i.date;
+  return ['DTSTART:'+z(i.date,tOk(i.time)),'DTEND:'+z(ed,tOk(i.etime)||h1(tOk(i.time)))];
+}
+async function ensureV35(){
+  if(!db||!EDIT||lsGet('tllj_seed_v35')||!S.pipe.length) return;
+  try{
+    const ax=S.events.find(e=>/^ART X/i.test(e.name));
+    const a=get('kit','pt_artx');
+    if(a){const u={};
+      if(/^Confirm Tokini/i.test(a.next||'')&&!a.nextDate){u.next='Interview Tokini on Saturday 7 Nov, 3pm to 4pm (20-minute slot). Ask ART X for the exact time and where to meet.';u.nextDate='2026-11-07';u.nextTime='15:00'}
+      u.pkgs=(a.pkgs||[]).map(p=>/^Interview with Tokini/i.test(p.item)&&!p.dueTime?{...p,detail:'20-minute slot between 3pm and 4pm. Exact time and meeting point to be confirmed by ART X.',due:'2026-11-07',dueTime:'15:00'}:p);
+      if(!/Das and N.Gon. Fall|N.Gon. Fall/.test(a.notes||'')) u.notes=((a.notes||'')+' ART X is checking the availability of Dr Das and N’Goné Fall and will confirm the interview schedules.').trim();
+      await patch('kit','pt_artx',u)}
+    if(!S.events.some(e=>e.id==='e_affinity')) await save('events','e_affinity',{id:'e_affinity',name:'Affinity Gallery exhibition',start:'2026-11-05',end:'2026-12-31',where:'Affinity Gallery',who:'To decide',reach:'',how:'Invited by the gallery to the public opening.',status:'Invited to the public opening on 5 Nov',note:'Press materials and invitation: https://drive.google.com/drive/folders/1DW8L7wmJ93koY8jBfGwPReO-PE2Qb3P4?usp=sharing'});
+    if(!get('kit','pt_affinity')){const pk=(s,item,detail,due,done)=>({id:uid('pk'),side:s,item,detail:detail||'',due:due||'',done:!!done});
+      await save('kit','pt_affinity',{id:'pt_affinity',type:'partner',name:'Affinity Gallery',kind:'Press invitation',stage:'approached',pkgs:[pk('get','Press materials for ART X Lagos 2026','Works list, artist notes, stand details, opening hours, credit lines and permissions, social handles','',true),pk('get','Invitation to the exhibition opening','Public opening on 5 Nov 2026, open until 31 Dec 2026','2026-11-05'),pk('get','A few minutes with the gallery at or after ART X','About the presentation and the thinking behind the selection of works. Time and stand location to be agreed.')],eventId:ax?ax.id:'',accred:'Not needed',attendees:'',contact:'Mo',next:'Send the reply, agree a time to meet the gallery at ART X, and decide on the 5 Nov opening',nextDate:'2026-11-05',nextTime:'',ask:'',notes:'Exhibition press materials and invitation: https://drive.google.com/drive/folders/1DW8L7wmJ93koY8jBfGwPReO-PE2Qb3P4?usp=sharing',wrap:{},outcomes:[],created:TODAY})}
+    const h=get('kit','fu_hs_tennis');if(h&&!h.dueTime&&/11 ?am/i.test(h.text||'')) await patch('kit','fu_hs_tennis',{dueTime:'11:00'});
+    if(!places().some(p=>p.name==='Affinity Gallery')) await save('kit','pl_affinity',{id:'pl_affinity',type:'place',name:'Affinity Gallery',area:'',status:'Invited',note:'Public opening on 5 Nov 2026, open until 31 Dec. Invited by Mo.',added:TODAY});
+    const linked=new Set(PTS().map(x=>x.eventId).filter(Boolean));
+    for(const e of S.events.filter(e=>linked.has(e.id)&&e.where)){const d=e.end||e.start;await rememberPlace(e.where,e,d&&d<TODAY?'Been':'Going')}
+    lsSet('tllj_seed_v35','1');render()}catch(e){}
 }
 
 /* ---------- v32: templates, inline events, de-duplication ---------- */
@@ -1212,21 +1268,21 @@ const tabIc=k=>TABIC[k]?`<svg class="ic tic" viewBox="0 0 24 24" aria-hidden="tr
 /* next moves and greeting */
 function nextMoves(){
   const R=[],soon=addDays(TODAY,2),tag=d=>d<TODAY?{t:-dd(TODAY,d)+' day'+(dd(TODAY,d)===-1?'':'s')+' overdue',c:'warn'}:d===TODAY?{t:'Today',c:'gold'}:{t:fmt(d),c:''};
-  FUS().filter(f=>!f.done&&f.due&&f.due<=soon).forEach(f=>R.push({d:f.due,kind:'Follow-up',t:f.text,sub:linkName(f.pipeId),b:['fudone',f.id,'Done']}));
+  FUS().filter(f=>!f.done&&f.due&&f.due<=soon).forEach(f=>R.push({d:f.due,tm:f.dueTime,kind:'Follow-up',t:f.text,sub:linkName(f.pipeId),b:['fudone',f.id,'Done']}));
   outDue().forEach(o=>R.push({d:o.d||TODAY,kind:o.k==='event'?'Event':o.k==='partner'?'Partner':'Sponsor',t:o.name,sub:o.why,b:['outopen',o.id,'Log outcome',o.k]}));
   if(MODE==='p'){
-    PTS().filter(x=>x.stage!=='wrapped').forEach(x=>{if(x.nextDate&&x.nextDate>=TODAY&&x.nextDate<=soon&&!FUS().some(f=>!f.done&&f.pipeId===x.id)) R.push({d:x.nextDate,kind:'Partner',t:x.name,sub:x.next,b:['openpt',x.id,'Open']});
-      (x.pkgs||[]).forEach(p=>{if(!p.done&&p.due&&p.due<=soon) R.push({d:p.due,kind:'Package',t:x.name+': '+(p.side==='give'?'deliver ':'receive ')+p.item,sub:'',b:['openpt',x.id,'Open']})})});
+    PTS().filter(x=>x.stage!=='wrapped').forEach(x=>{if(x.nextDate&&x.nextDate>=TODAY&&x.nextDate<=soon&&!FUS().some(f=>!f.done&&f.pipeId===x.id)) R.push({d:x.nextDate,tm:x.nextTime,kind:'Partner',t:x.name,sub:x.next,b:['openpt',x.id,'Open']});
+      (x.pkgs||[]).forEach(p=>{if(!p.done&&p.due&&p.due<=soon) R.push({d:p.due,tm:p.dueTime,kind:'Package',t:x.name+': '+(p.side==='give'?'deliver ':'receive ')+p.item,sub:'',b:['openpt',x.id,'Open']})})});
   }else{
-    S.pipe.filter(p=>p.nextDate&&p.nextDate>=TODAY&&p.nextDate<=soon&&!FINAL.includes(p.status)&&!FUS().some(f=>!f.done&&f.pipeId===p.id)).forEach(p=>R.push({d:p.nextDate,kind:'Sponsor',t:p.group,sub:p.next,b:['opensp',p.id,'Open']}));
+    S.pipe.filter(p=>p.nextDate&&p.nextDate>=TODAY&&p.nextDate<=soon&&!FINAL.includes(p.status)&&!FUS().some(f=>!f.done&&f.pipeId===p.id)).forEach(p=>R.push({d:p.nextDate,tm:p.nextTime,kind:'Sponsor',t:p.group,sub:p.next,b:['opensp',p.id,'Open']}));
     open().filter(t=>t.due&&t.due<=soon).forEach(t=>R.push({d:t.due,kind:'Plan step',t:t.action,sub:'',b:['edit',t.id,'Open','tasks']}));
   }
-  R.sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0);R.forEach(r=>r.tag=tag(r.d));return R;
+  R.sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:(a.tm||'99')<(b.tm||'99')?-1:(a.tm||'99')>(b.tm||'99')?1:0);R.forEach(r=>r.tag=tag(r.d));return R;
 }
 function vNextMoves(){
   if(!EDIT) return '';const R=nextMoves();S._nm=R.slice(0,5).filter(r=>r.b[0]==='outopen').map(r=>r.b[1]);const n=R.filter(r=>r.d<=TODAY).length,hr=new Date().getHours(),g=hr<12?'Good morning':hr<17?'Good afternoon':'Good evening';
   const line=n?`${g}, Sade. ${n===1?'1 thing needs':n+' things need'} you today.`:R.length?`${g}, Sade. Nothing is due today; ${R.length===1?'one thing is':R.length+' things are'} coming up.`:`${g}, Sade. Nothing is due. A good time to move something forward.`;
-  return `<section class="box nm"><h2>${esc(line)}</h2>${R.length?`<p class="meta" style="margin:0 0 6px">Your next moves, most urgent first. The full lists are below.</p>`+R.slice(0,5).map(r=>`<div class="ptrow ${r.d<TODAY?'late':''}"><span class="pill">${r.kind}</span><b>${esc(shortV(r.t))}</b><span class="meta" style="flex:1">${r.sub?esc(shortV(r.sub))+' · ':''}<span class="${r.tag.c==='warn'?'late-t':''}">${esc(r.tag.t)}</span></span><button class="btn sm pri" data-act="${r.b[0]}" data-id="${r.b[1]}" ${r.b[3]?`data-${r.b[0]==='outopen'?'k':'col'}="${r.b[3]}"`:''}>${r.b[2]}</button></div>`).join('')+(R.length>5?`<p class="meta" style="margin:6px 0 0">+${R.length-5} more below.</p>`:''):''}</section>`;
+  return `<section class="box nm"><h2>${esc(line)}</h2>${R.length?`<p class="meta" style="margin:0 0 6px">Your next moves, most urgent first. The full lists are below.</p>`+R.slice(0,5).map(r=>`<div class="ptrow ${r.d<TODAY?'late':''}"><span class="pill">${r.kind}</span><b>${esc(shortV(r.t))}</b><span class="meta" style="flex:1">${r.sub?esc(shortV(r.sub))+' · ':''}<span class="${r.tag.c==='warn'?'late-t':''}">${esc(r.tag.t+(tm(r.tm)?', '+tm(r.tm):''))}</span></span><button class="btn sm pri" data-act="${r.b[0]}" data-id="${r.b[1]}" ${r.b[3]?`data-${r.b[0]==='outopen'?'k':'col'}="${r.b[3]}"`:''}>${r.b[2]}</button></div>`).join('')+(R.length>5?`<p class="meta" style="margin:6px 0 0">+${R.length-5} more below.</p>`:''):''}</section>`;
 }
 /* one-tap logging */
 async function fuLog(id,kind){
@@ -1296,6 +1352,7 @@ async function ptExtra4(a,id,el){
 function searchAll(q){
   const ql=q.trim().toLowerCase();if(ql.length<2) return [];const has=(...a)=>a.some(x=>x!=null&&String(x).toLowerCase().includes(ql)),P=[],O=searchAll0(q);
   PTS().forEach(x=>has(x.name,x.kind,x.contact,x.notes,x.next,x.attendees,glTxt(x,'give'),glTxt(x,'get'))&&P.push({k:'Partner',t:x.name,s:stLabel(x.stage),a:'openpt',id:x.id}));
+  places().filter(p=>has(p.name,p.area,p.note)).forEach(p=>P.push({k:'Place',t:p.name,s:p.status+(p.area?' · '+p.area:''),a:'tab',id:'events'}));
   covs().filter(c=>has(c.title,c.url,c.where,c.reach,c.notes,linkName(c.pipeId))).forEach(c=>P.push({k:'Coverage',t:c.title,s:(c.where||'')+(c.date?' · '+fmt(c.date):''),a:'tab',id:'coverage'}));
   S.kit.filter(k=>k.type==='followup'&&has(k.text)).forEach(f=>P.push({k:'Follow-up',t:f.text,s:fmt(f.due)+(f.done?' · done':''),a:'tab',id:'today'}));
   return MODE==='p'?P.concat(O):O.concat(P);
@@ -1389,6 +1446,7 @@ document.addEventListener('click',async e=>{
   if(await ptExtra2(a,id,el)) return;
   if(await ptExtra3(a,id,el)) return;
   if(await ptExtra4(a,id,el)) return;
+  if(await ptExtra5(a,id,el)) return;
   if(a==='askq'){await askq();return}
   if(a==='tillytest'){const o=$('#tt');o.textContent='Testing…';try{const t=await aiText('Reply with the single word: ready');o.textContent='Tilly works. Reply: '+t.trim().slice(0,60)}catch(e){o.textContent='Tilly failed: '+(e.message||e)}return}
   if(a==='startfresh'){const ot=S.tasks.filter(t=>!t.done&&t.due&&t.due<TODAY),op=S.pipe.filter(p=>p.nextDate&&p.nextDate<TODAY&&!['Agreed','Declined','On hold'].includes(p.status));if(!ot.length&&!op.length){toast('Nothing is overdue.');return}
@@ -1525,6 +1583,7 @@ document.addEventListener('click',async e=>{
 document.addEventListener('input',e=>{if(e.target.id==='gq'){const r=$('#gres');if(r) r.innerHTML=searchHtml(e.target.value)}});
 document.addEventListener('change',async e=>{
   if(await ptChange(e)) return;
+  {const t=e.target;if(t.dataset&&t.dataset.pl&&EDIT){const k=t.dataset.k,v=k==='name'?t.value.trim():t.value;if(k==='name'&&!v){render();return}await act('Edit place',()=>patch('kit',t.dataset.pl,{[k]:v}));render();return}}
   {const t=e.target;if(t.dataset&&t.dataset.fu&&EDIT){const k=t.dataset.k;let v=t.value;if(k==='repeat') v=+v||0;if(k==='due'&&!v){render();return}if(k==='text'&&!String(v).trim()){render();return}await act('Edit follow-up',()=>patch('kit',t.dataset.fu,{[k]:v}));render();return}}
   {const t=e.target;if(t.dataset&&t.dataset.tg&&EDIT){const T=tgt(),k=t.dataset.tg;let v=t.value;if(k==='goal'){v=Math.max(1,parseInt(v,10)||1)}if((k==='date'||k==='start')&&!/^\d{4}-\d\d-\d\d$/.test(v)){render();return}
     const n={...T,[k]:v};if(n.date<n.start){toast('The deadline must be after the start');render();return}await act('Change target',()=>save('kit','target',n));render();toast('Target updated');return}}
@@ -1603,6 +1662,7 @@ function ripple(col,old,nw,del){
   if(col==='events'){
     if(del){const ps=S.prep.filter(x=>x.eventId===old.id).length;if(ps) w(`${ps} prep item${ps===1?'':'s'} for this event will be left without an event.`);return W}
     if(nw.end&&nw.start&&nw.end<nw.start) w('The end date is before the start date.');
+    if(nw.start&&nw.start===nw.end&&nw.startTime&&nw.endTime&&nw.endTime<nw.startTime) w('The end time is before the start time.');
     if(nw.start&&nw.end){const ov=S.events.filter(x=>x.id!==nw.id&&x.start<=nw.end&&x.end>=nw.start);
       if(ov.length) w(`Overlaps ${ov.map(x=>x.name).join(', ')}. One person cannot be at two events on the same day, so decide who goes where.`);
       const toks=nw.name.split(/\W+/).filter(x=>x.length>=5&&!STOP.has(x.toLowerCase()));
@@ -1999,7 +2059,7 @@ function searchAll0(q){
   S.pipe.forEach(p=>has(p.group,p.category,p.why,p.notes,p.next,p.first,p.propose,p.outcome)&&R.push({k:'Sponsor',t:p.group,s:(p.tab||'')+' · '+p.status,a:'edit',col:'pipe',id:p.id}));
   S.contacts.forEach(c=>has(c.name,c.email,c.phone,c.role,c.route)&&R.push({k:'Contact',t:c.name||c.email||c.phone,s:((get('pipe',c.pipeId)||{}).group||'')+' · '+[c.email,c.phone].filter(Boolean).join(' · '),a:'edit',col:'pipe',id:c.pipeId}));
   S.tasks.forEach(t=>has(t.action,t.target,t.week,t.goal)&&R.push({k:'Plan step',t:String(t.action).slice(0,90),s:(t.due?fmt(t.due):'No date')+(t.done?' · done':''),a:'edit',col:'tasks',id:t.id}));
-  S.events.forEach(e=>has(e.name,e.where,e.note,e.status,e.how,e.reach)&&R.push({k:'Event',t:e.name,s:fmt(e.start)+' to '+fmt(e.end),a:'edit',col:'events',id:e.id}));
+  S.events.forEach(e=>has(e.name,e.where,e.note,e.status,e.how,e.reach)&&R.push({k:'Event',t:e.name,s:evDates(e),a:'edit',col:'events',id:e.id}));
   S.log.forEach(l=>has(l.summary,l.type)&&R.push({k:'Outreach log',t:(l.type||'')+' '+(l.summary||''),s:((get('pipe',l.pipeId)||{}).group||'')+' · '+fmt(l.date),a:'edit',col:'pipe',id:l.pipeId}));
   S.decisions.forEach(d=>has(d.decision,d.proposed,d.why,d.comment,d.answer)&&R.push({k:'Decision',t:d.n+'. '+d.decision,s:d.answer||'Open',a:'tab',id:'decisions'}));
   S.deals.forEach(d=>has(d.deliverables,d.notes,d.amount)&&R.push({k:'Deal',t:(get('pipe',d.pipeId)||{}).group||'Deal',s:d.invoice||'',a:'tab',id:'deals'}));
@@ -2050,7 +2110,7 @@ async function startApp(env){
   $('#signout').hidden=!env.auth;
   render();
   if(!db) return;
-  for(const c of COLS){db.collection(c).onSnapshot(s=>{S[c]=s.docs.map(d=>({...d.data(),id:d.id}));S.loaded[c]=true;softRender();if(EDIT&&!S.fixed&&['tasks','pipe','decisions','kit','evsug','activity'].every(k=>S.loaded[k])&&S.pipe.length){S.fixed=true;fixWording().then(()=>ensureRecords()).then(()=>ensureFocus()).then(()=>ensureFiles()).then(()=>ensureGov()).then(()=>ensureNoAlcohol()).then(()=>ensureAudience()).then(()=>ensureRates()).then(()=>ensureV25()).then(()=>ensureV26()).then(()=>ensureV27()).then(()=>ensureV28()).then(()=>ensureV29()).then(()=>ensureV30()).then(()=>{pruneActivity();return dailyEvents()})}},e=>toast('Could not load '+c+': '+(e.code||e.message||'')))}
+  for(const c of COLS){db.collection(c).onSnapshot(s=>{S[c]=s.docs.map(d=>({...d.data(),id:d.id}));S.loaded[c]=true;softRender();if(EDIT&&!S.fixed&&['tasks','pipe','decisions','kit','evsug','activity'].every(k=>S.loaded[k])&&S.pipe.length){S.fixed=true;fixWording().then(()=>ensureRecords()).then(()=>ensureFocus()).then(()=>ensureFiles()).then(()=>ensureGov()).then(()=>ensureNoAlcohol()).then(()=>ensureAudience()).then(()=>ensureRates()).then(()=>ensureV25()).then(()=>ensureV26()).then(()=>ensureV27()).then(()=>ensureV28()).then(()=>ensureV29()).then(()=>ensureV30()).then(()=>ensureV35()).then(()=>{pruneActivity();return dailyEvents()})}},e=>toast('Could not load '+c+': '+(e.code||e.message||'')))}
 }
 function lsGet(k){try{return localStorage.getItem(k)||''}catch(e){return ''}}
 function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
