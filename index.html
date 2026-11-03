@@ -20,6 +20,7 @@ const STATUSES=['Not started','Finding the contact','Contact found','First messa
 const ACTIVE=['First message sent','In conversation','Proposal sent','Negotiating','Agreed'];
 const LIVE=['In conversation','Proposal sent','Negotiating'];
 const COLS=['tasks','events','pipe','log','contacts','kit','prep','deals','decisions','activity','evsug','notes'];
+let MODE=lsGet('tllj_mode')==='p'?'p':'s';
 const S={loaded:{},tab:'today',fo:'All',fw:'All',fs:'All',fc:'Missing',ai:{}};
 COLS.forEach(c=>S[c]=[]);
 let db=null,sample=null,EDIT=true,CONTRIB=false;
@@ -119,7 +120,7 @@ function sugItem(s,i,k){
 }
 
 /* ---------- Follow-ups ---------- */
-const FUS=()=>S.kit.filter(k=>k.type==='followup');
+const FUS=()=>S.kit.filter(k=>k.type==='followup'&&(k.mode==='Both'||(k.mode==='P')===(MODE==='p')));
 const MON=['january','february','march','april','may','june','july','august','september','october','november','december'];
 const MON3=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
 const WKD=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
@@ -150,7 +151,7 @@ function matchLink(txt){
   const low=txt.toLowerCase(),words=low.replace(/[^a-z0-9 ]/g,' ').split(/\s+/).filter(Boolean);
   let best={pipeId:'',who:'',score:0};
   const bump=(pipeId,who,score)=>{if(score>best.score) best={pipeId,who,score}};
-  S.pipe.forEach(p=>{const g=p.group.toLowerCase();if(low.includes(g)) bump(p.id,'',100);const gs=slug(p.group);if(gs.length>=5){for(let n=1;n<=3;n++)for(let i=0;i+n<=words.length;i++){const w=words.slice(i,i+n).join('');if(w.length>=4&&(w===gs||(gs.length>=7&&lev(w,gs)<=Math.floor(gs.length/5)))) bump(p.id,'',80)}}});
+  linkables().forEach(p=>{const g=p.group.toLowerCase();if(low.includes(g)) bump(p.id,'',100);const gs=slug(p.group);if(gs.length>=5){for(let n=1;n<=3;n++)for(let i=0;i+n<=words.length;i++){const w=words.slice(i,i+n).join('');if(w.length>=4&&(w===gs||(gs.length>=7&&lev(w,gs)<=Math.floor(gs.length/5)))) bump(p.id,'',80)}}});
   S.contacts.forEach(c=>{const nm=(c.name||'').toLowerCase().trim();if(!nm||nm.length>40||/[,(]/.test(nm)||nm.split(/\s+/).length>4) return;if(low.includes(nm)) bump(c.pipeId,c.name,95);const fn=nm.split(/\s+/)[0];if(fn.length>=4&&!/^(the|from|with|team|office|head|their|your)$/.test(fn)&&words.includes(fn)) bump(c.pipeId,c.name,60)});
   S.pipe.forEach(p=>{const fw=p.group.toLowerCase().split(/[^a-z0-9]+/)[0];if(fw.length>=5&&words.includes(fw)) bump(p.id,'',70)});
   if(!best.who){const m=txt.match(/\bwith ([A-Z][a-zA-Z'-]+(?: [A-Z][a-zA-Z'-]+)?)/);if(m&&!S.pipe.some(p=>p.group.toLowerCase().startsWith(m[1].toLowerCase().split(' ')[0]))) best.who=m[1]}
@@ -159,10 +160,10 @@ function matchLink(txt){
 function fuDue(f,t){if(f.done||!f.due) return false;if(f.due>t) return false;const n=Math.round((pd(t)-pd(f.due))/864e5),r=+f.repeat||0;return n===0||(r>0&&n%r===0)}
 function fuNext(f){const r=+f.repeat||0;if(f.due>=TODAY||r<=0) return f.due;const n=dd(f.due,TODAY);return addDays(f.due,Math.ceil(n/r)*r)}
 function fuRow(f,short){
-  const p=f.pipeId&&get('pipe',f.pipeId),late=f.due<TODAY,n=dd(TODAY,f.due),cls=late?'late':f.due===TODAY?'today':n<=2?'soon':'',dt=pd(f.due);
+  const p=f.pipeId&&(get('pipe',f.pipeId)||ptr(f.pipeId)),late=f.due<TODAY,n=dd(TODAY,f.due),cls=late?'late':f.due===TODAY?'today':n<=2?'soon':'',dt=pd(f.due);
   return `<div class="fu2 ${cls}"><div class="fdate"><b>${dt.getDate()}</b><span>${MON3[dt.getMonth()]}</span></div><div class="fbody">
   <input type="text" class="ghost" data-fu="${f.id}" data-k="text" value="${esc(f.text)}" aria-label="Follow-up" style="width:100%;font-weight:600">
-  <div class="meta" style="align-items:center">${fuTag(f)}${p?`<span class="pill ok" data-act="opensp" data-id="${p.id}" style="cursor:pointer">${esc(p.group)}</span>`:''}${f.who?`<span>${esc(f.who)}</span>`:''}${late&&(+f.repeat||0)>0?`<span>Next reminder ${esc(fmt(fuNext(f)))}</span>`:''}</div>
+  <div class="meta" style="align-items:center">${fuTag(f)}${p?`<span class="pill ok" data-act="${p._pt?'openpt':'opensp'}" data-id="${p.id}" style="cursor:pointer">${esc(p.group)}</span>`:''}${f.who?`<span>${esc(f.who)}</span>`:''}${late&&(+f.repeat||0)>0?`<span>Next reminder ${esc(fmt(fuNext(f)))}</span>`:''}</div>
   <div class="fact"><button class="btn sm pri" data-act="fudone" data-id="${f.id}">Done</button><button class="btn sm" data-act="fusay" data-id="${f.id}">What to say</button><button class="btn sm" data-act="fusnooze" data-id="${f.id}">+3 days</button><input type="date" data-fu="${f.id}" data-k="due" value="${esc(f.due)}" aria-label="Due date" style="width:128px"><select data-fu="${f.id}" data-k="repeat" aria-label="Repeat" style="width:auto">${[[0,'No repeat'],[1,'Every day'],[2,'Every 2 days'],[3,'Every 3 days'],[7,'Every week']].map(([v,l])=>`<option value="${v}" ${(+f.repeat||0)===v?'selected':''}>${l}</option>`).join('')}</select><button class="btn sm del xbtn" data-act="fudel" data-id="${f.id}" aria-label="Remove follow-up" title="Remove">×</button></div><div id="fs_${f.id}"></div></div></div>`;
 }
 function vFollow(){
@@ -187,14 +188,14 @@ async function fuPreview(){
   <div class="fld"><label for="fu_t">What</label><input type="text" id="fu_t" value="${esc(text)}"></div>
   <div class="g2"><div class="fld"><label for="fu_d">When</label><input type="date" id="fu_d" value="${esc(due)}"></div>
   <div class="fld"><label for="fu_r">Remind again</label><select id="fu_r">${[[0,'No repeat'],[1,'Every day'],[2,'Every 2 days'],[3,'Every 3 days'],[7,'Every week']].map(([v,l])=>`<option value="${v}" ${rep===v?'selected':''}>${l}</option>`).join('')}</select></div></div>
-  <div class="g2"><div class="fld"><label for="fu_p">Linked sponsor</label><select id="fu_p"><option value="">None</option>${S.pipe.slice().sort((a,b)=>a.group<b.group?-1:1).map(p=>`<option value="${p.id}" ${p.id===ln.pipeId?'selected':''}>${esc(p.group)}</option>`).join('')}</select></div>
+  <div class="g2"><div class="fld"><label for="fu_p">${MODE==='p'?'Linked partner':'Linked sponsor'}</label><select id="fu_p"><option value="">None</option>${linkables().slice().sort((a,b)=>a.group<b.group?-1:1).map(p=>`<option value="${p.id}" ${p.id===ln.pipeId?'selected':''}>${esc(p.group)}</option>`).join('')}</select></div>
   <div class="fld"><label for="fu_w">Person</label><input type="text" id="fu_w" value="${esc(ln.who)}"></div></div>
   <div class="row"><button class="btn pri" data-act="fusave">Save follow-up</button><button class="btn" data-act="fucancel">Cancel</button></div></div>`;
   const dEl=$('#fu_d');if(!due) dEl.focus();
 }
 async function fuSave(){
   const text=$('#fu_t').value.trim(),due=$('#fu_d').value;if(!text){toast('Say what the follow-up is');return}if(!due){toast('Pick a date');return}
-  const id=uid('fu');const o={id,type:'followup',text,due,repeat:+$('#fu_r').value||0,pipeId:$('#fu_p').value,who:$('#fu_w').value.trim(),done:false,created:TODAY};
+  const id=uid('fu');const o={id,type:'followup',text,due,repeat:+$('#fu_r').value||0,pipeId:$('#fu_p').value,who:$('#fu_w').value.trim(),done:false,created:TODAY,mode:MODE==='p'?'P':'S'};
   await act('Add follow-up',()=>save('kit',id,o));$('#fuin').value='';S.fu=null;render();toast('Follow-up saved');
 }
 
@@ -353,6 +354,7 @@ function sheetsData(){
   O['Sponsors']=gen(S.pipe.slice().sort((a,b)=>(a.n||0)-(b.n||0)),['checks','n']);
   O['Contacts']=gen(S.contacts);
   O['Outreach log']=gen(S.log.slice().sort((a,b)=>a.date<b.date?1:-1));
+  O['Partners']=[['Name','Type','Stage','We give','We get','Event','Event dates','Accreditation','Who attends','Contact','Next step','Next step date','Notes','TLLJ delivered','Partner delivered','Worth to TLLJ (1-5)','Would repeat','Wrapped up on','Packages delivered or received','Outcomes logged']].concat(PTS().map(x=>{const e=ptEv(x),w=x.wrap||{};return [x.name,x.kind,stLabel(x.stage),glTxt(x,'give'),glTxt(x,'get'),e?e.name:'',e?evDates(e):'',x.accred,x.attendees,x.contact,x.next,x.nextDate,x.notes,w.gave,w.got,w.worth,w.again,w.date,(x.pkgs||[]).filter(p=>p.done).length+' of '+(x.pkgs||[]).length,(x.outcomes||[]).length].map(v=>v==null?'':String(v))}));
   O['Follow-ups']=gen(S.kit.filter(k=>k.type==='followup'),['type']);
   O['Plan steps']=gen(S.tasks.slice().sort(byDue));
   O['Events']=gen(S.events);
@@ -486,7 +488,7 @@ function vGen(){
 /* ---------- follow-ups: what to say ---------- */
 function fuTag(f){const n=dd(TODAY,f.due);return f.due===TODAY?'<span class="pill gold">Today</span>':f.due<TODAY?`<span class="pill warn">${-n} day${-n===1?'':'s'} overdue</span>`:n<=2?`<span class="pill gold">${n===1?'Tomorrow':'In '+n+' days'}</span>`:`<span class="pill">${esc(fmt(f.due))}</span>`}
 function saySuggest(f){
-  const p=f.pipeId&&get('pipe',f.pipeId),last=p?logsOf(p.id)[0]:null,who=f.who||(p?recipient(p):'');
+  const p0=f.pipeId&&get('pipe',f.pipeId),pt0=f.pipeId&&ptr(f.pipeId),p=p0||(pt0?{id:pt0.id,group:pt0.group,next:(get('kit',pt0.id)||{}).next}:null),last=p?logsOf(p.id)[0]:null,who=f.who||(p?recipient(p):'');
   const hi=who?'Hello '+who.split(' ')[0]+',':'Hello,';
   const act=p&&p.next?p.next:'Contact them today, then add it to the outreach log.';
   return 'Do: '+act+'\nSay: '+hi+'\nI am following up on '+(last?'my '+(last.type==='Email received'?'last conversation with you':'note of '+fmt(last.date)):'our earlier conversation')+(p?' about a partnership between '+p.group+' and The Leisurely Life Journal':'')+'. [One line on what you need: a reply, a call or a decision.] Would [day] suit for a short call?\nThank you,\nSade';
@@ -496,8 +498,8 @@ async function fuSay(id){
   const p=f.pipeId&&get('pipe',f.pipeId);
   box.innerHTML='<div class="sec" style="margin-top:6px"><div class="meta">Thinking…</div></div>';
   let txt=saySuggest(f);
-  if(gem()){try{const sp=p?{group:p.group,status:p.status,next:p.next,proposeFirst:p.propose,whyTheyShouldCare:p.why,contacts:contactsOf(p.id).map(c=>({name:c.name,role:c.role})),log:logsOf(p.id).slice(0,4)}:null;
-    txt=await aiText(STYLE+'\nGive advice for FOLLOWUP in exactly two parts. "Do:" one concrete action in one line. "Say:" a message from Sade of 40 to 70 words, with one clear ask. Use only facts in FOLLOWUP and SPONSOR; keep gaps in [brackets].\nFOLLOWUP: '+JSON.stringify({text:f.text,due:f.due,who:f.who})+'\nSPONSOR: '+JSON.stringify(sp))}catch(e){}}
+  if(gem()){try{const PT=f.pipeId&&get('kit',f.pipeId),sp=PT&&PT.type==='partner'?ptCtx(PT):p?{group:p.group,status:p.status,next:p.next,proposeFirst:p.propose,whyTheyShouldCare:p.why,contacts:contactsOf(p.id).map(c=>({name:c.name,role:c.role})),log:logsOf(p.id).slice(0,4)}:null;
+    txt=await aiText(STY()+'\nGive advice for FOLLOWUP in exactly two parts. "Do:" one concrete action in one line. "Say:" a message from Sade of 40 to 70 words, with one clear ask. Use only facts in FOLLOWUP and SPONSOR; keep gaps in [brackets].\nFOLLOWUP: '+JSON.stringify({text:f.text,due:f.due,who:f.who})+'\nSPONSOR: '+JSON.stringify(sp))}catch(e){}}
   box.innerHTML=`<div class="sec" style="margin-top:6px"><textarea id="fsx_${id}" style="min-height:140px">${esc(txt)}</textarea><div class="row" style="margin-top:6px"><button class="btn sm" data-act="copy" data-t="fsx_${id}">Copy</button><button class="btn sm" data-act="fusayx" data-id="${id}">Close</button></div></div>`;
 }
 /* ---------- check-in and relevance ---------- */
@@ -512,14 +514,14 @@ async function checkin(){
   const goals=[...fus,...nexts,...tasks].filter((x,i,a)=>a.indexOf(x)===i).slice(0,5);
   let txt='Good morning Fatimah.\n\nToday I aim to:\n'+(goals.length?goals.map(x=>'- '+x).join('\n'):'- Move the warmest sponsor conversation one step forward')+(evs.length?'\n- Be ready for '+evs.join(', '):'')+'\n\n'+(decs.length?'From you when you have a moment: your answers on '+decs.slice(0,3).join('; ')+'.':'Nothing needed from you today.');
   box.value=txt;
-  if(gem()){box.value='Writing…';try{txt=await aiText(STYLE+'\nWrite the daily check-in message from Sade to Fatimah. Short and conversational, warm, in a warm Nigerian register, not stiff. A short greeting, then "Today" as plain bullet points of what Sade aims to get done by the end of the day (only things still to do, never anything already done, no Done section), then one short conversational section that merges what Sade needs from Fatimah (open decisions) and any reminder. Use only FACTS. Under 120 words.\nFACTS: '+JSON.stringify({today:fmt(TODAY),toDo:goals,events:evs,openDecisionsForFatimah:decs.slice(0,3)}))}catch(e){}box.value=txt}
+  if(gem()){box.value='Writing…';try{txt=await aiText(STY()+'\nWrite the daily check-in message from Sade to Fatimah. Short and conversational, warm, in a warm Nigerian register, not stiff. A short greeting, then "Today" as plain bullet points of what Sade aims to get done by the end of the day (only things still to do, never anything already done, no Done section), then one short conversational section that merges what Sade needs from Fatimah (open decisions) and any reminder. Use only FACTS. Under 120 words.\nFACTS: '+JSON.stringify({today:fmt(TODAY),toDo:goals,events:evs,openDecisionsForFatimah:decs.slice(0,3)}))}catch(e){}box.value=txt}
   S.ai.checkin=box.value;
 }
 async function relevantNote(text){
   const kw=/sponsor|partner|proposal|pitch|brand|email|call|meeting|met |event|fair|show|accredit|press|contact|introduc|follow|invoice|deal|rate card|media|advert|campaign|interview|repl|speak|spoke|conversation|lead/i;
   const first=g=>String(g).split(/[ ,:(']/)[0];
   const named=S.pipe.some(p=>first(p.group).length>3&&text.toLowerCase().includes(first(p.group).toLowerCase()));
-  if(gem()){try{const r=await aiJson(STYLE+'\nDecide whether NOTE is about sponsorship or partnership work for TLLJ: a sponsor or prospect, outreach, a proposal, an event attended or planned for partnerships, a contact, a deal, or a follow-up. General daily activity is not relevant. Return JSON only: {"relevant":true,"reason":"one short sentence"}.\nNOTE: '+text+'\nSPONSORS: '+S.pipe.map(p=>p.group).join('; '));if(r&&r.relevant===false){toast('Not added: '+(r.reason||'this does not look related to sponsors or partnerships.'));return false}return true}catch(e){}}
+  if(gem()){try{const r=await aiJson(STY()+'\nDecide whether NOTE is about sponsorship or partnership work for TLLJ: a sponsor or prospect, outreach, a proposal, an event attended or planned for partnerships, a contact, a deal, or a follow-up. General daily activity is not relevant. Return JSON only: {"relevant":true,"reason":"one short sentence"}.\nNOTE: '+text+'\nSPONSORS: '+S.pipe.map(p=>p.group).join('; '));if(r&&r.relevant===false){toast('Not added: '+(r.reason||'this does not look related to sponsors or partnerships.'));return false}return true}catch(e){}}
   if(named||kw.test(text)) return true;
   toast('Not added: this does not mention a sponsor, an event or partnership work.');return false;
 }
@@ -592,9 +594,9 @@ function vDecisions(){
    <div class="row"><button class="btn pri sm" data-act="decide" data-id="${d.id}" data-v="Approved">Approve</button><button class="btn sm" data-act="decide" data-id="${d.id}" data-v="Changes needed">Changes needed</button><button class="btn sm" data-act="decide" data-id="${d.id}" data-v="">Clear</button>${EDIT?`<button class="btn sm" data-act="edit" data-col="decisions" data-id="${d.id}">Edit wording</button>`:''}</div></div>`).join('')}</section>`;
 }
 
-const APPGUIDE='TLLJ Partnerships Desk. Tabs: Today (what is due, suggested next steps); Roadmap (calendar of plan steps, events and sponsor next steps; it grows past six weeks when later items are added; Add plan step puts a step in any week); Sponsors (all sponsors under Nigeria, Africa, Global, every cell editable, warnings when a change affects other items); Pipeline (sponsors by stage; open one for contacts, outreach log, drafts, proposal checklist, deal); Contacts (each sponsor contacts and who to write to first; click a contact to edit; adding an email or phone moves the sponsor to Contact found); Events; Proposal Kit (create a proposal in one click from a sponsor, template, ticked rate-card items, audience and terms; rate card; how the prices are built; audience, terms, sponsorship ideas, templates); Balance (checks workload, dates and sponsor conflicts); Scoreboard (signed, pending, live counts, fallbacks, conflicts, the editable Target with deadline and countdown, Start the next target, weekly note for Fatimah); Deals; Decisions (Fatimah approves or comments; Sade edits wording in place); Ask Tilly (brief, propose updates from pasted text, ask anything, Test Tilly); Activity (sponsor activity figures, outside-the-app notes checked by Tilly, check-out report, Excel and CSV export); Suggestions (top right, notes about the desk). Top bar: Search, Tilly (update the board, search the web, or ask a question), Undo, Dark/Light, Settings (Gemini key and model). Roles: editor (Sade) edits everything; contributor (Fatimah) can add and edit sponsors, contacts, events, and answer decisions; viewer reads and comments. Undo reverses the last change.';
+const APPGUIDE='TLLJ Partnerships Desk. A toggle above the tabs switches between Sponsorships and Partnerships. Partnerships mode has Today, Review, Partners (what we give and what we get, five stages: idea, approached, terms agreed, delivering, wrapped up; each partner can link to an event with accreditation and who attends), Events, Templates (a media-partner offer and a collaboration proposal, filled from the partner), Wrap-ups (what each side delivered and what it was worth to TLLJ), Ask Tilly and Activity. Press invitations, media partnerships and collaborations are all partnerships. Partners also has Paste an email (Tilly fills in the partner from an email). Review has a Meeting view for Fatimah (what moved, what is stuck, decisions needed) and a Weekly view with sponsors and partners side by side, plus Copy as text and a Calendar file of next-step dates. Tabs: Today (what is due, suggested next steps); Roadmap (calendar of plan steps, events and sponsor next steps; it grows past six weeks when later items are added; Add plan step puts a step in any week); Sponsors (all sponsors under Nigeria, Africa, Global, every cell editable, warnings when a change affects other items); Pipeline (sponsors by stage; open one for contacts, outreach log, drafts, proposal checklist, deal); Contacts (each sponsor contacts and who to write to first; click a contact to edit; adding an email or phone moves the sponsor to Contact found); Events; Proposal Kit (create a proposal in one click from a sponsor, template, ticked rate-card items, audience and terms; rate card; how the prices are built; audience, terms, sponsorship ideas, templates); Balance (checks workload, dates and sponsor conflicts); Scoreboard (signed, pending, live counts, fallbacks, conflicts, the editable Target with deadline and countdown, Start the next target, weekly note for Fatimah); Deals; Decisions (Fatimah approves or comments; Sade edits wording in place); Ask Tilly (brief, propose updates from pasted text, ask anything, Test Tilly); Activity (sponsor activity figures, outside-the-app notes checked by Tilly, check-out report, Excel and CSV export); Suggestions (top right, notes about the desk). Top bar: Search, Tilly (update the board, search the web, or ask a question), Undo, Dark/Light, Settings (Gemini key and model). Roles: editor (Sade) edits everything; contributor (Fatimah) can add and edit sponsors, contacts, events, and answer decisions; viewer reads and comments. Undo reverses the last change.';
 async function askq(){const q=$('#aq').value.trim(),o=$('#aqout');if(!q){toast('Type a question first');return}if(!gem()){needKey();return}o.textContent='Thinking…';
-  try{const web=$('#aqweb').checked;const t=await aiText(STYLE+'\nAnswer QUESTION. If it is about how this app works or what something means in it, answer only from APP GUIDE and DATA, and say so if the guide does not cover it. If the question needs outside facts, search the web and name the source link for each fact; if you cannot confirm something, say so.\nQUESTION: '+q+'\nAPP GUIDE: '+APPGUIDE+'\nDATA: '+ctx(),x=>o.textContent=x,web?{search:true}:undefined);o.textContent=t}catch(e){o.textContent='Tilly could not answer: '+(e.message||e.code)}}
+  try{const web=$('#aqweb').checked;const t=await aiText(STY()+'\nAnswer QUESTION. If it is about how this app works or what something means in it, answer only from APP GUIDE and DATA, and say so if the guide does not cover it. If the question needs outside facts, search the web and name the source link for each fact; if you cannot confirm something, say so.\nQUESTION: '+q+'\nAPP GUIDE: '+APPGUIDE+'\nDATA: '+ctx(),x=>o.textContent=x,web?{search:true}:undefined);o.textContent=t}catch(e){o.textContent='Tilly could not answer: '+(e.message||e.code)}}
 function vAsk(){
   const A=S.ai;
   return `<div class="cols"><div>
@@ -693,48 +695,429 @@ function openPrep(eid){
 /* ---------- render ---------- */
 function render(){
   applyTarget();
-  const all=[['today','Today'],['roadmap','Roadmap'],['sponsors','Sponsors'],['pipeline','Pipeline'],['contacts','Contacts'],['events','Events'],['kit','Proposal Kit'],['balance','Balance'],['score','Scoreboard'],['deals','Deals'],['decisions','Decisions'],['ask','Ask Tilly'],['activity','Activity']];
-  const tabs=EDIT?all:all.filter(([k])=>(CONTRIB?['today','sponsors','pipeline','contacts','events','score','decisions']:['today','score','decisions']).includes(k));
+  const all=[['today','Today'],['roadmap','Roadmap'],['sponsors','Sponsors'],['pipeline','Pipeline'],['contacts','Contacts'],['events','Events'],['kit','Proposal Kit'],['balance','Balance'],['score','Scoreboard'],['deals','Deals'],['decisions','Decisions'],['review','Review'],['ask','Ask Tilly'],['activity','Activity']];
+  const allP=[['today','Today'],['partners','Partners'],['events','Events'],['templates','Templates'],['wrap','Wrap-ups'],['ask','Ask Tilly'],['review','Review'],['activity','Activity']];
+  const tabs=MODE==='p'?(EDIT?allP:allP.filter(([k])=>['today','partners','events','wrap','review'].includes(k))):EDIT?all:all.filter(([k])=>(CONTRIB?['today','sponsors','pipeline','contacts','events','score','decisions','review']:['today','score','decisions','review']).includes(k));
   if(S.tab!=='notes'&&!tabs.some(([k])=>k===S.tab)) S.tab=tabs[0][0];
   const bc=EDIT?balanceChecks().filter(x=>x.level!=='info').length:0,nc=EDIT?S.notes.filter(x=>x.status==='New').length:0;
-  $('#nav').innerHTML=tabs.map(([k,l])=>`<button data-act="tab" data-id="${k}" ${S.tab===k?'aria-current="true"':''}>${l}${k==='balance'&&bc?' ('+bc+')':''}</button>`).join('');const nb=$('#notesbtn');nb.textContent='Suggestions'+(nc?' ('+nc+')':'');nb.setAttribute('aria-current',S.tab==='notes'?'true':'false');$('#tools').hidden=!(EDIT||CONTRIB);$('#tillybtn').hidden=!EDIT;
-  {const T=tgt(),l=dd(TODAY,END);$('#sub').innerHTML=esc(new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'}))+' · Target: '+esc(T.label)+' by '+esc(DL())+` <span class="pill ${l<0?'warn':'gold'}">${l<0?'Target date passed':l===0?'Target day':l+(l===1?' day left':' days left')}</span>`+(S.demo?' · Demo mode: saved in this browser only':'')}
+  document.body.dataset.mode=MODE;$('#nav').innerHTML=modeSw()+tabs.map(([k,l])=>`<button data-act="tab" data-id="${k}" ${S.tab===k?'aria-current="true"':''}>${l}${k==='balance'&&bc?' ('+bc+')':''}</button>`).join('');const nb=$('#notesbtn');nb.textContent='Suggestions'+(nc?' ('+nc+')':'');nb.setAttribute('aria-current',S.tab==='notes'?'true':'false');$('#tools').hidden=!(EDIT||CONTRIB);$('#tillybtn').hidden=!EDIT;
+  if(MODE==='p'){const L=PTS().filter(x=>x.stage!=='wrapped');$('#sub').innerHTML=esc(new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'}))+' · Partnerships: '+L.length+' live'+(S.demo?' · Demo mode: saved in this browser only':'')}else{const T=tgt(),l=dd(TODAY,END);$('#sub').innerHTML=esc(new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'}))+' · Target: '+esc(T.label)+' by '+esc(DL())+` <span class="pill ${l<0?'warn':'gold'}">${l<0?'Target date passed':l===0?'Target day':l+(l===1?' day left':' days left')}</span>`+(S.demo?' · Demo mode: saved in this browser only':'')}
   renderUndo();
   if(!S.pipe.length&&!S.tasks.length){
     $('#main').innerHTML=`<section class="box"><h2>No data yet</h2><p class="meta">${EDIT?'Choose your seed.json file to load the plan, pipeline and events.':'The plan has not been loaded yet.'}</p>${EDIT?'<input type="file" id="seedfile" accept=".json" aria-label="seed.json">':''}</section>`;return}
-  const f={today:vToday,roadmap:vRoadmap,pipeline:vPipeline,sponsors:vSponsors,balance:vBalance,contacts:vContacts,events:vEvents,kit:vKit,score:vScore,deals:vDeals,decisions:vDecisions,notes:vNotes,activity:vActivity,ask:vAsk}[S.tab];
-  const main=$('#main'),y=scrollY,fk=focusKey();main.style.minHeight=main.offsetHeight+'px';main.innerHTML=f();restoreFocus(fk);scrollTo({top:y,behavior:'instant'});requestAnimationFrame(()=>{main.style.minHeight='';scrollTo({top:y,behavior:'instant'})});
+  const f={today:vToday,roadmap:vRoadmap,pipeline:vPipeline,sponsors:vSponsors,balance:vBalance,contacts:vContacts,events:vEvents,kit:vKit,score:vScore,deals:vDeals,decisions:vDecisions,notes:vNotes,activity:vActivity,ask:vAsk,review:vReview,events:()=>vEvents()+vEvOut(),partners:vPartners,templates:vTemplatesP,wrap:vWrap,...(MODE==='p'?{today:vTodayP,events:vEventsP}:{})}[S.tab];
+  const main=$('#main'),y=scrollY,fk=focusKey();main.style.minHeight=main.offsetHeight+'px';main.innerHTML=f();{const vk=MODE+S.tab+(S.rv?S.rv.sub:'');if(vk!==S._vk){S._vk=vk;main.classList.remove('rise');void main.offsetWidth;main.classList.add('rise')}}restoreFocus(fk);scrollTo({top:y,behavior:'instant'});requestAnimationFrame(()=>{main.style.minHeight='';scrollTo({top:y,behavior:'instant'})});
+}
+
+/* ---------- Partnerships mode (v29) ---------- */
+const PST=[['idea','Idea'],['approached','Approached'],['terms','Terms agreed'],['delivering','Delivering'],['wrapped','Wrapped up']];
+const PKINDS=['Press invitation','Media partner','Collaboration','Event partner','Other'];
+const ACCR=['Not needed','To request','Requested','Confirmed','Declined'];
+const WORTH=['','Not worth it','Little','Fair','Good','Excellent'];
+const PTS=()=>S.kit.filter(k=>k.type==='partner');
+const ptr=id=>{const x=id&&get('kit',id);return x&&x.type==='partner'?{id:x.id,group:x.name,_pt:true}:null};
+const linkables=()=>MODE==='p'?PTS().map(x=>({id:x.id,group:x.name})):S.pipe;
+const ptEv=x=>x&&x.eventId?get('events',x.eventId):null;
+const evDates=e=>!e?'':(e.end&&e.end!==e.start)?fmt(e.start)+' to '+fmt(e.end):fmt(e.start);
+const stLabel=k=>(PST.find(s=>s[0]===k)||[0,k])[1];
+const lines=t=>String(t||'').split(/\n|;/).map(s=>s.trim()).filter(Boolean);
+const ptCtx=x=>{const e=ptEv(x);return {id:x.id,name:x.name,kind:x.kind,stage:stLabel(x.stage),weGive:glTxt(x,'give'),weGet:glTxt(x,'get'),packages:(x.pkgs||[]).map(p=>({side:p.side==='give'?'TLLJ gives':'TLLJ gets',item:p.item,detail:p.detail,by:p.due,done:!!p.done})),outcomes:(x.outcomes||[]).slice(0,3),event:e?{name:e.name,start:e.start,end:e.end,where:e.where}:null,accreditation:e?x.accred:'',attending:x.attendees||'',contact:x.contact||'',next:x.next||'',nextDate:x.nextDate||'',notes:x.notes||'',wrapUp:x.wrap||null}};
+const STYLE_P='You write for Sade Ademola at The Leisurely Life Journal (TLLJ), a global luxury publication for the discerning African reader. She is working in Partnerships mode: non-cash exchanges of access, coverage, content and introductions, such as press invitations, media partnerships and collaborations. Use only facts in DATA. Each partner has "weGive" (what TLLJ offers) and "weGet" (what TLLJ receives). Never invent dates, reach, accreditation, terms or what a partner agreed; if DATA lacks it, say so. Do not quote prices or use the sponsorship rate card, because there is no quote builder here. TLLJ does not partner with alcohol brands. Write warmly, professionally and exactly, in short plain sentences, with no filler.';
+const STY=()=>MODE==='p'?STYLE_P:STYLE_S;
+const ctxP=()=>JSON.stringify({today:TODAY,mode:'Partnerships',partners:PTS().map(ptCtx),followUps:FUS().filter(f=>!f.done).map(f=>({text:f.text,due:f.due,partner:(ptr(f.pipeId)||{}).group||''})),events:S.events.filter(e=>(e.end||e.start)>=addDays(TODAY,-3)).map(e=>({id:e.id,name:e.name,start:e.start,end:e.end,where:e.where})),audience:audLine()});
+function modeSw(){if(!EDIT) return '';return `<span class="seg" role="group" aria-label="Mode"><button data-act="mode" data-id="s" aria-pressed="${MODE==='s'}">Sponsorships</button><button data-act="mode" data-id="p" aria-pressed="${MODE==='p'}">Partnerships</button></span>`}
+
+function ptRow(x,note,cls){return `<div class="ptrow ${cls||''}" data-act="openpt" data-id="${x.id}" tabindex="0" role="button"><b>${esc(x.name)}</b><span class="meta">${note}</span></div>`}
+function ptCard(x){
+  const ev=ptEv(x),late=x.nextDate&&x.nextDate<TODAY;
+  return `<div class="pt" data-act="openpt" data-id="${x.id}" tabindex="0" role="button" aria-label="Open ${esc(x.name)}">
+  <div class="pth"><b>${esc(x.name)}</b><span class="pill">${esc(x.kind)}</span></div>
+  <div class="pt2"><div><small>We give</small>${pkLi(x,'give')}</div><div><small>We get</small>${pkLi(x,'get')}</div></div>${(x.pkgs||[]).length?`<div class="bar" title="${(x.pkgs||[]).filter(p=>p.done).length} of ${(x.pkgs||[]).length} packages done"><i style="width:${Math.round(100*(x.pkgs||[]).filter(p=>p.done).length/(x.pkgs||[]).length)}%"></i></div>`:''}
+  ${ev?`<div class="meta"><span>${esc(ev.name)}</span><span>${esc(evDates(ev))}</span>${x.accred&&x.accred!=='Not needed'?`<span class="pill ${x.accred==='Confirmed'?'ok':''}">Accreditation: ${esc(x.accred)}</span>`:''}${x.attendees?`<span>Attending: ${esc(x.attendees)}</span>`:''}</div>`:''}
+  <div class="meta">${x.next?`<span class="${late?'late-t':''}">Next: ${esc(x.next)}${x.nextDate?' · '+esc(fmt(x.nextDate)):''}</span>`:'<span>No next step yet</span>'}</div></div>`;
+}
+function vPartners(){
+  S.ps=S.ps||'all';const L=PTS(),cnt=k=>L.filter(x=>x.stage===k).length;
+  const chips=`<div class="chips" role="group" aria-label="Stage">`+[['all','All']].concat(PST).map(([k,l])=>`<button class="chip" data-act="psf" data-id="${k}" aria-pressed="${S.ps===k}">${l} <b>${k==='all'?L.length:cnt(k)}</b></button>`).join('')+`</div>`;
+  const groups=PST.filter(([k])=>S.ps==='all'||S.ps===k).map(([k,l])=>{const a=L.filter(x=>x.stage===k).sort((p,q)=>(p.nextDate||'9')<(q.nextDate||'9')?-1:1);return a.length?`<h3 class="ptg">${l} <small>${a.length}</small></h3><div class="ptgrid">${a.map(ptCard).join('')}</div>`:''}).join('');
+  return `<section class="box"><h2>Partners <small>${L.filter(x=>x.stage!=='wrapped').length} live · ${cnt('wrapped')} wrapped up</small></h2>
+  <p class="meta">Non-cash exchanges of access, coverage, content and introductions: press invitations, media partnerships and collaborations. For each, write what we give and what we get.</p>
+  <div class="row" style="margin:8px 0">${EDIT?`<button class="btn pri" data-act="ptnew">Add a partner</button><button class="btn" data-act="pastemail">${ICO.mail}Paste an email</button>`:''}</div>${chips}${groups||'<div class="empty">No partners here yet. Add the first: a press invitation, a media partnership or a collaboration.</div>'}</section>`;
+}
+function vTodayP(){
+  const L=PTS().filter(x=>x.stage!=='wrapped'),wk=addDays(TODAY,7);
+  const need=L.filter(x=>x.nextDate&&x.nextDate<=wk).sort((a,b)=>a.nextDate<b.nextDate?-1:1);
+  const nostep=L.filter(x=>!x.nextDate);
+  const gaps=L.filter(x=>!gl(x,'give').length||!gl(x,'get').length);
+  const ended=L.filter(x=>{const e=ptEv(x);return e&&(e.end||e.start)<TODAY});
+  const evs=S.events.filter(e=>(e.end||e.start)>=TODAY&&dd(TODAY,e.start)<=30&&PTS().some(x=>x.eventId===e.id&&x.stage!=='wrapped')).sort((a,b)=>a.start<b.start?-1:1);
+  const nn=S.notes.filter(x=>x.status==='New').length;
+  return (EDIT&&nn?`<div class="banner" style="background:var(--gold-soft);color:var(--gold);border-color:var(--gold)">${nn} new suggestion${nn===1?'':'s'}. <button class="btn sm" data-act="tab" data-id="notes">Read</button></div>`:'')+
+  ptHero()+vOutcomes()+`<section class="box"><h2>Brief and quick actions</h2>
+  <div class="row"><button class="btn pri" data-act="brief">Brief me</button><button class="btn" data-act="ptnew">Add a partner</button><button class="btn" data-act="pastemail">${ICO.mail}Paste an email</button></div><pre id="brief" class="meta" style="white-space:pre-wrap;font:inherit;margin:8px 0 0"></pre></section>`+vFollow()+
+  `<section class="box"><h2>Needs a move <small>next 7 days and overdue</small></h2>${need.map(x=>ptRow(x,esc(x.next||'No next step')+' · '+esc(fmt(x.nextDate)),x.nextDate<TODAY?'late':'')).join('')||'<div class="empty">Nothing due in the next seven days.</div>'}
+  ${nostep.length?`<p class="meta" style="margin-top:8px"><b>No next step set:</b> ${nostep.map(x=>esc(x.name)).join(', ')}.</p>`:''}</section>`+
+  (false?`<section class="box"><h2>The event has passed <small>wrap these up</small></h2>${ended.map(x=>ptRow(x,esc((ptEv(x)||{}).name)+' ended '+esc(fmt((ptEv(x).end||ptEv(x).start)))+'. Record what each side delivered.')).join('')}</section>`:'')+
+  (gaps.length?`<section class="box"><h2>Fill in <small>${gaps.length}</small></h2>${gaps.map(x=>ptRow(x,[!gl(x,'give').length?'what we give':'',!gl(x,'get').length?'what we get':''].filter(Boolean).join(' and ')+' is missing')).join('')}</section>`:'')+
+  (evs.length?`<section class="box"><h2>Coming up with partners</h2>${evs.map(e=>`<div class="sec"><b>${esc(e.name)}</b><div class="meta"><span>${esc(evDates(e))}</span><span>${esc(e.where||'')}</span></div>${PTS().filter(x=>x.eventId===e.id&&x.stage!=='wrapped').map(x=>ptRow(x,esc(x.accred&&x.accred!=='Not needed'?'Accreditation: '+x.accred:'')+(x.attendees?' · Attending: '+esc(x.attendees):''))).join('')}</div>`).join('')}</section>`:'');
+}
+function vEventsP(){
+  const L=PTS(),ids=[...new Set(L.map(x=>x.eventId).filter(Boolean))],evs=ids.map(i=>get('events',i)).filter(Boolean).sort((a,b)=>a.start<b.start?-1:1);
+  return `<section class="box"><h2>Partners at events</h2>${evs.map(e=>`<div class="sec"><b>${esc(e.name)}</b><div class="meta"><span>${esc(evDates(e))}</span><span>${esc(e.where||'')}</span>${(e.end||e.start)<TODAY?'<span class="pill">Ended</span>':''}</div>${L.filter(x=>x.eventId===e.id).map(x=>ptRow(x,esc(stLabel(x.stage))+(x.accred&&x.accred!=='Not needed'?' · Accreditation: '+esc(x.accred):'')+(x.attendees?' · Attending: '+esc(x.attendees):''))).join('')}</div>`).join('')||'<div class="empty">No partner is linked to an event yet. Open a partner and choose its event.</div>'}</section>`+vEvents()+vEvOut();
+}
+function vWrap(){
+  const W=PTS().filter(x=>x.stage==='wrapped').sort((a,b)=>((b.wrap||{}).date||'')<((a.wrap||{}).date||'')?-1:1);
+  const rated=W.filter(x=>x.wrap&&+x.wrap.worth),avg=rated.length?(rated.reduce((s,x)=>s+(+x.wrap.worth),0)/rated.length).toFixed(1):'';
+  const again=W.filter(x=>x.wrap&&x.wrap.again==='Yes').length;
+  const ready=PTS().filter(x=>x.stage==='delivering');
+  return `<section class="box"><h2>Wrap-ups <small>${W.length} wrapped up</small></h2>
+  <p class="meta">What each side delivered and what it was worth to TLLJ. This is the record to read before saying yes to the same partner again.</p>
+  ${W.length?`<div class="meta"><span><b>${rated.length}</b> of ${W.length} rated</span>${avg?`<span>Average worth <b>${avg}</b> of 5</span>`:''}<span>Would repeat: <b>${again}</b></span></div>`:''}
+  ${W.map(x=>{const w=x.wrap||{},ev=ptEv(x);return `<div class="pt" data-act="openpt" data-id="${x.id}" tabindex="0" role="button"><div class="pth"><b>${esc(x.name)}</b><span class="pill">${esc(x.kind)}</span>${w.worth?`<span class="pill ok">${esc(WORTH[+w.worth])} (${+w.worth}/5)</span>`:'<span class="pill warn">Not rated</span>'}</div>
+  <div class="pt2"><div><small>TLLJ delivered</small><p>${(w.gave||doneTxt(x,'give'))?esc(w.gave||doneTxt(x,'give')):'<i>Not recorded</i>'}</p></div><div><small>${esc(x.name)} delivered</small><p>${(w.got||doneTxt(x,'get'))?esc(w.got||doneTxt(x,'get')):'<i>Not recorded</i>'}</p></div></div>
+  ${w.why?`<p class="meta">${esc(w.why)}</p>`:''}<div class="meta">${ev?`<span>${esc(ev.name)}</span>`:''}${w.date?`<span>Wrapped ${esc(fmt(w.date))}</span>`:''}${w.again?`<span>Would repeat: ${esc(w.again)}</span>`:''}</div></div>`}).join('')||'<div class="empty">Nothing wrapped up yet. When a partnership is done, open it, move it to Wrapped up and record what it was worth.</div>'}</section>
+  ${ready.length?`<section class="box"><h2>Delivering now <small>${ready.length}</small></h2>${ready.map(x=>ptRow(x,'Move to Wrapped up when both sides have delivered')).join('')}</section>`:''}`;
+}
+function genPT(p,tpl){
+  const first=(p.contact||'').trim().split(/\s+/)[0],ev=ptEv(p),miss=[],give=gl(p,'give').map(q=>q.item+(q.detail?': '+q.detail:'')+(q.due?' (by '+fmt(q.due)+')':'')),got=gl(p,'get').map(q=>q.item+(q.detail?': '+q.detail:'')+(q.due?' (by '+fmt(q.due)+')':'')),aud=audLine(),B=a=>a.map(s=>'- '+s.replace(/\.$/,'')).join('\n');
+  if(!give.length) miss.push('what we give');if(!got.length) miss.push('what we get');
+  const topic=ev?ev.name:p.name;
+  const when=ev?`Dates: ${evDates(ev)}${ev.where?', '+ev.where:''}.`:'';
+  let acc='';if(ev&&p.accred&&p.accred!=='Not needed'&&p.accred!=='Declined'){if(!p.attendees) miss.push('who attends');else acc=p.accred==='Confirmed'?`Accreditation is confirmed for ${p.attendees}.`:`We would like to request accreditation for ${p.attendees}.`}
+  const hi=`Dear ${first||'[Name]'},`;if(!first) miss.push('the contact name');
+  const reach=aud?`Our audience: ${aud}.`:'';
+  let t;
+  if(tpl==='collab'){
+    if(!p.notes) miss.push('the idea (add it under Notes)');if(!ev) miss.push('timing');
+    t=`Subject: Collaboration proposal: ${p.name} and The Leisurely Life Journal\n\n${hi}\n\nThank you for your time. Here is the collaboration we have in mind${ev?` around ${ev.name}`:''}.\n\nThe idea\n${p.notes||'[the idea in one or two lines]'}\n\nWhat The Leisurely Life Journal brings\n${give.length?B(give):'- [what we give]'}\n\nWhat we would love from you\n${got.length?B(got):'- [what we get]'}\n\nTiming\n${ev?when:'[timing]'}${acc?' '+acc:''}\n\n${reach}\n\nIf this feels right, I would suggest a short call to agree the details and who does what.\n\nWarm regards,${SIGN}`;
+  }else{
+    t=`Subject: Media partnership: ${topic} and The Leisurely Life Journal\n\n${hi}\n\nI am writing on behalf of The Leisurely Life Journal, a global luxury publication for the discerning African reader. We would be glad to be the media partner for ${topic}.\n\nWhat we would give\n${give.length?B(give):'- [what we give]'}\n\nWhat we would ask in return\n${got.length?B(got):'- [what we get]'}\n\n${[when,acc].filter(Boolean).join(' ')}${when||acc?'\n\n':''}${reach}${reach?'\n\n':''}If this suits you, I would suggest a short call to agree the details and the dates for each piece.\n\nWarm regards,${SIGN}`;
+  }
+  return {text:t.replace(/\n{3,}/g,'\n\n'),miss};
+}
+function vTemplatesP(){
+  const L=PTS().sort((a,b)=>a.name<b.name?-1:1);if(!L.length) return `<section class="box"><h2>Templates</h2><div class="empty">Add a partner first. The templates fill themselves from it.</div></section>`;
+  const cur=S.tp&&get('kit',S.tp.id)?S.tp:{id:(L.find(x=>x.stage!=='wrapped')||L[0]).id,tpl:'media'},o=S.ptOut&&S.ptOut.id===cur.id&&S.ptOut.tpl===cur.tpl?S.ptOut:null;
+  return `<section class="box"><h2>Templates <small>filled from the partner</small></h2><p class="meta">Choose a partner and a template. The offer is built from what we give, what we get, the event, accreditation and our audience figures. Anything missing stays in [brackets] and is listed below.</p>
+  <div class="g2"><div class="fld"><label for="ptsel">Partner</label><select id="ptsel">${L.map(x=>`<option value="${x.id}" ${x.id===cur.id?'selected':''}>${esc(x.name)} (${esc(stLabel(x.stage))})</option>`).join('')}</select></div>
+  <div class="fld"><label>Template</label><div class="row"><label class="radio"><input type="radio" name="pttpl" value="media" ${cur.tpl==='media'?'checked':''}> Media-partner offer</label><label class="radio"><input type="radio" name="pttpl" value="collab" ${cur.tpl==='collab'?'checked':''}> Collaboration proposal</label></div></div></div>
+  <div class="row"><button class="btn pri big" data-act="ptgen">Generate</button>${o?'<button class="btn" data-act="copy" data-t="ptout">Copy</button><button class="btn" data-act="ptpolish">Polish with Tilly</button>':''}</div>
+  ${o?`${o.miss.length?`<div class="banner" style="margin-top:10px">Still to fill in: ${o.miss.map(esc).join(', ')}.</div>`:''}<textarea id="ptout" style="min-height:360px;margin-top:10px" aria-label="Draft">${esc(o.text)}</textarea><p class="meta">Check every line before it goes. Nothing is sent from here.</p>`:''}</section>`;
+}
+function openPartner(id){
+  const x=get('kit',id);if(!x||x.type!=='partner') return;
+  const dis=EDIT?'':'disabled',w=x.wrap||{},ev=ptEv(x),evs=S.events.slice().sort((a,b)=>a.start<b.start?-1:1);
+  const showW=x.stage==='wrapped'||S.wrapOpen===id||w.gave||w.got||w.worth||w.why;
+  const T=(k,l,v,ph)=>`<div class="fld"><label>${l}</label><input type="text" data-pt="${k}" data-pid="${id}" value="${esc(v||'')}" placeholder="${esc(ph||'')}" ${dis}></div>`;
+  const A=(k,l,v,ph,h)=>`<div class="fld"><label>${l}</label><textarea data-pt="${k}" data-pid="${id}" placeholder="${esc(ph||'')}" style="min-height:${h||90}px" ${dis}>${esc(v||'')}</textarea></div>`;
+  const dlg=$('#dlg'),st0=dlg.open&&dlg.dataset.id===id?dlg.scrollTop:0;
+  dlg.innerHTML=`<h2 style="margin-bottom:6px"><input type="text" class="ghost" data-pt="name" data-pid="${id}" value="${esc(x.name)}" aria-label="Partner name" style="width:100%;font-size:inherit;font-weight:inherit" ${dis}></h2>
+  <div class="g2"><div class="fld"><label>Type</label><select data-pt="kind" data-pid="${id}" ${dis}>${PKINDS.map(k=>`<option ${x.kind===k?'selected':''}>${k}</option>`).join('')}</select></div>${T('contact','Contact (name, then email or phone)',x.contact,'For example: Ada Obi, ada@example.com')}</div>
+  <div class="stagebar" role="group" aria-label="Stage">${PST.map(([k,l],i)=>`<button class="stg ${x.stage===k?'on':''}" data-act="ptstage" data-id="${id}" data-s="${k}" aria-pressed="${x.stage===k}" ${dis}>${i+1}. ${l}</button>`).join('')}</div>
+  <div class="pkgrid">${pkCol(x,'give',dis)}${pkCol(x,'get',dis)}</div>
+  <div class="g2"><div class="fld"><label>Event</label><select data-pt="eventId" data-pid="${id}" ${dis}><option value="">None</option>${evs.map(e=>`<option value="${e.id}" ${e.id===x.eventId?'selected':''}>${esc(e.name)} · ${esc(fmt(e.start))}</option>`).join('')}</select></div>
+  <div class="fld"><label>Accreditation</label><select data-pt="accred" data-pid="${id}" ${dis}>${ACCR.map(k=>`<option ${(x.accred||'Not needed')===k?'selected':''}>${k}</option>`).join('')}</select></div></div>
+  ${ev?`<div class="meta" style="margin:-4px 0 8px"><span>${esc(evDates(ev))}</span><span>${esc(ev.where||'')}</span></div>`:''}
+  ${T('attendees','Who attends',x.attendees,'For example: Sade, plus a photographer')}
+  <div class="g2">${T('next','Next step',x.next,'The one thing that moves this forward')}<div class="fld"><label>Next step date</label><input type="date" data-pt="nextDate" data-pid="${id}" value="${esc(x.nextDate||'')}" ${dis}></div></div>
+  ${T('ask','Needs a decision from Fatimah',x.ask,'Leave empty if nothing is needed')}
+  ${A('notes','Notes (also feeds the collaboration proposal as the idea)',x.notes,'',70)}
+  ${showW?`<div class="wrapbox"><h3>Wrap-up <small class="meta">${gl(x,'give').length+gl(x,'get').length?pkDone(x,'give').length+' of '+gl(x,'give').length+' delivered, '+pkDone(x,'get').length+' of '+gl(x,'get').length+' received':''}</small></h3><div class="g2">${`<div class="fld"><label>What TLLJ delivered</label><textarea data-ptw="gave" data-pid="${id}" placeholder="${esc(doneTxt(x,'give'))}" style="min-height:80px" ${dis}>${esc(w.gave||'')}</textarea></div><div class="fld"><label>What ${esc(x.name)} delivered</label><textarea data-ptw="got" data-pid="${id}" placeholder="${esc(doneTxt(x,'get'))}" style="min-height:80px" ${dis}>${esc(w.got||'')}</textarea></div>`}</div>
+  <div class="g2"><div class="fld"><label>What it was worth to TLLJ</label><select data-ptw="worth" data-pid="${id}" ${dis}>${WORTH.map((l,i)=>`<option value="${i||''}" ${(+w.worth||0)===i?'selected':''}>${i?i+' · '+l:'Not rated'}</option>`).join('')}</select></div><div class="fld"><label>Would we do it again</label><select data-ptw="again" data-pid="${id}" ${dis}>${['','Yes','Maybe','No'].map(k=>`<option value="${k}" ${(w.again||'')===k?'selected':''}>${k||'Not decided'}</option>`).join('')}</select></div></div>
+  <div class="g2"><div class="fld" style="grid-column:1/-1"><label>Why (in your words: reach, leads, access, content, time spent)</label><textarea data-ptw="why" data-pid="${id}" style="min-height:70px" ${dis}>${esc(w.why||'')}</textarea></div></div>
+  <div class="fld"><label>Wrapped up on</label><input type="date" data-ptw="date" data-pid="${id}" value="${esc(w.date||'')}" ${dis}></div></div>`:(EDIT?`<div class="row"><button class="btn" data-act="ptwrap" data-id="${id}">Record a wrap-up</button></div>`:'')}
+  ${(x.outcomes||[]).length?`<div class="wrapbox" style="background:var(--surface);border-style:solid"><h3>Outcomes</h3>${x.outcomes.map((o,i)=>`<div class="meta"><b>${esc(fmt(o.at))}</b>${o.next?' · Next: '+esc(o.next):''}</div><textarea data-oc="${i}" data-pid="${id}" aria-label="Outcome" style="min-height:56px;margin-bottom:8px" ${dis}>${esc(o.result)}</textarea>`).join('')}</div>`:''}
+  ${EDIT?`<div class="row" style="margin-top:12px"><button class="btn pri" data-act="ptfu" data-id="${id}">Add a follow-up</button><button class="btn" data-act="outopen" data-k="partner" data-id="${id}">Log an outcome</button><button class="btn" data-act="ptdraft" data-id="${id}">Draft an offer</button><button class="btn" data-act="icspt" data-id="${id}">${ICO.cal}Add to calendar</button><button class="btn" data-act="ptdel" data-id="${id}">Delete</button><button class="btn" data-act="ptclose">Close</button></div>`:'<div class="row"><button class="btn" data-act="ptclose">Close</button></div>'}`;
+  dlg.dataset.col='partner';dlg.dataset.id=id;if(!dlg.open) dlg.showModal();dlg.scrollTop=st0;
+}
+async function ptClick(a,id,el){
+  if(a==='mode'){MODE=id==='p'?'p':'s';lsSet('tllj_mode',MODE);S.tab='today';render();return true}
+  if(a==='psf'){S.ps=id;render();return true}
+  if(a==='ptclose'){$('#dlg').close();return true}
+  if(a==='openpt'){openPartner(id);return true}
+  if(a==='gopt'){openPartner(id);return true}
+  if(!EDIT||!/^(pt|pk|out)/.test(a)) return false;
+  if(a==='pkadd'){const x=get('kit',id),s=el.dataset.s;if(!x) return true;await act('Add package',()=>patch('kit',id,{pkgs:[...(x.pkgs||[]),{id:uid('pk'),side:s,item:'',detail:'',due:'',done:false}]}));openPartner(id);const L=document.querySelectorAll('[data-pkk=item]');const l=[...L].reverse().find(i=>!i.value);if(l) l.focus();return true}
+  if(a==='pkdel'){const x=get('kit',id);if(!x) return true;await act('Remove package',()=>patch('kit',id,{pkgs:(x.pkgs||[]).filter(p=>p.id!==el.dataset.k)}));openPartner(id);return true}
+  if(a==='outopen'){openOutcome(el.dataset.k,id);return true}
+  if(a==='outsave'){await outSave(el.dataset.k,id);return true}
+  if(a==='outskip'){await act('Event: no outcome needed',()=>patch('events',id,{outcome:{result:'',skipped:true,at:TODAY}}));$('#dlg').close();return true}
+  if(a==='ptnew'){const nid=uid('pt');await act('Add partner',()=>save('kit',nid,{type:'partner',name:'New partner',kind:'Collaboration',stage:'idea',pkgs:[],ask:'',eventId:'',accred:'Not needed',attendees:'',contact:'',next:'',nextDate:'',notes:'',wrap:{},outcomes:[],created:TODAY}));openPartner(nid);const n=document.querySelector('[data-pt="name"]');if(n){n.focus();n.select()}return true}
+  if(a==='ptstage'){const x=get('kit',id),s=el.dataset.s;if(!x||x.stage===s) return true;await act('Move '+x.name+' to '+stLabel(s),()=>patch('kit',id,{stage:s,...(s==='wrapped'&&!(x.wrap&&x.wrap.date)?{wrap:{...(x.wrap||{}),date:TODAY}}:{})}));openPartner(id);return true}
+  if(a==='ptwrap'){S.wrapOpen=id;openPartner(id);return true}
+  if(a==='ptfu'){const x=get('kit',id);if(!x) return true;const due=x.nextDate&&x.nextDate>=TODAY?x.nextDate:addDays(TODAY,3),fid=uid('fu');await act('Add follow-up',()=>save('kit',fid,{id:fid,type:'followup',text:'Follow up with '+x.name+(x.next?': '+x.next:''),due,repeat:0,pipeId:id,who:(x.contact||'').split(',')[0].trim(),done:false,created:TODAY,mode:'P'}));toast('Follow-up added for '+fmt(due)+'. Change the wording or date on Today.');return true}
+  if(a==='ptdraft'){S.tp={id,tpl:'media'};S.ptOut=null;S.tab='templates';$('#dlg').close();return true}
+  if(a==='ptdel'){const x=get('kit',id);if(!x) return true;await act('Delete partner '+x.name,async()=>{for(const f of FUS().filter(f=>f.pipeId===id)) await remove('kit',f.id);await remove('kit',id)});$('#dlg').close();toast('Deleted. Undo brings it back.');return true}
+  if(a==='ptgen'){const sel=$('#ptsel'),r=document.querySelector('input[name="pttpl"]:checked'),p=sel&&get('kit',sel.value);if(!p) return true;const g=genPT(p,r?r.value:'media');S.tp={id:p.id,tpl:r?r.value:'media'};S.ptOut={id:p.id,tpl:S.tp.tpl,text:g.text,miss:g.miss};render();return true}
+  if(a==='ptpolish'){const t=$('#ptout');if(!t||!S.ptOut) return true;toast('Tilly is polishing…');try{const o=await aiText(STY()+'\nPolish this draft so it reads warmly and exactly. Keep every fact, the subject line, the section headings and every [bracket] as they are. Do not add facts, numbers or promises. Return only the draft.\nDRAFT:\n'+t.value);S.ptOut.text=o.trim();render()}catch(e){toast('Tilly could not polish it. The draft is unchanged.')}return true}
+  return false;
+}
+async function ptChange(e){
+  const t=e.target;if(!t||!t.dataset||!EDIT) return false;
+  if(t.id==='ptsel'||t.name==='pttpl'){const r=document.querySelector('input[name="pttpl"]:checked');S.tp={id:$('#ptsel').value,tpl:r?r.value:'media'};S.ptOut=null;render();return true}
+  if(t.id==='rvper'){S.rv=S.rv||{sub:'meeting'};S.rv.per=t.value;render();return true}
+  if(t.dataset.oc!==undefined){const x=get('kit',t.dataset.pid);if(!x) return true;await act('Edit outcome',()=>patch('kit',x.id,{outcomes:(x.outcomes||[]).map((o,i)=>i===+t.dataset.oc?{...o,result:t.value}:o)}));return true}
+  if(t.dataset.eo){const e=get('events',t.dataset.eo);if(!e) return true;await act('Edit event outcome',()=>patch('events',e.id,{outcome:{...(e.outcome||{}),result:t.value}}));return true}
+  if(t.id==='ptout'){if(S.ptOut) S.ptOut.text=t.value;return true}
+  if(t.dataset.pk){const x=get('kit',t.dataset.pid),k2=t.dataset.pkk,v=k2==='done'?t.checked:t.value;if(!x) return true;await act('Edit package',()=>patch('kit',x.id,{pkgs:(x.pkgs||[]).map(p=>p.id===t.dataset.pk?{...p,[k2]:v}:p)}));if(k2==='done') t.closest('.pk').classList.toggle('done',v);return true}
+  const k=t.dataset.pt,w=t.dataset.ptw,id=t.dataset.pid;if(!k&&!w) return false;
+  const x=get('kit',id);if(!x) return true;
+  if(k){const v=t.value;if(k==='name'&&!v.trim()){toast('A partner needs a name');t.value=x.name;return true}
+    await act('Edit partner',()=>patch('kit',id,{[k]:v}));if(k==='eventId'||k==='name') openPartner(id);return true}
+  await act('Edit wrap-up',()=>patch('kit',id,{wrap:{...(x.wrap||{}),[w]:t.value}}));return true;
+}
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target&&e.target.matches&&e.target.matches('.pt,.ptrow')){e.preventDefault();e.target.click()}});
+async function ensureV29(){
+  if(!db||!EDIT||lsGet('tllj_seed_v29')||!S.pipe.length) return;
+  const P=[
+    {id:'pt_hs',type:'partner',name:'H&S Tennis',kind:'Press invitation',stage:'approached',give:'',get:'',eventId:'',accred:'Not needed',attendees:'',contact:'',next:'Follow up with H&S',nextDate:'2026-11-06',notes:'Details to come from Sade.',wrap:{},created:TODAY},
+    {id:'pt_kilentar',type:'partner',name:'Kilentar private viewing',kind:'Press invitation',stage:'approached',give:'',get:'Invitation to a private viewing',eventId:'',accred:'Not needed',attendees:'',contact:'',next:'',nextDate:'',notes:'Kilentar has invited TLLJ to a private viewing. Details to come from Sade.',wrap:{},created:TODAY},
+    {id:'pt_iamisigo',type:'partner',name:'IAMISIGO',kind:'Press invitation',stage:'delivering',give:'A review of the IAMISIGO runway show at Lagos Fashion Week',get:'Invitation to the show',eventId:S.events.some(e=>e.id==='e1')?'e1':'',accred:'Not needed',attendees:'',contact:'',next:'Write the show review',nextDate:'',notes:'Show review to be written from Sade\'s notes.',wrap:{},created:TODAY}];
+  const F=[
+    {id:'fu_hs_tennis',type:'followup',text:'Follow up with H&S Tennis (by 11 am)',due:'2026-11-06',repeat:0,pipeId:'pt_hs',who:'',done:false,created:TODAY,mode:'P'},
+    {id:'fu_style_writers',type:'followup',text:'Reach out to writers for the style piece',due:'2026-11-03',repeat:0,pipeId:'',who:'',done:false,created:TODAY,mode:'Both'}];
+  try{for(const d of P.concat(F)){if(!get('kit',d.id)){await db.collection('kit').doc(d.id).set(d);local('kit',d.id,d)}}lsSet('tllj_seed_v29','1');render()}catch(e){}
+}
+
+/* ---------- v30: packages, outcomes, mode-scoped search and activity ---------- */
+const gl=(x,side)=>Array.isArray(x.pkgs)?x.pkgs.filter(p=>p.side===side&&p.item):lines(x[side]).map(s=>({item:s}));
+const glTxt=(x,side)=>gl(x,side).map(p=>p.item+(p.detail?': '+p.detail:'')).join('; ');
+const pkDone=(x,side)=>gl(x,side).filter(p=>p.done);
+const doneTxt=(x,side)=>pkDone(x,side).map(p=>p.item).join('; ');
+function pkLi(x,side){const L=gl(x,side);return L.length?'<ul class="pkl">'+L.slice(0,5).map(p=>`<li class="${p.done?'ok':''}">${p.done?'&#10003; ':''}${esc(p.item)}${p.due?' <span class="meta">by '+esc(fmt(p.due))+'</span>':''}</li>`).join('')+(L.length>5?`<li class="meta">+${L.length-5} more</li>`:'')+'</ul>':'<p><i>Not filled in yet</i></p>'}
+function pkRow(x,p,dis){const lab=p.side==='give'?'Delivered':'Received',d=`data-pk="${p.id}" data-pid="${x.id}"`;
+  return `<div class="pk ${p.done?'done':''}"><div class="pkh"><label class="radio" title="${lab}"><input type="checkbox" ${d} data-pkk="done" ${p.done?'checked':''} aria-label="${lab}" ${dis}><span class="meta">${lab}</span></label><input type="text" class="ghost" ${d} data-pkk="item" value="${esc(p.item)}" placeholder="Package, for example: Instagram feature" aria-label="Package" ${dis}></div>
+  <textarea ${d} data-pkk="detail" placeholder="What exactly, how many, any conditions" aria-label="Detail" style="min-height:46px" ${dis}>${esc(p.detail||'')}</textarea>
+  <div class="pkf"><input type="date" ${d} data-pkk="due" value="${esc(p.due||'')}" aria-label="By when" ${dis}>${EDIT?`<button class="btn sm" data-act="pkdel" data-id="${x.id}" data-k="${p.id}" aria-label="Remove package">&#10005;</button>`:''}</div></div>`}
+function pkCol(x,side,dis){const L=(x.pkgs||[]).filter(p=>p.side===side);
+  return `<div class="pkcol"><h3>${side==='give'?'We give':'We get'} <small>${L.filter(p=>p.done).length}/${L.length} ${side==='give'?'delivered':'received'}</small></h3>${L.map(p=>pkRow(x,p,dis)).join('')||'<div class="meta">Nothing listed yet.</div>'}${EDIT?`<button class="btn sm" data-act="pkadd" data-id="${x.id}" data-s="${side}">Add a package</button>`:''}</div>`}
+
+function outDue(){
+  const R=[];
+  S.events.filter(e=>(e.end||e.start)<TODAY&&dd(e.end||e.start,TODAY)<=30&&!e.outcome).forEach(e=>R.push({k:'event',id:e.id,name:e.name,why:'Ended '+fmt(e.end||e.start)}));
+  if(MODE==='p') PTS().filter(x=>x.stage!=='wrapped'&&x.nextDate&&x.nextDate<TODAY).forEach(x=>R.push({k:'partner',id:x.id,name:x.name,why:'Next step was due '+fmt(x.nextDate)+(x.next?': '+x.next:'')}));
+  else S.pipe.filter(p=>p.nextDate&&p.nextDate<TODAY&&!['Agreed','Declined','On hold'].includes(p.status)).forEach(p=>R.push({k:'pipe',id:p.id,name:p.group,why:'Next step was due '+fmt(p.nextDate)+(p.next?': '+p.next:'')}));
+  return R;
+}
+function vOutcomes(){
+  if(!EDIT) return '';const R=outDue();if(!R.length) return '';
+  const lab={event:'Event',partner:'Partner',pipe:'Sponsor'};
+  return `<section class="box"><h2>What happened? <small>${R.length} waiting</small></h2><p class="meta">These have passed their date. Log the result and the next step so nothing goes quiet.</p>${R.map(r=>`<div class="ptrow"><span class="pill">${lab[r.k]}</span><b>${esc(r.name)}</b><span class="meta" style="flex:1">${esc(r.why)}</span><button class="btn sm pri" data-act="outopen" data-k="${r.k}" data-id="${r.id}">Log outcome</button></div>`).join('')}</section>`;
+}
+function vEvOut(){
+  const E=S.events.filter(e=>e.outcome&&e.outcome.result).sort((a,b)=>(b.outcome.at||'')<(a.outcome.at||'')?-1:1);if(!E.length) return '';
+  return `<section class="box"><h2>Event outcomes <small>${E.length}</small></h2>${E.map(e=>`<div class="sec"><b>${esc(e.name)}</b><div class="meta"><span>Logged ${esc(fmt(e.outcome.at))}</span>${e.outcome.next?`<span>Next: ${esc(e.outcome.next)}</span>`:''}</div><textarea data-eo="${e.id}" aria-label="Outcome" style="min-height:56px;margin-top:4px" ${EDIT?'':'disabled'}>${esc(e.outcome.result)}</textarea></div>`).join('')}</section>`;
+}
+function openOutcome(kind,id){
+  const x=kind==='event'?get('events',id):kind==='pipe'?get('pipe',id):get('kit',id);if(!x) return;
+  const name=kind==='pipe'?x.group:x.name,why=kind==='event'?'Ended '+fmt(x.end||x.start):'Next step was due '+fmt(x.nextDate)+(x.next?': '+x.next:'');
+  const sel=kind==='pipe'?`<div class="fld"><label for="o_s">Status now</label><select id="o_s">${STATUSES.map(s=>`<option ${s===x.status?'selected':''}>${s}</option>`).join('')}</select></div>`:kind==='partner'?`<div class="fld"><label for="o_s">Stage now</label><select id="o_s">${PST.map(([k,l])=>`<option value="${k}" ${k===x.stage?'selected':''}>${l}</option>`).join('')}</select></div>`:'';
+  const dlg=$('#dlg');
+  dlg.innerHTML=`<h2 style="margin-bottom:4px">What happened? <small>${esc(name)}</small></h2><p class="meta">${esc(why)}</p>
+  <div class="fld"><label for="o_r">Outcome or result</label><textarea id="o_r" style="min-height:110px" placeholder="What happened, who you spoke to, what was agreed or learned"></textarea></div>${sel}
+  <div class="g2"><div class="fld"><label for="o_n">Next step</label><input type="text" id="o_n" placeholder="The one thing that moves this forward"></div><div class="fld"><label for="o_d">Date</label><input type="date" id="o_d"></div></div>
+  ${kind==='event'?'':'<label class="radio"><input type="checkbox" id="o_x"> Nothing further needed</label>'}
+  <div class="row" style="margin-top:10px"><button class="btn pri" data-act="outsave" data-k="${kind}" data-id="${id}">Save outcome</button>${kind==='event'?`<button class="btn" data-act="outskip" data-id="${id}">Not needed</button>`:''}<button class="btn" data-act="ptclose">Cancel</button></div>`;
+  dlg.dataset.col='outcome';dlg.dataset.id=id;if(!dlg.open) dlg.showModal();$('#o_r').focus();
+}
+async function outSave(k,id){
+  const r=$('#o_r').value.trim(),n=$('#o_n').value.trim(),d=$('#o_d').value,none=$('#o_x')&&$('#o_x').checked,st=$('#o_s')&&$('#o_s').value;
+  if(!r){toast('Say what happened');return}
+  if(k!=='event'&&!none&&!d){toast('Pick a date for the next step, or tick Nothing further needed');return}
+  const name=k==='pipe'?(get('pipe',id)||{}).group:(get(k==='event'?'events':'kit',id)||{}).name;
+  await act('Log outcome: '+name,async()=>{
+    if(k==='event'){const e=get('events',id);await patch('events',id,{outcome:{result:r,next:n,at:TODAY}});if(n){const f=uid('fu');await save('kit',f,{id:f,type:'followup',text:n,due:d||addDays(TODAY,3),repeat:0,pipeId:'',who:'',done:false,created:TODAY,mode:'Both'})}}
+    else if(k==='pipe'){await addLog(id,{type:'Note',date:TODAY,summary:r});await patch('pipe',id,{status:st,next:none?'':n,nextDate:none?'':d})}
+    else{const x=get('kit',id);await patch('kit',id,{stage:st,next:none?'':n,nextDate:none?'':d,outcomes:[{at:TODAY,result:r,next:n},...(x.outcomes||[])],...(st==='wrapped'&&!(x.wrap&&x.wrap.date)?{wrap:{...(x.wrap||{}),date:TODAY}}:{})})}
+  });
+  $('#dlg').close();toast('Outcome saved.');
+}
+const cmode=c=>c.m||'s';
+async function ensureV30(){
+  if(!db||!EDIT||lsGet('tllj_seed_v30')||!S.pipe.length) return;
+  try{
+    for(const x of PTS()){if(!Array.isArray(x.pkgs)){const pk=[];['give','get'].forEach(s=>lines(x[s]).forEach(t=>pk.push({id:uid('pk'),side:s,item:t,detail:'',due:'',done:false})));const nx={...x,pkgs:pk};await db.collection('kit').doc(x.id).set(nx);local('kit',x.id,nx)}}
+    const ax=S.events.find(e=>/^ART X/i.test(e.name)),pk=(s,item,detail,due)=>({id:uid('pk'),side:s,item,detail:detail||'',due:due||'',done:false});
+    if(!get('kit','pt_artx')){const d={id:'pt_artx',type:'partner',name:'ART X Lagos',kind:'Media partner',stage:'approached',pkgs:[pk('give','Interviews','Interviews with Tokini Peterside-Schwebig and Dr Jareh Das, or N’Goné Fall if Dr Das is unavailable'),pk('give','Coverage of the fair'),pk('get','Interview with Tokini Peterside-Schwebig','20-minute slot, 3pm to 4pm','2026-11-07'),pk('get','Interview with Dr Jareh Das (or N’Goné Fall)','ART X is checking availability and will confirm the schedule'),pk('get','2027 media partnership conversation','ART X will revisit it after the fair and connect us with the right team member')],eventId:ax?ax.id:'',accred:'Not needed',attendees:'',contact:'',next:'Confirm Tokini’s slot and ask for the Das or Fall confirmation',nextDate:'',notes:'Revisit the 2027 media partnership after the fair, as ART X suggested, and ask for the named contact then.',wrap:{},outcomes:[],created:TODAY};await db.collection('kit').doc(d.id).set(d);local('kit',d.id,d)}
+    const k=get('kit','pt_kilentar');if(k&&!k.next&&!k.nextDate){const nk={...k,next:'Book the 30-minute appointment with Kilentar (Calendly link in their reply)',nextDate:'2026-11-03',notes:(k.notes?k.notes+' ':'')+'Kilentar replied with a Calendly link for a 30-minute appointment.'};await db.collection('kit').doc(k.id).set(nk);local('kit',k.id,nk)}
+    lsSet('tllj_seed_v30','1');render()}catch(e){}
+}
+function searchAll(q){
+  if(MODE!=='p') return searchAll0(q);
+  q=q.trim().toLowerCase();if(q.length<2) return [];const has=(...a)=>a.some(x=>x!=null&&String(x).toLowerCase().includes(q)),R=[];
+  PTS().forEach(x=>has(x.name,x.kind,x.contact,x.notes,x.next,x.attendees,glTxt(x,'give'),glTxt(x,'get'))&&R.push({k:'Partner',t:x.name,s:stLabel(x.stage),a:'openpt',id:x.id}));
+  S.events.forEach(e=>has(e.name,e.where,e.note,e.status)&&R.push({k:'Event',t:e.name,s:fmt(e.start)+' to '+fmt(e.end),a:'edit',col:'events',id:e.id}));
+  FUS().forEach(f=>has(f.text)&&R.push({k:'Follow-up',t:f.text,s:fmt(f.due),a:'tab',id:'today'}));
+  return R;
+}
+
+/* ---------- v31: paste an email, review, calendar ---------- */
+const IC=p=>`<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${p}</svg>`;
+const ICO={cal:IC('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'),mail:IC('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>'),chart:IC('<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'),copy:IC('<rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/>')};
+const FINAL=['Agreed','Declined','On hold'];
+
+/* paste an email */
+function openPaste(){
+  const dlg=$('#dlg');
+  dlg.innerHTML=`<h2 style="margin-bottom:4px">${ICO.mail}Paste an email</h2><p class="meta">Paste a reply or an invitation. Tilly pulls out the dates, what we give, what we get and the next step. You check and edit everything before it is saved.</p>
+  <textarea id="pe_t" style="min-height:220px;margin-top:8px" aria-label="Email text" placeholder="Paste the email here"></textarea>
+  <div class="row" style="margin-top:8px"><button class="btn pri" data-act="pasteread">Read it</button><button class="btn" data-act="ptclose">Cancel</button></div><div id="pe_o"></div>`;
+  dlg.dataset.col='paste';dlg.dataset.id='';if(!dlg.open) dlg.showModal();$('#pe_t').focus();
+}
+const pkLine=p=>p.item+(p.detail?' \u2014 '+p.detail:'')+(p.due?' (by '+p.due+')':'');
+function pkParse(side,txt){return String(txt||'').split('\n').map(s=>s.trim()).filter(Boolean).map(s=>{let due='';const m=s.match(/\(by (\d{4}-\d\d-\d\d)\)\s*$/);if(m){due=m[1];s=s.slice(0,m.index).trim()}const i=s.indexOf(' \u2014 ');return {id:uid('pk'),side,item:(i<0?s:s.slice(0,i)).trim(),detail:i<0?'':s.slice(i+3).trim(),due,done:false}}).filter(p=>p.item)}
+async function pasteRead(){
+  const t=$('#pe_t').value.trim();if(t.length<20){toast('Paste the email first');return}
+  const o=$('#pe_o');o.innerHTML='<p class="meta">Tilly is reading\u2026</p>';
+  let r=null;
+  try{r=await aiJson(STY()+`\nToday is ${TODAY}. Read the EMAIL and return JSON only, using only what the email says. Use "" or [] when it does not say. Shape: {"partner":"the organisation or event","kind":"one of ${PKINDS.join(', ')}","contact":"the sender, with email or phone if given","event":"event name if any","give":[{"item":"short name","detail":"what exactly","due":"YYYY-MM-DD or empty"}],"get":[{"item":"short name","detail":"what exactly","due":"YYYY-MM-DD or empty"}],"next":"the single next step for Sade","nextDate":"YYYY-MM-DD or empty","notes":"one or two sentences on anything else that matters, such as what is postponed"}. "give" is what TLLJ offers or is asked to provide. "get" is what TLLJ is offered or receives. A date without a year takes the current year.\nEMAIL:\n`+t)}catch(e){r=null}
+  const fail=!r;if(!r) r={partner:'',kind:'Other',contact:'',event:'',give:[],get:[],next:'',nextDate:'',notes:''};
+  const nm=String(r.partner||'').trim(),low=nm.toLowerCase();
+  const ex=low?PTS().find(x=>x.name.toLowerCase().includes(low)||low.includes(x.name.toLowerCase())):null;
+  const ev=r.event?S.events.find(e=>e.name.toLowerCase().includes(String(r.event).toLowerCase())||String(r.event).toLowerCase().includes(e.name.toLowerCase())):null;
+  const dOk=v=>/^\d{4}-\d\d-\d\d$/.test(v||'')?v:'';
+  S.pe={raw:t,eventId:ev?ev.id:''};
+  o.innerHTML=`${fail?'<div class="banner" style="margin-top:10px">Tilly could not read it, so nothing was filled in. Fill in the details yourself; the email is kept in Notes.</div>':'<div class="banner ok" style="margin-top:10px">Check each field. Nothing is saved until you press Save.</div>'}
+  <div class="fld"><label for="pe_p">Add to</label><select id="pe_p"><option value="">A new partner</option>${PTS().map(x=>`<option value="${x.id}" ${ex&&ex.id===x.id?'selected':''}>${esc(x.name)}</option>`).join('')}</select></div>
+  <div class="g2"><div class="fld"><label for="pe_n">Name</label><input type="text" id="pe_n" value="${esc(ex?ex.name:nm)}"></div><div class="fld"><label for="pe_k">Type</label><select id="pe_k">${PKINDS.map(k=>`<option ${(PKINDS.includes(r.kind)?r.kind:'Other')===k?'selected':''}>${k}</option>`).join('')}</select></div></div>
+  <div class="fld"><label for="pe_c">Contact</label><input type="text" id="pe_c" value="${esc(r.contact||'')}"></div>
+  ${ev?`<div class="meta" style="margin-bottom:6px">Linked to the event ${esc(ev.name)} (${esc(evDates(ev))}).</div>`:''}
+  <div class="g2"><div class="fld"><label for="pe_g">We give (one per line: item \u2014 detail (by YYYY-MM-DD))</label><textarea id="pe_g" style="min-height:110px">${esc((r.give||[]).map(p=>pkLine({item:p.item||'',detail:p.detail||'',due:dOk(p.due)})).join('\n'))}</textarea></div>
+  <div class="fld"><label for="pe_e">We get</label><textarea id="pe_e" style="min-height:110px">${esc((r.get||[]).map(p=>pkLine({item:p.item||'',detail:p.detail||'',due:dOk(p.due)})).join('\n'))}</textarea></div></div>
+  <div class="g2"><div class="fld"><label for="pe_x">Next step</label><input type="text" id="pe_x" value="${esc(r.next||'')}"></div><div class="fld"><label for="pe_d">Date</label><input type="date" id="pe_d" value="${esc(dOk(r.nextDate))}"></div></div>
+  <div class="fld"><label for="pe_o2">Notes</label><textarea id="pe_o2" style="min-height:70px">${esc(fail?t.slice(0,600):(r.notes||''))}</textarea></div>
+  <div class="row"><button class="btn pri" data-act="pastesave">Save</button><button class="btn" data-act="ptclose">Cancel</button></div>`;
+}
+async function pasteSave(){
+  const nm=$('#pe_n').value.trim();if(!nm){toast('Give the partner a name');return}
+  const pid=$('#pe_p').value,give=pkParse('give',$('#pe_g').value),got=pkParse('get',$('#pe_e').value),next=$('#pe_x').value.trim(),nd=$('#pe_d').value,notes=$('#pe_o2').value.trim(),contact=$('#pe_c').value.trim(),kind=$('#pe_k').value;
+  let id=pid;
+  await act('Paste an email: '+nm,async()=>{
+    if(pid){const x=get('kit',pid),have=new Set((x.pkgs||[]).map(p=>p.side+'|'+p.item.toLowerCase())),add=give.concat(got).filter(p=>!have.has(p.side+'|'+p.item.toLowerCase()));
+      await patch('kit',pid,{pkgs:[...(x.pkgs||[]),...add],...(next?{next,nextDate:nd}:{}),contact:x.contact||contact,eventId:x.eventId||S.pe.eventId,notes:[x.notes,notes].filter(Boolean).join(' ')})}
+    else{id=uid('pt');await save('kit',id,{type:'partner',name:nm,kind,stage:'approached',pkgs:give.concat(got),eventId:S.pe.eventId,accred:'Not needed',attendees:'',contact,next,nextDate:nd,notes,ask:'',wrap:{},outcomes:[],created:TODAY})}});
+  toast('Saved.');openPartner(id);
+}
+
+/* review: meeting and weekly */
+function rvRange(per){const dow=(pd(TODAY).getDay()+6)%7,mon=addDays(TODAY,-dow);
+  if(per==='This week') return [mon,TODAY];if(per==='Last week') return [addDays(mon,-7),addDays(mon,-1)];if(per==='Last 30 days') return [addDays(TODAY,-29),TODAY];return [addDays(TODAY,-6),TODAY]}
+function rvData(a,b){
+  const inR=d=>!!d&&d>=a&&d<=b,wk=addDays(TODAY,7);
+  const acts=S.activity.filter(x=>inR(fromAt(x.at))).flatMap(x=>(x.changes||[]).map(c=>({...c})));
+  const D={s:{moved:[],stuck:[],next:[],sent:0,replies:0,calls:0},p:{moved:[],stuck:[],next:[],outcomes:0,wrapped:0},ev:[],dec:[],asks:[]};
+  const lg=S.log.filter(l=>inR(l.date)).sort((x,y)=>x.date<y.date?1:-1);
+  D.s.sent=lg.filter(l=>l.type==='Email sent').length;D.s.replies=lg.filter(l=>l.type==='Email received').length;D.s.calls=lg.filter(l=>l.type==='Call'||l.type==='Meeting').length;
+  lg.forEach(l=>{const p=get('pipe',l.pipeId);if(p) D.s.moved.push({t:p.group,s:l.type+(l.summary?': '+shortV(l.summary):'')+' \u00b7 '+fmt(l.date),a:'opensp',id:p.id})});
+  acts.filter(c=>c.col==='pipe'&&/status:/.test(c.what||'')).forEach(c=>D.s.moved.push({t:c.name,s:'Status '+((c.what.match(/status: ([^;]*)/)||[0,''])[1])}));
+  PTS().forEach(x=>{(x.outcomes||[]).filter(o=>inR(o.at)).forEach(o=>{D.p.outcomes++;D.p.moved.push({t:x.name,s:'Outcome: '+shortV(o.result)+' \u00b7 '+fmt(o.at),a:'openpt',id:x.id})});
+    if(x.stage==='wrapped'&&x.wrap&&inR(x.wrap.date)){D.p.wrapped++;D.p.moved.push({t:x.name,s:'Wrapped up'+(x.wrap.worth?' \u00b7 worth '+x.wrap.worth+' of 5':''),a:'openpt',id:x.id})}
+    (x.pkgs||[]).forEach(p=>{if(!p.done&&p.due&&p.due<TODAY&&x.stage!=='wrapped') D.p.stuck.push({t:x.name,s:'Package overdue: '+p.item+' (was due '+fmt(p.due)+')',a:'openpt',id:x.id})});
+    if(x.stage!=='wrapped'){if(x.nextDate&&x.nextDate<TODAY) D.p.stuck.push({t:x.name,s:'Next step overdue: '+shortV(x.next||'no wording')+' (was '+fmt(x.nextDate)+')',a:'openpt',id:x.id});else if(!x.nextDate) D.p.stuck.push({t:x.name,s:'No next step date',a:'openpt',id:x.id});
+      if(x.nextDate&&x.nextDate>=TODAY&&x.nextDate<=wk) D.p.next.push({t:x.name,s:shortV(x.next||'Next step')+' \u00b7 '+fmt(x.nextDate),a:'openpt',id:x.id});
+      const e=ptEv(x);if(e&&x.accred==='To request'&&e.start>=TODAY&&dd(TODAY,e.start)<=7) D.p.stuck.push({t:x.name,s:'Accreditation still to request for '+e.name,a:'openpt',id:x.id});
+      if(x.ask) D.asks.push({t:x.name,s:x.ask,a:'openpt',id:x.id})}});
+  acts.filter(c=>c.kind==='Partner'&&/stage:/.test(c.what||'')).forEach(c=>D.p.moved.push({t:c.name,s:'Stage '+((c.what.match(/stage: ([^;]*)/)||[0,''])[1])}));
+  S.pipe.forEach(p=>{if(FINAL.includes(p.status)) return;
+    if(p.nextDate&&p.nextDate<TODAY) D.s.stuck.push({t:p.group,s:'Next step overdue: '+shortV(p.next||'no wording')+' (was '+fmt(p.nextDate)+')',a:'opensp',id:p.id});
+    else if(ACTIVE.includes(p.status)){const l=lastOf(p.id,['Email sent','Email received','Call','Meeting']);if(!l||dd(l,TODAY)>14) D.s.stuck.push({t:p.group,s:'Active but no contact for '+(l?dd(l,TODAY)+' days':'as long as the log goes back'),a:'opensp',id:p.id})}
+    if(p.nextDate&&p.nextDate>=TODAY&&p.nextDate<=wk) D.s.next.push({t:p.group,s:shortV(p.next||'Next step')+' \u00b7 '+fmt(p.nextDate),a:'opensp',id:p.id})});
+  S.events.filter(e=>e.outcome&&e.outcome.result&&inR(e.outcome.at)).forEach(e=>D.ev.push({t:e.name,s:shortV(e.outcome.result)+' \u00b7 '+fmt(e.outcome.at)}));
+  S.decisions.filter(d=>!d.answer).sort((x,y)=>(x.n||0)-(y.n||0)).forEach(d=>D.dec.push({t:d.n+'. '+d.decision,s:shortV(d.proposed||''),a:'tab',id:'decisions'}));
+  return D;
+}
+function rvList(a,cap){cap=cap||8;if(!a.length) return '<p class="meta" style="margin:4px 0">Nothing here.</p>';
+  return '<ul class="rvl">'+a.slice(0,cap).map(i=>`<li ${i.a?`data-act="${i.a}" data-id="${i.id}" tabindex="0" role="button"`:''}><b>${esc(i.t)}</b><span class="meta">${esc(i.s||'')}</span></li>`).join('')+(a.length>cap?`<li class="meta">+${a.length-cap} more</li>`:'')+'</ul>'}
+const tile=(n,l,c)=>`<div class="tile ${c||''}"><b>${n}</b><span>${l}</span></div>`;
+function vReview(){
+  const rv=S.rv=S.rv||{sub:'meeting',per:'Last 7 days'},[a,b]=rvRange(rv.per),D=rvData(a,b),side=MODE==='p'?'p':'s',X=D[side];
+  const head=`<section class="box rvhead"><div class="rvbar"><span class="seg" role="group" aria-label="View"><button data-act="rvsub" data-id="meeting" aria-pressed="${rv.sub==='meeting'}">Meeting</button><button data-act="rvsub" data-id="weekly" aria-pressed="${rv.sub==='weekly'}">Weekly</button></span>
+  <select id="rvper" aria-label="Period">${['Last 7 days','This week','Last week','Last 30 days'].map(p=>`<option ${rv.per===p?'selected':''}>${p}</option>`).join('')}</select><span class="meta" style="flex:1">${esc(fmt(a))} to ${esc(fmt(b))}</span>
+  <button class="btn" data-act="rvcopy">${ICO.copy}Copy as text</button><button class="btn" data-act="icsall">${ICO.cal}Calendar file</button></div></section>`;
+  if(rv.sub==='weekly'){
+    const col=(k,title,Y)=>`<section class="box rvcol ${k}"><h2>${title}</h2><div class="tiles">${k==='s'?tile(Y.sent,'Emails sent')+tile(Y.replies,'Replies')+tile(Y.calls,'Calls and meetings'):tile(Y.outcomes,'Outcomes logged')+tile(Y.wrapped,'Wrapped up')+tile(PTS().filter(x=>x.stage!=='wrapped').length,'Live partners')}</div>
+      <h3>What moved</h3>${rvList(Y.moved)}<h3>Next seven days</h3>${rvList(Y.next,6)}<h3>Stuck</h3>${rvList(Y.stuck,5)}</section>`;
+    return head+`<div class="rvgrid2">${col('s','Sponsorships',D.s)}${col('p','Partnerships',D.p)}</div>`+(D.ev.length?`<section class="box"><h2>Event outcomes</h2>${rvList(D.ev,10)}</section>`:'');
+  }
+  const mv=X.moved.concat(D.ev.map(e=>({...e,t:'Event: '+e.t})));
+  return head+`<div class="tiles" style="margin-bottom:14px">${tile(mv.length,'Moved','good')}${tile(X.stuck.length,'Stuck',X.stuck.length?'warn':'')}${tile(D.dec.length+D.asks.length,'Decisions needed','gold')}${tile(X.next.length,'Due in seven days')}</div>
+  <div class="rvgrid3"><section class="box rvc good"><h2>What moved</h2>${rvList(mv,8)}</section><section class="box rvc warn"><h2>What is stuck</h2>${rvList(X.stuck,8)}</section><section class="box rvc gold"><h2>Decisions Fatimah needs to make</h2>${rvList(D.asks.concat(D.dec),8)}${EDIT?'<p class="meta" style="margin-top:6px">Add a partner question under "Needs a decision from Fatimah" in the partner.</p>':''}</section></div>`;
+}
+function reviewText(){
+  const rv=S.rv||{sub:'meeting',per:'Last 7 days'},[a,b]=rvRange(rv.per),D=rvData(a,b),side=MODE==='p'?'p':'s',X=D[side],L=[];
+  const sec=(h,arr)=>{L.push('',h);if(!arr.length) L.push('- Nothing');arr.forEach(i=>L.push('- '+i.t+(i.s?': '+i.s:'')))};
+  if(rv.sub==='weekly'){L.push('Weekly summary, '+fmt(a)+' to '+fmt(b));
+    L.push('','SPONSORSHIPS: '+D.s.sent+' emails sent, '+D.s.replies+' replies, '+D.s.calls+' calls and meetings');sec('Moved',D.s.moved);sec('Next seven days',D.s.next);sec('Stuck',D.s.stuck);
+    L.push('','PARTNERSHIPS: '+D.p.outcomes+' outcomes logged, '+D.p.wrapped+' wrapped up');sec('Moved',D.p.moved);sec('Next seven days',D.p.next);sec('Stuck',D.p.stuck);
+    if(D.ev.length) sec('Event outcomes',D.ev)}
+  else{L.push((side==='p'?'Partnerships':'Sponsorships')+' meeting view, '+fmt(a)+' to '+fmt(b));sec('What moved',X.moved.concat(D.ev.map(e=>({t:'Event: '+e.t,s:e.s}))));sec('What is stuck',X.stuck);sec('Decisions needed',D.asks.concat(D.dec))}
+  return L.join('\n');
+}
+/* calendar */
+function icsBuild(items){
+  const e2=s=>String(s==null?'':s).replace(/\\/g,'\\\\').replace(/;/g,'\;').replace(/,/g,'\\,').replace(/\r?\n/g,'\\n'),fold=l=>{const o=[];while(l.length>73){o.push(l.slice(0,73));l=' '+l.slice(73)}o.push(l);return o.join('\r\n')};
+  const st=new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d+Z$/,'Z'),dy=d=>d.replace(/-/g,'');
+  const L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//TLLJ//Partnerships Desk//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH','X-WR-CALNAME:TLLJ Partnerships Desk'];
+  items.forEach(i=>{L.push('BEGIN:VEVENT','UID:'+i.uid+'@tllj-desk','DTSTAMP:'+st,'DTSTART;VALUE=DATE:'+dy(i.date),'DTEND;VALUE=DATE:'+dy(addDays(i.end||i.date,1)),'SUMMARY:'+e2(i.title),'DESCRIPTION:'+e2(i.desc||''),'BEGIN:VALARM','TRIGGER:PT9H','ACTION:DISPLAY','DESCRIPTION:'+e2(i.title),'END:VALARM','END:VEVENT')});
+  L.push('END:VCALENDAR');return L.map(fold).join('\r\n')+'\r\n';
+}
+function icsItems(all){
+  const I=[],ok=d=>/^\d{4}-\d\d-\d\d$/.test(d||'');
+  if(MODE==='p'||all) PTS().filter(x=>x.stage!=='wrapped').forEach(x=>{if(ok(x.nextDate)) I.push({uid:'pt-'+x.id,date:x.nextDate,title:x.name+': '+(x.next||'next step'),desc:'Partnership with '+x.name+'. Stage: '+stLabel(x.stage)+'.'});(x.pkgs||[]).forEach(p=>{if(!p.done&&ok(p.due)) I.push({uid:'pk-'+p.id,date:p.due,title:x.name+': '+(p.side==='give'?'deliver ':'receive ')+p.item,desc:p.detail||''})})});
+  if(MODE!=='p'||all) S.pipe.filter(p=>!FINAL.includes(p.status)&&ok(p.nextDate)).forEach(p=>I.push({uid:'sp-'+p.id,date:p.nextDate,title:p.group+': '+(p.next||'next step'),desc:'Sponsor. Status: '+p.status+'.'}));
+  S.kit.filter(k=>k.type==='followup'&&!k.done&&ok(k.due)&&(all||FUS().includes(k))).forEach(f=>I.push({uid:'fu-'+f.id,date:f.due,title:'Follow-up: '+f.text,desc:f.who||''}));
+  S.events.filter(e=>ok(e.start)&&(e.end||e.start)>=TODAY).forEach(e=>I.push({uid:'ev-'+e.id,date:e.start,end:ok(e.end)?e.end:e.start,title:'Event: '+e.name,desc:e.where||''}));
+  return I;
+}
+function icsDownload(items,name){
+  if(!items.length){toast('No dated next steps to add yet.');return}
+  const blob=new Blob([icsBuild(items)],{type:'text/calendar;charset=utf-8'}),u=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000);
+  toast(items.length+' dates in the file. Open it on your phone and choose Add All.');
+}
+function ptHero(){const L=PTS().filter(x=>x.stage!=='wrapped'),pk=L.flatMap(x=>x.pkgs||[]),d=pk.filter(p=>p.done).length,due=L.filter(x=>x.nextDate&&x.nextDate<=addDays(TODAY,7)).length;
+  return `<div class="hero"><div><h2>Partnerships</h2><p>Access, coverage, content and introductions, exchanged on both sides.</p></div><div class="tiles">${tile(L.length,'Live partners')}${tile(due,'Next steps this week')}${tile(d+'/'+pk.length,'Packages done')}${tile(outDue().length,'Waiting for an outcome')}</div></div>`}
+async function ptExtra(a,id,el){
+  if(a==='pastemail'){openPaste();return true}
+  if(a==='pasteread'){await pasteRead();return true}
+  if(a==='pastesave'){await pasteSave();return true}
+  if(a==='rvsub'){S.rv=S.rv||{sub:'meeting',per:'Last 7 days'};S.rv.sub=id;render();return true}
+  if(a==='rvcopy'){try{await navigator.clipboard.writeText(reviewText());toast('Copied')}catch(e){toast('Press Ctrl+C after selecting the text')}return true}
+  if(a==='icsall'){icsDownload(icsItems(false),'tllj-desk-calendar.ics');return true}
+  if(a==='icspt'){const x=get('kit',id);if(!x) return true;const I=icsItems(true).filter(i=>i.uid==='pt-'+id||(x.pkgs||[]).some(p=>i.uid==='pk-'+p.id));icsDownload(I,x.name.replace(/[^a-z0-9]+/gi,'-').toLowerCase()+'.ics');return true}
+  return false;
 }
 
 /* ---------- AI ---------- */
-const STYLE='You write for Sade Ademola at The Leisurely Life Journal, a global luxury publication for the discerning African reader. Use only facts in DATA. Prices come only from RATES in DATA; where a rate says "Quoted to brief", write that and give no number. Audience figures, named followers and terms come only from AUDIENCE and TERMS in DATA; never invent reach, rates or terms. TLLJ also declines tobacco and gambling brands. TLLJ does not work with alcohol brands or alcohol-led events; never suggest them. Never invent contacts, dates, figures, prices or sponsors; leave unknowns in [square brackets]. Warm, professional, exact. Short sentences joined with conjunctions. No em dashes. No lists of three. No "not X but Y". No hedging words (perhaps, maybe, might). Never use these words: quiet, explore, journey, craft, landscape, vibrant, showcase, elevate, leverage, seamless, unlock, ensure, essential, global, innovative. Write The Leisurely Life Journal in full, never TLLJ, in anything external.';
+const STYLE_S='You write for Sade Ademola at The Leisurely Life Journal, a global luxury publication for the discerning African reader. Use only facts in DATA. Prices come only from RATES in DATA; where a rate says "Quoted to brief", write that and give no number. Audience figures, named followers and terms come only from AUDIENCE and TERMS in DATA; never invent reach, rates or terms. TLLJ also declines tobacco and gambling brands. TLLJ does not work with alcohol brands or alcohol-led events; never suggest them. Never invent contacts, dates, figures, prices or sponsors; leave unknowns in [square brackets]. Warm, professional, exact. Short sentences joined with conjunctions. No em dashes. No lists of three. No "not X but Y". No hedging words (perhaps, maybe, might). Never use these words: quiet, explore, journey, craft, landscape, vibrant, showcase, elevate, leverage, seamless, unlock, ensure, essential, global, innovative. Write The Leisurely Life Journal in full, never TLLJ, in anything external.';
 const SIGN='\n\nSade Ademola\nThe Leisurely Life Journal\nwww.theleisurelylifejournal.com\nhttps://www.instagram.com/theleisurelylifejournal/';
-const ctx=()=>JSON.stringify({today:TODAY,deadline:END,target:tgt(),openSteps:open().map(t=>({id:t.id,action:t.action,due:t.due,owner:t.owner})),sponsors:S.pipe.map(p=>({id:p.id,group:p.group,category:p.category,status:p.status,next:p.next,nextDate:p.nextDate,owner:p.owner,score:p.score,contacts:contactsOf(p.id).map(c=>({name:c.name,email:c.email,phone:c.phone})),log:logsOf(p.id).slice(0,4).map(l=>({type:l.type,date:l.date,summary:l.summary}))})),events:S.events.map(e=>({id:e.id,name:e.name,start:e.start,end:e.end,status:e.status,reach:e.reach})),rates:((get('kit','rates')||{rows:[]}).rows).map(r=>r.pkg+': '+(r.price||'no price yet')),audience:{figures:AUD().stats.map(s=>s.k+': '+s.v+(s.note?' ('+s.note+')':'')),namedFollowers:AUD().people.map(x=>({name:x.name,handle:x.handle,who:x.who,checked:x.src==='Checked'}))},terms:((get('kit','terms')||{items:[]}).items).map(x=>x.h+': '+x.t),deals:S.deals,decisionsOpen:S.decisions.filter(d=>!d.answer).map(d=>d.n+'. '+d.decision)});
+const ctxS=()=>JSON.stringify({today:TODAY,deadline:END,target:tgt(),openSteps:open().map(t=>({id:t.id,action:t.action,due:t.due,owner:t.owner})),sponsors:S.pipe.map(p=>({id:p.id,group:p.group,category:p.category,status:p.status,next:p.next,nextDate:p.nextDate,owner:p.owner,score:p.score,contacts:contactsOf(p.id).map(c=>({name:c.name,email:c.email,phone:c.phone})),log:logsOf(p.id).slice(0,4).map(l=>({type:l.type,date:l.date,summary:l.summary}))})),events:S.events.map(e=>({id:e.id,name:e.name,start:e.start,end:e.end,status:e.status,reach:e.reach})),rates:((get('kit','rates')||{rows:[]}).rows).map(r=>r.pkg+': '+(r.price||'no price yet')),audience:{figures:AUD().stats.map(s=>s.k+': '+s.v+(s.note?' ('+s.note+')':'')),namedFollowers:AUD().people.map(x=>({name:x.name,handle:x.handle,who:x.who,checked:x.src==='Checked'}))},terms:((get('kit','terms')||{items:[]}).items).map(x=>x.h+': '+x.t),deals:S.deals,decisionsOpen:S.decisions.filter(d=>!d.answer).map(d=>d.n+'. '+d.decision)});
+const ctx=()=>MODE==='p'?ctxP():ctxS();
 async function aiText(prompt,onText,opts){if(!sample){toast('Tilly is not available in this view.');throw new Error('none')}const r=await sample(prompt,{cache:false,onText:u=>onText&&onText(u.text),...(opts||{})});return r.text}
 async function aiJson(prompt){if(!sample){toast('Tilly is not available in this view.');throw new Error('none')}return sample.json(prompt,{cache:false})}
-async function brief(){const out=$('#brief');out.textContent='Reading the desk…';try{S.ai.brief=await aiText(STYLE+'\nWrite a brief for today in at most 170 words: the three most important actions in order, what is overdue, what to chase from the outreach log, and the next event to prepare for. Plain text, short lines starting with a dash.\nDATA: '+ctx(),t=>out.textContent=t);out.textContent=S.ai.brief}catch(e){out.textContent='Tilly could not answer: '+(e.message||e.code)}}
-async function aisugg(){toast('Asking Tilly…');try{const r=await aiJson(STYLE+'\nSuggest up to 6 concrete next steps that are NOT already in openSteps, each grounded in DATA (log gaps, silent sponsors, missing contacts, events, deals, the target deadline (DATA.target) and the cash fallbacks). Return JSON only: [{"text":"","why":"one sentence from the data","due":"YYYY-MM-DD","pid":"sponsor id or empty"}].\nDATA: '+ctx());S.ai.sugg=(Array.isArray(r)?r:[]).filter(x=>x&&x.text).map(x=>({text:String(x.text),why:String(x.why||''),due:dOK(x.due)?x.due:TODAY,pid:get('pipe',x.pid)?x.pid:''}));render()}catch(e){toast('Tilly could not suggest steps: '+(e.message||e.code))}}
+async function brief(){const out=$('#brief');out.textContent='Reading the desk…';try{S.ai.brief=await aiText(STY()+(MODE==='p'?'\nWrite a brief for today in at most 170 words: the three most important partnership actions in order, which follow-ups are due or overdue, which partners have no next step, and the next event to prepare for. Plain text, short lines starting with a dash.\nDATA: ':'\nWrite a brief for today in at most 170 words: the three most important actions in order, what is overdue, what to chase from the outreach log, and the next event to prepare for. Plain text, short lines starting with a dash.\nDATA: ')+ctx(),t=>out.textContent=t);out.textContent=S.ai.brief}catch(e){out.textContent='Tilly could not answer: '+(e.message||e.code)}}
+async function aisugg(){toast('Asking Tilly…');try{const r=await aiJson(STY()+'\nSuggest up to 6 concrete next steps that are NOT already in openSteps, each grounded in DATA (log gaps, silent sponsors, missing contacts, events, deals, the target deadline (DATA.target) and the cash fallbacks). Return JSON only: [{"text":"","why":"one sentence from the data","due":"YYYY-MM-DD","pid":"sponsor id or empty"}].\nDATA: '+ctx());S.ai.sugg=(Array.isArray(r)?r:[]).filter(x=>x&&x.text).map(x=>({text:String(x.text),why:String(x.why||''),due:dOK(x.due)?x.due:TODAY,pid:get('pipe',x.pid)?x.pid:''}));render()}catch(e){toast('Tilly could not suggest steps: '+(e.message||e.code))}}
 async function weekly(){const box=$('#wk');box.value='Writing…';const moved=S.log.filter(l=>l.date>=addDays(TODAY,-7)).map(l=>{const p=get('pipe',l.pipeId);return {sponsor:p&&p.group,type:l.type,date:l.date,summary:l.summary}});
-  try{S.ai.weekly=await aiText(STYLE+`\nWrite a short WhatsApp-style update from Sade to Fatimah. Warm, conversational, a natural Nigerian register, never stiff. Rules: no "Done" section and nothing presented as done unless it is in movedThisWeek; one sentence on what moved and one on what is stuck; then "Today" as plain bullet points of tasks Sade still has to do; then ONE short merged section for questions, views needed and reminders for Fatimah (use decisionsOpen and any pending approvals). Keep it under 170 words. No sign-off block.\nDATA: ${ctx()}\nmovedThisWeek: ${JSON.stringify(moved)}`,t=>box.value=t);box.value=S.ai.weekly}catch(e){box.value='Tilly could not write the update: '+(e.message||e.code)}}
+  try{S.ai.weekly=await aiText(STY()+`\nWrite a short WhatsApp-style update from Sade to Fatimah. Warm, conversational, a natural Nigerian register, never stiff. Rules: no "Done" section and nothing presented as done unless it is in movedThisWeek; one sentence on what moved and one on what is stuck; then "Today" as plain bullet points of tasks Sade still has to do; then ONE short merged section for questions, views needed and reminders for Fatimah (use decisionsOpen and any pending approvals). Keep it under 170 words. No sign-off block.\nDATA: ${ctx()}\nmovedThisWeek: ${JSON.stringify(moved)}`,t=>box.value=t);box.value=S.ai.weekly}catch(e){box.value='Tilly could not write the update: '+(e.message||e.code)}}
 async function draft(kind,pid){
   const p=get('pipe',pid),out=$('#draftout');out.value='Drafting…';
   const tpl=get('kit',$('#dtpl').value),rates=(get('kit','rates')||{rows:[]}).rows.filter(r=>r.price).map(r=>({package:r.pkg,price:r.price,approvedOn:r.approved}));
   const sp={group:p.group,category:p.category,status:p.status,writeToFirst:p.first,proposeFirst:p.propose,whyTheyShouldCare:p.why,contacts:contactsOf(pid).map(c=>({name:c.name,role:c.role,email:c.email})),log:logsOf(pid).slice(0,6)};
   const how={first:'Write the first email: warm, 90 to 130 words, one clear ask (a short note asking who handles partnerships, per proposeFirst), one line on The Leisurely Life Journal as a global luxury publication for the discerning African reader. Fatimah wants to listen first, so do not pitch a format yet unless proposeFirst says to.',follow:'Write a follow-up to the last email in the log. Refer to the date it went and anything the log records. 60 to 100 words. One clear next step.',proposal:'Fill the TEMPLATE for this sponsor. Keep its structure and labels. Fill a bracket only when SPONSOR or RATES gives the fact; otherwise keep the bracket. Use the approved price only if RATES has one; otherwise write [Price from the approved rate card].'}[kind];
-  try{let t=await aiText(STYLE+`\nTask: ${how}\nStart with a Subject line. Address the first contact by name if one is in contacts, otherwise [Name].\nSPONSOR: ${JSON.stringify(sp)}\nTEMPLATE: ${tpl?tpl.body:''}\nRATES: ${JSON.stringify(rates)}`,x=>out.value=x);
+  try{let t=await aiText(STY()+`\nTask: ${how}\nStart with a Subject line. Address the first contact by name if one is in contacts, otherwise [Name].\nSPONSOR: ${JSON.stringify(sp)}\nTEMPLATE: ${tpl?tpl.body:''}\nRATES: ${JSON.stringify(rates)}`,x=>out.value=x);
     t=t.replace(/\s*(Sade Ademola\s*)?(The Leisurely Life Journal\s*)?(www\.theleisurelylifejournal\.com.*)?$/s,m=>m.includes('www.theleisurelylifejournal.com')?'':m).trimEnd();
     out.value=t+SIGN}catch(e){out.value='Tilly could not draft: '+(e.message||e.code)}
 }
 async function prepai(eid){
   const e=get('events',eid);toast('Asking Tilly…');
-  try{const r=await aiJson(STYLE+'\nUsing only the event text in EVENT, list up to 8 prep items: who to meet (only people or organisations named in EVENT.reach or EVENT.how) and one or two questions for each, plus anything to bring. Return JSON only: [{"phase":"Before|During|After","text":""}].\nEVENT: '+JSON.stringify(e));
+  try{const r=await aiJson(STY()+'\nUsing only the event text in EVENT, list up to 8 prep items: who to meet (only people or organisations named in EVENT.reach or EVENT.how) and one or two questions for each, plus anything to bring. Return JSON only: [{"phase":"Before|During|After","text":""}].\nEVENT: '+JSON.stringify(e));
     await act('Tilly prep',async()=>{for(const x of (Array.isArray(r)?r:[])){if(x&&x.text) await save('prep',uid('pr'),{eventId:eid,phase:['Before','During','After'].includes(x.phase)?x.phase:'Before',text:String(x.text),done:false})}});openPrep(eid)}catch(er){toast('Tilly could not build prep: '+(er.message||er.code))}
 }
 async function propose(){
   const dlgMode=S.ai.pre==='d';S.ai.pre='';const txt=$(dlgMode?'#dpaste':'#paste').value.trim();if(!dlgMode) S.ai.paste=txt;if(!txt){toast('Paste a message first');return}
   const box=$(dlgMode?'#dprops':'#props');box.textContent='Reading…';
   try{
-    const r=await aiJson(STYLE+'\nRead MESSAGE and propose updates to DATA. Return JSON only: {"summary":"one sentence","pipe":[{"id":"","status":"","next":"","nextDate":"YYYY-MM-DD","notes":""}],"log":[{"pipeId":"","type":"Email sent|Email received|Call|Meeting|Note","date":"YYYY-MM-DD","summary":""}],"contacts":[{"pipeId":"","name":"","role":"","email":"","phone":""}],"steps":[{"id":"","done":true,"due":"YYYY-MM-DD","action":""}],"newSteps":[{"action":"","due":"YYYY-MM-DD","owner":"Sade|Fatimah|Both"}],"events":[{"id":"existing id or empty for new","name":"","start":"YYYY-MM-DD","end":"YYYY-MM-DD","where":"","status":"","note":"","remove":false}],"notes":[{"text":"a short past-tense line only for sponsorship or partnership work that fits nothing else above, such as attending an event for partnerships or a call not tied to one sponsor. Leave out anything not about sponsors, partnerships or outreach","date":"YYYY-MM-DD"}],"deals":[{"pipeId":"","deliverables":"","publishDate":"YYYY-MM-DD","amount":"","invoice":"Not invoiced|Invoiced|Paid","renewal":"YYYY-MM-DD"}]}. Use only ids present in DATA. Status must be one of: '+STATUSES.join(', ')+'. Include only fields the message supports. Dates come from the message or today ('+TODAY+'). Copy emails and phone numbers exactly as written.\nMESSAGE: '+txt+'\nDATA: '+ctx());
+    const r=await aiJson(STY()+'\nRead MESSAGE and propose updates to DATA. Return JSON only: {"summary":"one sentence","pipe":[{"id":"","status":"","next":"","nextDate":"YYYY-MM-DD","notes":""}],"log":[{"pipeId":"","type":"Email sent|Email received|Call|Meeting|Note","date":"YYYY-MM-DD","summary":""}],"contacts":[{"pipeId":"","name":"","role":"","email":"","phone":""}],"steps":[{"id":"","done":true,"due":"YYYY-MM-DD","action":""}],"newSteps":[{"action":"","due":"YYYY-MM-DD","owner":"Sade|Fatimah|Both"}],"events":[{"id":"existing id or empty for new","name":"","start":"YYYY-MM-DD","end":"YYYY-MM-DD","where":"","status":"","note":"","remove":false}],"notes":[{"text":"a short past-tense line only for sponsorship or partnership work that fits nothing else above, such as attending an event for partnerships or a call not tied to one sponsor. Leave out anything not about sponsors, partnerships or outreach","date":"YYYY-MM-DD"}],"deals":[{"pipeId":"","deliverables":"","publishDate":"YYYY-MM-DD","amount":"","invoice":"Not invoiced|Invoiced|Paid","renewal":"YYYY-MM-DD"}]}. Use only ids present in DATA. Status must be one of: '+STATUSES.join(', ')+'. Include only fields the message supports. Dates come from the message or today ('+TODAY+'). Copy emails and phone numbers exactly as written.\nMESSAGE: '+txt+'\nDATA: '+ctx());
     S.ai.prop=r;const nm=id=>(get('pipe',id)||{}).group;let h=`<div class="meta"><b>${esc(r.summary||'')}</b></div>`;
     const SEC=[];
     {const x=(r.pipe||[]).filter(x=>nm(x.id)).map(x=>`<div class="item"><span></span><div><b>${esc(nm(x.id))}</b><div class="meta">${x.status?`Status: ${esc(x.status)} · `:''}${x.nextDate?`Next: ${esc(fmt(x.nextDate))} · `:''}${esc(x.next||'')} ${esc(x.notes||'')}</div></div></div>`).join('');if(x) SEC.push(`<div class="meta" style="margin-top:10px"><b>Pipeline and next steps</b></div>`+x)}
@@ -788,6 +1171,8 @@ document.addEventListener('toggle',e=>{if(e.target&&e.target.id==='qd') S.qOpen=
 document.addEventListener('click',async e=>{
   const el=e.target.closest('[data-act]');if(!el) return;
   const a=el.dataset.act,id=el.dataset.id,col=el.dataset.col;
+  if(await ptClick(a,id,el)) return;
+  if(await ptExtra(a,id,el)) return;
   if(a==='askq'){await askq();return}
   if(a==='tillytest'){const o=$('#tt');o.textContent='Testing…';try{const t=await aiText('Reply with the single word: ready');o.textContent='Tilly works. Reply: '+t.trim().slice(0,60)}catch(e){o.textContent='Tilly failed: '+(e.message||e)}return}
   if(a==='startfresh'){const ot=S.tasks.filter(t=>!t.done&&t.due&&t.due<TODAY),op=S.pipe.filter(p=>p.nextDate&&p.nextDate<TODAY&&!['Agreed','Declined','On hold'].includes(p.status));if(!ot.length&&!op.length){toast('Nothing is overdue.');return}
@@ -841,7 +1226,7 @@ document.addEventListener('click',async e=>{
   if(a==='edit'){openEdit(col,id);return}
   if(a==='new'){openEdit(col,null);return}
   if(a==='repmake'){const per=S.ap||'Last 7 days';S.rep=reportText(per==='Today'?TODAY:per==='Last 7 days'?addDays(TODAY,-6):per==='Last 30 days'?addDays(TODAY,-29):'2000-01-01');render();return}
-  if(a==='repai'){const per=S.ap||'Last 7 days';const base=reportText(per==='Today'?TODAY:per==='Last 7 days'?addDays(TODAY,-6):per==='Last 30 days'?addDays(TODAY,-29):'2000-01-01');S.rep=base;render();const box=$('#rep');box.value='Writing…';try{const t=await aiText(STYLE+'\nTask: Rewrite this check-out report as a short, warm, clear update from Sade to Fatimah. Use only the facts in REPORT. Keep every sponsor name, count and date exactly. Do not add anything that is not in REPORT. No headings with symbols.\nREPORT:\n'+base,x=>box.value=x);S.rep=t.trimEnd();box.value=S.rep}catch(e){box.value=base;toast('Tilly could not write it up: '+(e.message||e.code))}return}
+  if(a==='repai'){const per=S.ap||'Last 7 days';const base=reportText(per==='Today'?TODAY:per==='Last 7 days'?addDays(TODAY,-6):per==='Last 30 days'?addDays(TODAY,-29):'2000-01-01');S.rep=base;render();const box=$('#rep');box.value='Writing…';try{const t=await aiText(STY()+'\nTask: Rewrite this check-out report as a short, warm, clear update from Sade to Fatimah. Use only the facts in REPORT. Keep every sponsor name, count and date exactly. Do not add anything that is not in REPORT. No headings with symbols.\nREPORT:\n'+base,x=>box.value=x);S.rep=t.trimEnd();box.value=S.rep}catch(e){box.value=base;toast('Tilly could not write it up: '+(e.message||e.code))}return}
   if(a==='editfull'){$('#dlg').close();openEdit('pipe',id,true);return}
   if(a==='newsp'){S.newTab=id;openEdit('pipe',null,true);return}
   if(a==='rmsp'){const okk=await removeSponsor(id);if(okk){const d=$('#dlg');if(d.open) d.close();toast('Removed')}return}
@@ -884,7 +1269,7 @@ document.addEventListener('click',async e=>{
   if(a==='genai'){const g=genState();if(!g.out){toast('Generate the proposal first');return}if(!gem()){needKey();return}const p=get('pipe',g.pid);toast('Asking Tilly…');
     try{const sp={group:p.group,category:p.category,writeToFirst:p.first,proposeFirst:p.propose,whyTheyShouldCare:p.why};
       const cur=($('#g_out')||{}).value||g.out;
-      const t=await aiText(STYLE+'\nFill the remaining [brackets] in PROPOSAL only where SPONSOR gives the fact. Do not change any other word, price, term or figure. Keep unknown brackets as they are. Return the full proposal.\nSPONSOR: '+JSON.stringify(sp)+'\nPROPOSAL:\n'+cur);
+      const t=await aiText(STY()+'\nFill the remaining [brackets] in PROPOSAL only where SPONSOR gives the fact. Do not change any other word, price, term or figure. Keep unknown brackets as they are. Return the full proposal.\nSPONSOR: '+JSON.stringify(sp)+'\nPROPOSAL:\n'+cur);
       g.out=t.trim();g.left=[...new Set(g.out.match(/\[[^\]]+\]/g)||[])];render()}catch(er){toast('Tilly could not fill it: '+(er.message||er.code))}return}
   if(a==='gensave'){const g=genState(),txt=($('#g_out')||{}).value||g.out;if(!g.pid||!txt){toast('Choose a sponsor and generate first');return}g.out=txt;await act('Save proposal',()=>save('kit','prop_'+g.pid,{type:'proposal',pipeId:g.pid,tpl:g.tpl,text:txt,at:TODAY}));toast('Saved to '+(get('pipe',g.pid)||{}).group+'. Open the sponsor to see it.');return}
   if(a==='gentpl'){const g=genState(),txt=($('#g_out')||{}).value||g.out,nm=(($('#g_tname')||{}).value||'').trim();if(!txt){toast('Generate a proposal first');return}if(!nm){toast('Give the template a name first');return}g.out=txt;await act('Save template',()=>save('kit','tpl'+Date.now().toString(36),{title:nm,forText:'Saved from a generated proposal',body:txt}));g.tname='';render();toast('Saved as a template');return}
@@ -899,7 +1284,7 @@ document.addEventListener('click',async e=>{
   if(a==='audaddst'){const x=AUD();await act('Add figure',()=>patch('kit','audience',{stats:[...x.stats,{k:'New figure',v:''}]}));render();return}
   if(a==='audaddp'){const x=AUD();await act('Add person',()=>patch('kit','audience',{people:[{name:'New person',handle:'',who:'',fit:[],src:'By account name'},...x.people]}));render();return}
   if(a==='auddel'){const x=AUD(),l=el.dataset.list;await act('Remove from audience',()=>patch('kit','audience',{[l]:x[l].filter((_,k)=>k!==+id)}));render();toast('Removed. Undo brings it back.');return}
-  if(a==='audsort'){const raw=(($('#audpaste')||{}).value||'').trim();if(!raw){toast('Paste some followers first.');return}toast('Asking Tilly…');try{const r=await aiJson(STYLE+'\nBelow is a pasted list of Instagram followers: a handle, then a display name, one per line. Keep only accounts whose handle or display name clearly shows an organisation (gallery, hotel, magazine, club, brand, venue, agency) or whose display name states a role. Do not guess who any person is and do not use outside knowledge. Skip alcohol, tobacco and gambling accounts. Return JSON only: [{"name":"","handle":"","who":"what the account name itself shows, four words or fewer"}].\nLIST:\n'+raw.slice(0,12000));const x=AUD(),have=new Set(x.people.map(p=>String(p.handle).toLowerCase().replace(/^@/,'')));const add=(Array.isArray(r)?r:[]).filter(o=>o&&o.name&&o.handle).map(o=>({name:String(o.name),handle:'@'+String(o.handle).replace(/^@/,''),who:String(o.who||''),fit:[],src:'By account name'})).filter(o=>!have.has(o.handle.slice(1).toLowerCase()));if(!add.length){toast('Nothing new to add.');return}await act('Add followers',()=>patch('kit','audience',{people:[...x.people,...add]}));$('#audpaste').value='';render();toast('Added '+add.length+'. Check them before they are quoted.')}catch(er){toast('Tilly could not sort them: '+(er.message||er.code))}return}
+  if(a==='audsort'){const raw=(($('#audpaste')||{}).value||'').trim();if(!raw){toast('Paste some followers first.');return}toast('Asking Tilly…');try{const r=await aiJson(STY()+'\nBelow is a pasted list of Instagram followers: a handle, then a display name, one per line. Keep only accounts whose handle or display name clearly shows an organisation (gallery, hotel, magazine, club, brand, venue, agency) or whose display name states a role. Do not guess who any person is and do not use outside knowledge. Skip alcohol, tobacco and gambling accounts. Return JSON only: [{"name":"","handle":"","who":"what the account name itself shows, four words or fewer"}].\nLIST:\n'+raw.slice(0,12000));const x=AUD(),have=new Set(x.people.map(p=>String(p.handle).toLowerCase().replace(/^@/,'')));const add=(Array.isArray(r)?r:[]).filter(o=>o&&o.name&&o.handle).map(o=>({name:String(o.name),handle:'@'+String(o.handle).replace(/^@/,''),who:String(o.who||''),fit:[],src:'By account name'})).filter(o=>!have.has(o.handle.slice(1).toLowerCase()));if(!add.length){toast('Nothing new to add.');return}await act('Add followers',()=>patch('kit','audience',{people:[...x.people,...add]}));$('#audpaste').value='';render();toast('Added '+add.length+'. Check them before they are quoted.')}catch(er){toast('Tilly could not sort them: '+(er.message||er.code))}return}
   if(a==='termadd'){const x=get('kit','terms')||{items:[]};await act('Add term',()=>save('kit','terms',{items:[...x.items,{h:'New term',t:''}]}));render();return}
   if(a==='termdel'){const x=get('kit','terms')||{items:[]};await act('Remove term',()=>save('kit','terms',{items:x.items.filter((_,k)=>k!==+id)}));render();toast('Removed. Undo brings it back.');return}
   if(a==='termcopy'){const x=get('kit','terms')||{items:[]};try{await navigator.clipboard.writeText(x.items.map(i=>i.h+'\n'+i.t).join('\n\n'));toast('Copied')}catch(er){toast('Press Ctrl+C to copy')}return}
@@ -908,7 +1293,7 @@ document.addEventListener('click',async e=>{
   if(a==='ideaadd'){const it=(get('kit','ideas')||{items:[]}).items;await act('Add idea',()=>save('kit','ideas',{items:[...it,{title:'New idea',text:''}]}));render();return}
   if(a==='ideadel'){const it=(get('kit','ideas')||{items:[]}).items;await act('Remove idea',()=>save('kit','ideas',{items:it.filter((_,k)=>k!==+id)}));render();return}
   if(a==='ideatorate'){const it=(get('kit','ideas')||{items:[]}).items[+id],r=get('kit','rates');if(!it||!r) return;await act('Idea to rate card',async()=>{await patch('kit','rates',{rows:[...r.rows,{pkg:it.title,incl:it.text,price:'',approved:''}]});await save('kit','ideas',{items:get('kit','ideas').items.filter((_,k)=>k!==+id)})});render();toast('Added to the rate card. Add the price.');return}
-  if(a==='ideaai'){toast('Asking Tilly…');try{const r=await aiJson(STYLE+'\nSuggest 5 sponsorship packages or formats The Leisurely Life Journal could add to its rate card, different from the packages already in RATES. Each must suit a global luxury publication for the discerning African reader and keep editorial independence. Return JSON only: [{"title":"","text":"what the sponsor gets, in one or two sentences"}].\nRATES: '+JSON.stringify((get('kit','rates')||{rows:[]}).rows.map(x=>x.pkg))+'\nDATA: '+ctx());const arr=(Array.isArray(r)?r:[]).filter(x=>x&&x.title).slice(0,5).map(x=>({title:String(x.title),text:String(x.text||'')}));if(!arr.length){toast('No ideas came back. Try again.');return}await act('Add ideas',()=>save('kit','ideas',{items:[...(get('kit','ideas')||{items:[]}).items,...arr]}));render();toast('Added '+arr.length+' ideas')}catch(e){toast('Tilly could not suggest ideas: '+(e.message||e.code))}return}
+  if(a==='ideaai'){toast('Asking Tilly…');try{const r=await aiJson(STY()+'\nSuggest 5 sponsorship packages or formats The Leisurely Life Journal could add to its rate card, different from the packages already in RATES. Each must suit a global luxury publication for the discerning African reader and keep editorial independence. Return JSON only: [{"title":"","text":"what the sponsor gets, in one or two sentences"}].\nRATES: '+JSON.stringify((get('kit','rates')||{rows:[]}).rows.map(x=>x.pkg))+'\nDATA: '+ctx());const arr=(Array.isArray(r)?r:[]).filter(x=>x&&x.title).slice(0,5).map(x=>({title:String(x.title),text:String(x.text||'')}));if(!arr.length){toast('No ideas came back. Try again.');return}await act('Add ideas',()=>save('kit','ideas',{items:[...(get('kit','ideas')||{items:[]}).items,...arr]}));render();toast('Added '+arr.length+' ideas')}catch(e){toast('Tilly could not suggest ideas: '+(e.message||e.code))}return}
   if(a==='chk'){const p0=get('pipe',id);const c={...(p0.checks||{})};c[el.dataset.i]=el.checked;await act('Proposal checklist',()=>patch('pipe',id,{checks:c}));openSponsor(id,true);return}
   if(a==='chkdone'){const p0=get('pipe',id),d=$('#dlg2');d.innerHTML=`<h2 style="margin-bottom:6px">Mark as sent?</h2><p class="meta">All ${CHK.length} steps are ticked. Done means the proposal to ${esc(p0.group)} has gone out. You can change this later.</p><div class="row" style="margin-top:12px"><button class="btn pri" id="dk">Done, it is sent</button><button class="btn" id="dn">Not yet</button></div>`;d.showModal();$('#dn').onclick=()=>d.close();
     $('#dk').onclick=async()=>{d.close();const np={proposalSent:TODAY};if(!['Proposal sent','Negotiating','Agreed'].includes(p0.status)){np.status='Proposal sent';np.next='Follow up on the proposal.';np.nextDate=addDays(TODAY,7)}
@@ -923,6 +1308,7 @@ document.addEventListener('click',async e=>{
 });
 document.addEventListener('input',e=>{if(e.target.id==='gq'){const r=$('#gres');if(r) r.innerHTML=searchHtml(e.target.value)}});
 document.addEventListener('change',async e=>{
+  if(await ptChange(e)) return;
   {const t=e.target;if(t.dataset&&t.dataset.fu&&EDIT){const k=t.dataset.k;let v=t.value;if(k==='repeat') v=+v||0;if(k==='due'&&!v){render();return}if(k==='text'&&!String(v).trim()){render();return}await act('Edit follow-up',()=>patch('kit',t.dataset.fu,{[k]:v}));render();return}}
   {const t=e.target;if(t.dataset&&t.dataset.tg&&EDIT){const T=tgt(),k=t.dataset.tg;let v=t.value;if(k==='goal'){v=Math.max(1,parseInt(v,10)||1)}if((k==='date'||k==='start')&&!/^\d{4}-\d\d-\d\d$/.test(v)){render();return}
     const n={...T,[k]:v};if(n.date<n.start){toast('The deadline must be after the start');render();return}await act('Change target',()=>save('kit','target',n));render();toast('Target updated');return}}
@@ -1104,7 +1490,7 @@ function recordActivity(label,items){
   try{
     const seen=new Set(),ch=[];
     items.forEach(it=>{const k=it.col+'/'+it.id;if(seen.has(k)||['activity','evsug'].includes(it.col)) return;seen.add(k);const now=get(it.col,it.id);
-      ch.push({col:it.col,kind:(it.col==='kit'&&((now||it.prev)||{}).type==='followup')?'Follow-up':(FRIENDLY[it.col]||it.col),name:nameOfRec(it.col,now||it.prev),what:diffOf(it.col,it.prev,now)})});
+      const rr=(now||it.prev)||{},isP=it.col==='kit'&&rr.type==='partner',isF=it.col==='kit'&&rr.type==='followup';ch.push({col:it.col,m:isP?'p':isF?(rr.mode==='P'?'p':rr.mode==='Both'?'b':'s'):it.col==='events'?'b':'s',kind:isF?'Follow-up':isP?'Partner':(FRIENDLY[it.col]||it.col),name:nameOfRec(it.col,now||it.prev),what:diffOf(it.col,it.prev,now)})});
     if(items.length&&(!ch.length||ch.every(c=>c.what==='proposal checklist updated'))) return;
     const last=S.activity.slice().sort((a,b)=>a.at<b.at?1:-1)[0];
     if(last&&last.label===label&&Date.now()-new Date(last.at)<60000&&last.changes[0]&&ch[0]&&last.changes[0].name===ch[0].name) return;
@@ -1127,7 +1513,7 @@ function keepCh(c){const w=c.what||'';
   if(c.col==='tasks') return w==='added'||/done: [^;]*→ true/.test(w);
   if(c.col==='events') return w==='added'||/status:/.test(w);
   return false}
-function activityIn(since){return S.activity.filter(a=>fromAt(a.at)>=since).map(a=>({...a,changes:(a.changes||[]).filter(keepCh)})).filter(a=>a.changes.length).sort((a,b)=>a.at<b.at?1:-1)}
+function activityIn(since){return S.activity.filter(a=>fromAt(a.at)>=since).map(a=>({...a,changes:(a.changes||[]).filter(keepCh).filter(c=>cmode(c)==='b'||cmode(c)===(MODE==='p'?'p':'s'))})).filter(a=>a.changes.length).sort((a,b)=>a.at<b.at?1:-1)}
 function reportText(since){
   const a=activityIn(since).slice().reverse(),L=[],ch=a.flatMap(x=>x.changes.map(c=>({...c,at:x.at,label:x.label})));
   const status=ch.filter(c=>c.col==='pipe'&&/status:/.test(c.what)).map(c=>c.name+' ('+c.what.match(/status: [^;]*/)[0].replace('status: ','')+')');
@@ -1386,11 +1772,11 @@ function vNotes(){
 }
 function vToday(){
   const nn=S.notes.filter(x=>x.status==='New').length;
-  return (EDIT&&nn?`<div class="banner" style="background:var(--gold-soft);color:var(--gold);border-color:var(--gold)">${nn} new suggestion${nn===1?'':'s'}. <button class="btn sm" data-act="tab" data-id="notes">Read</button></div>`:'')+vToday0();
+  return (EDIT&&nn?`<div class="banner" style="background:var(--gold-soft);color:var(--gold);border-color:var(--gold)">${nn} new suggestion${nn===1?'':'s'}. <button class="btn sm" data-act="tab" data-id="notes">Read</button></div>`:'')+vOutcomes()+vToday0();
 }
 
 /* search across everything */
-function searchAll(q){
+function searchAll0(q){
   q=q.trim().toLowerCase();if(q.length<2) return [];
   const has=(...a)=>a.some(x=>x!=null&&String(x).toLowerCase().includes(q));const R=[];
   S.pipe.forEach(p=>has(p.group,p.category,p.why,p.notes,p.next,p.first,p.propose,p.outcome)&&R.push({k:'Sponsor',t:p.group,s:(p.tab||'')+' · '+p.status,a:'edit',col:'pipe',id:p.id}));
@@ -1406,7 +1792,7 @@ function searchAll(q){
   S.evsug.forEach(e=>has(e.name,e.where,e.why)&&R.push({k:'Event idea',t:e.name,s:fmt(e.start),a:'tab',id:'events'}));
   return R.slice(0,60);
 }
-function searchHtml(q){const r=searchAll(q);return r.length?r.map(x=>`<div class="item" style="grid-template-columns:90px minmax(0,1fr);cursor:pointer" data-act="${x.a==='tab'?'gotab':'gosearch'}" data-id="${esc(x.id)}" data-col="${x.col||''}"><span class="pill" style="height:fit-content">${esc(x.k)}</span><div><b>${esc(x.t)}</b><div class="meta">${esc(x.s)}</div></div></div>`).join(''):(q.trim().length<2?'<div class="empty">Type two letters or more.</div>':'<div class="empty">Nothing found.</div>')}
+function searchHtml(q){const r=searchAll(q);return r.length?r.map(x=>`<div class="item" style="grid-template-columns:90px minmax(0,1fr);cursor:pointer" data-act="${x.a==='tab'?'gotab':x.a==='openpt'?'gopt':'gosearch'}" data-id="${esc(x.id)}" data-col="${x.col||''}"><span class="pill" style="height:fit-content">${esc(x.k)}</span><div><b>${esc(x.t)}</b><div class="meta">${esc(x.s)}</div></div></div>`).join(''):(q.trim().length<2?'<div class="empty">Type two letters or more.</div>':'<div class="empty">Nothing found.</div>')}
 function openSearch(){
   const d=$('#dlg');d.innerHTML=`<h2 style="margin-bottom:10px">Search</h2><input type="text" id="gq" placeholder="Search sponsors, contacts, steps, events, decisions" aria-label="Search everything"><div id="gres" style="margin-top:10px">${searchHtml('')}</div><div class="row" style="margin-top:10px"><button class="btn" data-act="close">Close</button></div>`;
   d.dataset.col='';d.dataset.id='';d.showModal();$('#gq').focus();
@@ -1423,11 +1809,11 @@ function openTilly(){
 async function tillyGo(){
   const q=$('#dpaste').value.trim();if(!q){toast('Type something first');return}
   if($('#dask').checked){if(!gem()){needKey();return}const box=$('#dprops');box.textContent='Thinking…';
-    try{const t=await aiText(STYLE+'\nAnswer QUESTION. If it is about how this app works, use only APP GUIDE and DATA. Otherwise use what you know, and search the web only if asked; name sources and say what you cannot confirm.\nQUESTION: '+q+'\nAPP GUIDE: '+APPGUIDE+'\nDATA: '+ctx(),x=>box.textContent=x,$('#dweb').checked?{search:true}:undefined);box.textContent=t}catch(e){box.textContent='Tilly could not answer: '+(e.message||e.code)}return}
+    try{const t=await aiText(STY()+'\nAnswer QUESTION. If it is about how this app works, use only APP GUIDE and DATA. Otherwise use what you know, and search the web only if asked; name sources and say what you cannot confirm.\nQUESTION: '+q+'\nAPP GUIDE: '+APPGUIDE+'\nDATA: '+ctx(),x=>box.textContent=x,$('#dweb').checked?{search:true}:undefined);box.textContent=t}catch(e){box.textContent='Tilly could not answer: '+(e.message||e.code)}return}
   if($('#dweb').checked){
     if(!gem()){needKey();return}
     const box=$('#dprops');box.textContent='Searching…';
-    try{const t=await aiText(STYLE+'\nAnswer REQUEST by searching the web. Use only what the search results support, and name the source link for each fact. If you cannot confirm something, say so.\nREQUEST: '+q+'\nDATA: '+ctx(),x=>box.textContent=x,{search:true});box.textContent=t}catch(e){box.textContent='Tilly could not search: '+(e.message||e.code)}
+    try{const t=await aiText(STY()+'\nAnswer REQUEST by searching the web. Use only what the search results support, and name the source link for each fact. If you cannot confirm something, say so.\nREQUEST: '+q+'\nDATA: '+ctx(),x=>box.textContent=x,{search:true});box.textContent=t}catch(e){box.textContent='Tilly could not search: '+(e.message||e.code)}
   }else{S.ai.pre='d';await propose()}
 }
 
@@ -1447,7 +1833,7 @@ async function startApp(env){
   $('#signout').hidden=!env.auth;
   render();
   if(!db) return;
-  for(const c of COLS){db.collection(c).onSnapshot(s=>{S[c]=s.docs.map(d=>({...d.data(),id:d.id}));S.loaded[c]=true;softRender();if(EDIT&&!S.fixed&&['tasks','pipe','decisions','kit','evsug','activity'].every(k=>S.loaded[k])&&S.pipe.length){S.fixed=true;fixWording().then(()=>ensureRecords()).then(()=>ensureFocus()).then(()=>ensureFiles()).then(()=>ensureGov()).then(()=>ensureNoAlcohol()).then(()=>ensureAudience()).then(()=>ensureRates()).then(()=>ensureV25()).then(()=>ensureV26()).then(()=>ensureV27()).then(()=>ensureV28()).then(()=>{pruneActivity();return dailyEvents()})}},e=>toast('Could not load '+c+': '+(e.code||e.message||'')))}
+  for(const c of COLS){db.collection(c).onSnapshot(s=>{S[c]=s.docs.map(d=>({...d.data(),id:d.id}));S.loaded[c]=true;softRender();if(EDIT&&!S.fixed&&['tasks','pipe','decisions','kit','evsug','activity'].every(k=>S.loaded[k])&&S.pipe.length){S.fixed=true;fixWording().then(()=>ensureRecords()).then(()=>ensureFocus()).then(()=>ensureFiles()).then(()=>ensureGov()).then(()=>ensureNoAlcohol()).then(()=>ensureAudience()).then(()=>ensureRates()).then(()=>ensureV25()).then(()=>ensureV26()).then(()=>ensureV27()).then(()=>ensureV28()).then(()=>ensureV29()).then(()=>ensureV30()).then(()=>{pruneActivity();return dailyEvents()})}},e=>toast('Could not load '+c+': '+(e.code||e.message||'')))}
 }
 function lsGet(k){try{return localStorage.getItem(k)||''}catch(e){return ''}}
 function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}

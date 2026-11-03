@@ -83,3 +83,24 @@ The "Sponsor in focus" section on Today has a file box for each sponsor. Files g
 - **Next target**: set how long it runs in days, weeks or months.
 - **Daily check-in** (Ask Tilly) writes a short note for Fatimah. **Follow-ups** have a What to say button, and reminders also announce follow-ups due in the next two days.
 - **Activity** now shows sponsor work only: emails sent, replies, calls, proposals, stage moves and which live conversations have gone quiet.
+
+## Partnerships mode
+
+Use the toggle above the tabs to switch between Sponsorships and Partnerships. The choice is remembered on that device.
+
+- **Partners**: press invitations, media partnerships and collaborations. Each has *We give* and *We get*, one of five stages (idea, approached, terms agreed, delivering, wrapped up), an optional link to an event (dates, accreditation, who attends), a contact, and one next step.
+- **Templates**: a media-partner offer and a collaboration proposal, filled from the partner. Missing details stay in [brackets] and are listed. Nothing is sent from the app.
+- **Wrap-ups**: what each side delivered and what it was worth to TLLJ (1 to 5), and whether you would do it again.
+- **Follow-ups** belong to a mode (Sponsorships, Partnerships or both). **Ask Tilly** and the brief follow the mode you are in. Export adds a Partners sheet.
+
+## Packages and "What happened?"
+
+- **Packages:** inside each partner, "We give" and "We get" are lists of packages. Each has a name, the detail, a date and a tick for delivered or received. The ticks feed the wrap-up automatically.
+- **What happened?** On Today, in both modes, anything past its date asks for an outcome: events that have ended, sponsors and partners whose next step date has passed. Log the result and the next step (or tick "Nothing further needed"). Sponsor outcomes go into the outreach log, partner outcomes into the partner, event outcomes into the Events tab.
+- Search and Activity show only what belongs to the mode you are in. Events are shared by both modes.
+
+## Paste an email, Review and the calendar file
+
+- **Paste an email** (Partners and Today, Partnerships mode): paste a reply or invitation. Tilly pulls out the partner, what we give, what we get, dates and the next step. Every field is editable and nothing is saved until you press Save. It can add to an existing partner.
+- **Review** (both modes): *Meeting* is one screen for Fatimah showing what moved, what is stuck and the decisions needed. *Weekly* shows sponsors and partners side by side. Both can be copied as text and use the period you choose. Partner questions for Fatimah go in "Needs a decision from Fatimah".
+- **Calendar file:** downloads every dated next step, follow-up, package due date and event as an .ics file with a 9 am reminder. Open it on your phone and choose Add All. Importing it again updates the same entries instead of duplicating them. A partner also has its own Add to calendar button.
