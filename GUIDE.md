@@ -104,3 +104,24 @@ Use the toggle above the tabs to switch between Sponsorships and Partnerships. T
 - **Paste an email** (Partners and Today, Partnerships mode): paste a reply or invitation. Tilly pulls out the partner, what we give, what we get, dates and the next step. Every field is editable and nothing is saved until you press Save. It can add to an existing partner.
 - **Review** (both modes): *Meeting* is one screen for Fatimah showing what moved, what is stuck and the decisions needed. *Weekly* shows sponsors and partners side by side. Both can be copied as text and use the period you choose. Partner questions for Fatimah go in "Needs a decision from Fatimah".
 - **Calendar file:** downloads every dated next step, follow-up, package due date and event as an .ics file with a 9 am reminder. Open it on your phone and choose Add All. Importing it again updates the same entries instead of duplicating them. A partner also has its own Add to calendar button.
+
+## Templates, events and duplicates
+
+- **Templates** (Partnerships): Media-partner offer, Collaboration proposal, Press access and coverage request, and Coverage follow-up. Use "Add a template" to write your own with placeholders such as {name}, {first}, {topic}, {dates}, {give}, {get}, {delivered}. Custom templates can be edited or deleted.
+- **Events from a partner:** choose "+ Add a new event" in a partner's Event list, or in Paste an email. A name is enough; add the dates and place later under Events. Undated events are flagged in Review.
+- **No duplicates:** a partner whose next step already has an open follow-up is not repeated under "Needs a move"; "Add a follow-up" will not create a second one for the same date; a pasted email for an existing name must be added to that partner; events with the same name are linked instead of created again.
+- The mode toggle now sits in the header, and the tabs stay on one line (they scroll sideways on a phone).
+
+## Coverage and moving between modes
+
+- **Coverage** (both modes): log each published piece with its link, where it ran, the date, reach and who it was for. Choosing a package ticks it as delivered. Coverage shows under the partner, in wrap-ups, in Review, in search and in the export, and the "Coverage follow-up" template fills in the links.
+- **Move to Sponsorships / Move to Partnerships:** a button in the partner window and in the sponsor window. The contact, notes, follow-ups, coverage and history come with it. A sponsor with a deal record cannot be moved. Undo brings it back.
+
+## Next moves, one-tap logging, packs and search
+
+- **Today** opens with a greeting and your five most urgent moves (overdue and due follow-ups, outcomes to log, next steps, package dates, plan steps). The full lists stay below. Items already in the top list are not repeated under "What happened?".
+- **Follow-ups** have Sent, Replied and No reply (+3 days). They log on the sponsor (outreach log) or the partner (outcomes) and tick the follow-up done, except No reply, which moves the reminder.
+- **Press /** anywhere to search partners, sponsors, contacts, events, coverage, follow-ups and decisions.
+- **Partner packages:** type or pick from the list. Picking a rate-card package fills in what it includes. When a package is ticked delivered, an "Add the link" button logs the coverage.
+- **Pitch pack and Coverage report** (Review and Coverage tabs): open the print window and choose Save as PDF. Internal notes are never printed.
+- **Decisions:** archive single decisions or all answered ones; show archived to restore.
