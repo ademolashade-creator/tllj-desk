@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="styles.css"></head><body>
 <div class="wrap">
 <header>
- <div class="top"><h1>TLLJ Partnerships Desk</h1><span id="modesw"></span><div class="row"><div class="sub" id="sub"></div><button class="btn" id="undo" data-act="undo" disabled>Undo</button><span id="tools" class="row"><button class="btn" data-act="search" title="Search everything (press /)">Search</button><button class="btn" id="tillybtn" data-act="tilly">Tilly</button><button class="btn" data-act="export">Export</button></span><button class="btn" id="notesbtn" data-act="tab" data-id="notes">Suggestions</button><button class="btn" id="themebtn" data-act="theme" aria-label="Switch between light and dark">Dark</button><button class="btn" data-act="settings">Settings</button><button class="btn" id="signout" data-act="signout" hidden aria-label="Sign out" title="Sign out"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div></div>
+ <div class="top"><h1>TLLJ Partnerships Desk</h1><span id="modesw"></span><div class="row"><div class="sub" id="sub"></div><button class="btn" id="undo" data-act="undo" disabled>Undo</button><span id="tools" class="row"><button class="btn" data-act="search" title="Search everything (press /)">Search</button><button class="btn" id="tillybtn" data-act="tilly">Tilly</button><button class="btn" data-act="export">Export</button></span><button class="btn" id="apprbtn" data-act="tab" data-id="approvals" hidden>Approvals</button><button class="btn" id="notesbtn" data-act="tab" data-id="notes">Suggestions</button><button class="btn" id="themebtn" data-act="theme" aria-label="Switch between light and dark">Dark</button><button class="btn" data-act="settings">Settings</button><button class="btn" id="signout" data-act="signout" hidden aria-label="Sign out" title="Sign out"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div></div>
  <nav id="nav"></nav>
 </header>
 <main id="main"><p class="empty">Loading the plan, pipeline and events.</p></main>
@@ -20,7 +20,7 @@ const STATUSES=['Not started','Finding the contact','Contact found','First messa
 const ACTIVE=['First message sent','In conversation','Proposal sent','Negotiating','Agreed'];
 const LIVE=['In conversation','Proposal sent','Negotiating'];
 const COLS=['tasks','events','pipe','log','contacts','kit','prep','deals','decisions','activity','evsug','notes'];
-let MODE=lsGet('tllj_mode')==='p'?'p':'s';
+let MODE=['p','c'].includes(lsGet('tllj_mode'))?lsGet('tllj_mode'):'s';
 const S={loaded:{},tab:'today',fo:'All',fw:'All',fs:'All',fc:'Missing',ai:{}};
 COLS.forEach(c=>S[c]=[]);
 let db=null,sample=null,EDIT=true,CONTRIB=false;
@@ -32,7 +32,7 @@ const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+Stri
 let TODAY=iso(new Date());
 const dd=(a,b)=>Math.round((pd(b)-pd(a))/864e5);
 const DL=()=>pd(END).toLocaleDateString('en-GB',{day:'numeric',month:'long'}),DS=()=>pd(END).toLocaleDateString('en-GB',{day:'numeric',month:'short'});
-const TG0={label:'one partnership',goal:1,date:'2026-12-14',start:'2026-11-02',history:[]};
+const TG0={label:'one signed sponsorship',goal:1,date:'2026-12-14',start:'2026-11-02',history:[]};
 const tgt=()=>({...TG0,...(get('kit','target')||{})});
 function applyTarget(){const t=tgt();if(/^\d{4}-\d\d-\d\d$/.test(t.date)) END=t.date;if(/^\d{4}-\d\d-\d\d$/.test(t.start)) START=t.start}
 const addDays=(s,n)=>{const d=pd(s);d.setDate(d.getDate()+n);return iso(d)};
@@ -51,13 +51,15 @@ async function act(label,fn){cur=[];let items=[];try{await fn()}finally{items=cu
 function local(col,id,d){const i=S[col].findIndex(x=>x.id===id);if(d==null){if(i>=0) S[col].splice(i,1)}else if(i<0) S[col].push({...d});else S[col][i]={...d}}
 async function undo(){const b=hist.pop();renderUndo();if(!b){toast('Nothing to undo');return}
   try{for(const it of b.items.slice().reverse()){const r=db.collection(it.col).doc(it.id);if(it.prev){await r.set(it.prev);local(it.col,it.id,it.prev)}else{await r.delete();local(it.col,it.id,null)}}toast('Undid: '+b.label);recordActivity('Undid: '+b.label,[]);if(!$('#dlg').open) render()}catch(e){toast('Could not undo: '+(e.message||''))}}
+const LOCKED=['target','team','rates','terms','audience'];
 async function save(col,id,data){
+  if(ASSIST&&col==='kit'&&LOCKED.includes(id)){toast('That setting is kept for Sade and Fatimah.');return false}
   if(!db){toast('Saving is not available in this view.');return false}
   rec(col,id);
   try{await db.collection(col).doc(id).set({...data,id});local(col,id,{...data,id});return true}catch(e){toast('Not saved: '+(e.message||'check edit access'));return false}
 }
 async function patch(col,id,p){const c=get(col,id)||{};return save(col,id,{...c,...p})}
-async function remove(col,id){rec(col,id);try{await db.collection(col).doc(id).delete();local(col,id,null)}catch(e){toast('Not deleted: '+(e.message||''))}}
+async function remove(col,id){if(ASSIST){toast('Deleting is kept for Sade and Fatimah.');return}rec(col,id);try{await db.collection(col).doc(id).delete();local(col,id,null)}catch(e){toast('Not deleted: '+(e.message||''))}}
 
 /* ---------- facts ---------- */
 const open=()=>S.tasks.filter(t=>!t.done);
@@ -294,7 +296,7 @@ function vRoadmap(){
 }
 
 function vPipeline(){
-  const owners=['All','Sade','Fatimah','Both'];
+  const owners=['All',...OWNERS()];
   const p=S.pipe.filter(x=>(S.fo==='All'||x.owner===S.fo)&&(S.fw==='All'||x.when===S.fw));
   const whens=['All',...new Set(S.pipe.map(x=>x.when))];
   const lanes=STATUSES.filter(s=>S.fs==='All'||s===S.fs).map(s=>{
@@ -356,6 +358,8 @@ function sheetsData(){
   O['Outreach log']=gen(S.log.slice().sort((a,b)=>a.date<b.date?1:-1));
   O['Partners']=[['Name','Type','Stage','We give','We get','Event','Event dates','Accreditation','Who attends','Contact','Next step','Next step date','Notes','TLLJ delivered','Partner delivered','Worth to TLLJ (1-5)','Would repeat','Wrapped up on','Packages delivered or received','Outcomes logged']].concat(PTS().map(x=>{const e=ptEv(x),w=x.wrap||{};return [x.name,x.kind,stLabel(x.stage),glTxt(x,'give'),glTxt(x,'get'),e?e.name:'',e?evDates(e):'',x.accred,x.attendees,x.contact,x.next,(x.nextDate||'')+(tm(x.nextTime)?' '+tm(x.nextTime):''),x.notes,w.gave,w.got,w.worth,w.again,w.date,(x.pkgs||[]).filter(p=>p.done).length+' of '+(x.pkgs||[]).length,(x.outcomes||[]).length].map(v=>v==null?'':String(v))}));
   O['Coverage']=[['Title','Link','Where it ran','Published','For','Package delivered','Views or reach','Notes']].concat(covs().map(c=>{const pk=((get('kit',c.pipeId)||{}).pkgs||[]).find(p=>p.id===c.pkgId);return [c.title,c.url,c.where,c.date,linkName(c.pipeId),pk?pk.item:'',c.reach,c.notes].map(v=>v==null?'':String(v))}));
+  O['People']=[['Name','Roles','Email','Phone','Strongest in','Years','Status','From','Notes']].concat(people().map(p=>[p.name,(p.roles||[]).join('; '),p.email,p.phone,p.strengths,p.years,p.status,p.source,p.notes].map(v=>v||'')));
+  O['Assignments']=[['Title','Type','Stage','For','Writer or lead','Due','Brief','Draft','Published','Payment'].concat(MONEY()?['Agreed fee','Paid on']:[])].concat(asgs().map(a=>[a.title,a.kind,a.stage,linkLabel(a.linkId),cname(a.cid),a.due,a.brief,a.draft,a.pub,a.paid?'Paid':(a.cid?'Unpaid':'')].concat(MONEY()?[a.fee,a.paidOn]:[]).map(v=>v||'')));
   O['Follow-ups']=gen(S.kit.filter(k=>k.type==='followup'),['type']);
   O['Plan steps']=gen(S.tasks.slice().sort(byDue));
   O['Events']=gen(S.events);
@@ -570,7 +574,7 @@ function vScore(){
   return `<div class="stats"><div class="stat ${done?'good':'bad'}"><b>${signed.length}</b><span>signed (target ${esc(T.goal)})</span></div><div class="stat"><b>${pend.length}</b><span>proposals pending</span></div><div class="stat"><b>${live.length}</b><span>live conversations</span></div><div class="stat"><b>${money?'₦'+money.toLocaleString('en-NG'):'Not entered'}</b><span>signed value</span></div><div class="stat"><b>${left}</b><span>days to ${DS()}</span></div></div>
   <section class="box"><h2>The one number</h2><p style="margin:0">${esc(verdict)}</p></section>
   <div class="cols2"><section class="box"><h2>Pipeline by status</h2><div class="funnel">${STATUSES.map(s=>`<div><span>${esc(s)}</span><span><i style="width:${100*by(s).length/mx}%"></i></span><b>${by(s).length}</b></div>`).join('')}</div></section>
-  <section class="box"><h2>Cash fallbacks <small>in order</small></h2>${fb.map((f,i)=>{const p=S.pipe.find(q=>q.group===f.group);return `<div class="item"><span>${i+1}.</span><div><b>${esc(f.group)}</b> <span class="pill">${esc(p?p.status:'Not in pipeline')}</span><div class="meta">${esc(f.text)}</div></div></div>`}).join('')}</section></div>
+  <section class="box"><h2>Cash fallbacks <small>in order</small></h2>${fb.map((f,i)=>{const p=S.pipe.find(q=>q.group===f.group);return `<div class="item"><span>${i+1}.</span><div><b>${esc(f.group)}</b> <span class="pill">${esc(p?p.status:(S.hid||[]).some(q=>q.group===f.group)?'Hidden until '+fmt((S.hid.find(q=>q.group===f.group)||{}).hideUntil):'Not in pipeline')}</span><div class="meta">${esc(f.text)}</div></div></div>`}).join('')}</section></div>
   <section class="box"><h2>Conflicts <small>same category, both active</small></h2>${cf.length?cf.map(([c,a])=>`<div class="item"><span>⚠</span><div><b>${esc(c)}</b><div class="meta">${a.map(p=>esc(p.group+' ('+p.status+')')).join(' | ')}</div><div class="meta">Do not offer these the same slot.</div></div></div>`).join(''):'<div class="empty">No two active sponsors share a category.</div>'}</section>
   ${EDIT?`<section class="box"><h2>Target <small>${esc(DL())} · ${left<0?'date passed':left+' days left'}</small></h2><div class="g2"><div class="fld"><label for="tg_label">What we are aiming for</label><input type="text" id="tg_label" data-tg="label" value="${esc(T.label)}"></div><div class="fld"><label for="tg_goal">How many signed</label><input type="number" min="1" id="tg_goal" data-tg="goal" value="${esc(T.goal)}"></div><div class="fld"><label for="tg_start">Starts</label><input type="date" id="tg_start" data-tg="start" value="${esc(T.start)}"></div><div class="fld"><label for="tg_date">Deadline</label><input type="date" id="tg_date" data-tg="date" value="${esc(T.date)}"></div></div><p class="meta">Change any of these if Fatimah changes the target. The countdown, the warnings and the calendar follow. When this target ends, start the next one and the old one is kept below.</p><div class="row" style="align-items:center"><span class="meta" style="margin:0">The next target runs for</span><input type="number" min="1" id="tg_len" value="6" style="width:70px" aria-label="Length"><select id="tg_unit" style="width:auto" aria-label="Unit"><option>days</option><option selected>weeks</option><option>months</option></select><button class="btn pri" data-act="tgnext">Start the next target</button></div>${(T.history||[]).length?`<div class="meta" style="margin-top:8px"><b>Past targets</b></div>${T.history.map(h=>`<div class="meta">${esc(h.label)}: ${esc(fmt(h.start))} to ${esc(fmt(h.date))}, ${esc(h.signed)} of ${esc(h.goal)} signed</div>`).join('')}`:''}</section>
   <section class="box"><h2>Weekly update for Fatimah</h2><div class="row"><button class="btn pri" data-act="weekly">Write this week's update</button><button class="btn" data-act="copy" data-t="wk">Copy</button></div><textarea id="wk" style="margin-top:8px;min-height:220px">${esc(S.ai.weekly||'')}</textarea></section>`:''}`;
@@ -646,7 +650,7 @@ function openSponsor(id,keep){
   dlg.innerHTML=`<h2>${esc(p.group)}</h2><div class="meta"><span class="pill">Score ${esc(p.score)}</span><span>${esc(p.category||'')}</span><span>${esc(p.tab)}</span><span>${esc(p.chance)}</span></div>
   ${cf.length?`<div class="banner" style="margin-top:10px">Same category, already active: ${cf.map(q=>esc(q.group+' ('+q.status+')')).join(', ')}. Do not offer the same slot.</div>`:''}
   <div class="meta" style="margin-top:8px"><b>Write to first:</b> ${esc(p.first)}</div><div class="meta"><b>Propose first:</b> ${esc(p.propose)}</div><div class="meta"><b>Why they should care:</b> ${esc(p.why)}</div>
-  <form id="frm" class="sec"><div class="g2"><div class="fld"><label for="s_status">Status</label><select id="s_status">${STATUSES.map(o=>`<option ${o===p.status?'selected':''}>${o}</option>`).join('')}</select></div><div class="fld"><label for="s_owner">Owner</label><select id="s_owner">${['Sade','Fatimah','Both'].map(o=>`<option ${o===p.owner?'selected':''}>${o}</option>`).join('')}</select></div></div>
+  <form id="frm" class="sec"><div class="g2"><div class="fld"><label for="s_status">Status</label><select id="s_status">${STATUSES.map(o=>`<option ${o===p.status?'selected':''}>${o}</option>`).join('')}</select></div><div class="fld"><label for="s_owner">Owner</label><select id="s_owner">${OWNERS().map(o=>`<option ${o===p.owner?'selected':''}>${o}</option>`).join('')}</select></div></div>
   <div class="fld"><label for="s_next">Next step</label><textarea id="s_next" style="min-height:60px">${esc(p.next)}</textarea></div>
   <div class="g2"><div class="fld"><label for="s_nd">Next-step date and time</label><div class="dtp"><input type="date" id="s_nd" value="${esc(p.nextDate)}"><input type="time" id="s_nt" value="${esc(p.nextTime||'')}" aria-label="Next-step time, optional"></div></div><div class="fld"><label for="s_cat">Category</label><input type="text" id="s_cat" value="${esc(p.category)}"></div></div>
   <div class="fld"><label for="s_notes">Notes</label><textarea id="s_notes" style="min-height:60px">${esc(p.notes)}</textarea></div><div class="fld"><label for="s_out">Outcome or what was agreed</label><textarea id="s_out" style="min-height:60px">${esc(p.outcome)}</textarea></div>
@@ -698,16 +702,16 @@ function render(){
   applyTarget();
   const all=[['today','Today'],['roadmap','Roadmap'],['sponsors','Sponsors'],['pipeline','Pipeline'],['contacts','Contacts'],['events','Events'],['coverage','Coverage'],['kit','Proposal Kit'],['balance','Balance'],['score','Scoreboard'],['deals','Deals'],['decisions','Decisions'],['review','Review'],['ask','Ask Tilly'],['activity','Activity']];
   const allP=[['today','Today'],['partners','Partners'],['events','Events'],['coverage','Coverage'],['templates','Templates'],['wrap','Wrap-ups'],['ask','Ask Tilly'],['review','Review'],['activity','Activity']];
-  const tabs=MODE==='p'?(EDIT?allP:allP.filter(([k])=>['today','partners','events','coverage','wrap','review'].includes(k))):EDIT?all:all.filter(([k])=>(CONTRIB?['today','sponsors','pipeline','contacts','events','score','decisions','review']:['today','score','decisions','review']).includes(k));
-  if(S.tab!=='notes'&&!tabs.some(([k])=>k===S.tab)) S.tab=tabs[0][0];
+  const allC=[['today','Today'],['people','People'],['assign','Assignments'],['coverage','Coverage'],['activity','Activity']];const tabs=MODE==='c'?(EDIT?allC:allC.filter(([k])=>k!=='activity')):MODE==='p'?(EDIT?allP:allP.filter(([k])=>['today','partners','events','coverage','wrap','review'].includes(k))):EDIT?all:all.filter(([k])=>(CONTRIB?['today','sponsors','pipeline','contacts','events','score','decisions','review']:['today','score','decisions','review']).includes(k));
+  if(S.tab!=='notes'&&S.tab!=='approvals'&&!tabs.some(([k])=>k===S.tab)) S.tab=tabs[0][0];
   const bc=EDIT?balanceChecks().filter(x=>x.level!=='info').length:0,nc=EDIT?S.notes.filter(x=>x.status==='New').length:0;
-  document.body.dataset.mode=MODE;$('#modesw').innerHTML=modeSw();$('#nav').innerHTML=tabs.map(([k,l])=>`<button data-act="tab" data-id="${k}" ${S.tab===k?'aria-current="true"':''}>${S.tab===k?tabIc(k):''}${l}${k==='balance'&&bc?' ('+bc+')':''}</button>`).join('');const nb=$('#notesbtn');nb.textContent='Suggestions'+(nc?' ('+nc+')':'');nb.setAttribute('aria-current',S.tab==='notes'?'true':'false');$('#tools').hidden=!(EDIT||CONTRIB);$('#tillybtn').hidden=!EDIT;
-  if(MODE==='p'){const L=PTS().filter(x=>x.stage!=='wrapped');$('#sub').innerHTML=esc(new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'}))+' · Partnerships: '+L.length+' live'+(S.demo?' · Demo mode: saved in this browser only':'')}else{const T=tgt(),l=dd(TODAY,END);$('#sub').innerHTML=esc(new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'}))+' · Target: '+esc(T.label)+' by '+esc(DL())+` <span class="pill ${l<0?'warn':'gold'}">${l<0?'Target date passed':l===0?'Target day':l+(l===1?' day left':' days left')}</span>`+(S.demo?' · Demo mode: saved in this browser only':'')}
+  document.body.dataset.mode=MODE;$('#modesw').innerHTML=modeSw();$('#nav').innerHTML=tabs.map(([k,l])=>`<button data-act="tab" data-id="${k}" ${S.tab===k?'aria-current="true"':''}>${S.tab===k?tabIc(k):''}${l}${k==='balance'&&bc?' ('+bc+')':''}</button>`).join('');const ab=$('#apprbtn'),an=CONTRIB?drafts().filter(d=>d.status==='pending').length:EDIT?drafts().filter(d=>['approved','changes'].includes(d.status)).length:0;ab.textContent='Approvals'+(an?' ('+an+')':'');ab.setAttribute('aria-current',S.tab==='approvals'?'true':'false');ab.hidden=!(EDIT||CONTRIB);const nb=$('#notesbtn');nb.textContent='Suggestions'+(nc?' ('+nc+')':'');nb.setAttribute('aria-current',S.tab==='notes'?'true':'false');$('#tools').hidden=!(EDIT||CONTRIB);$('#tillybtn').hidden=!EDIT;
+  if(MODE==='c'){$('#sub').innerHTML=esc(new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'}))+' \u00b7 Contributors: '+people().length+(people().length===1?' person':' people')+(S.demo?' \u00b7 Demo mode: saved in this browser only':'')}else if(MODE==='p'){const L=PTS().filter(x=>x.stage!=='wrapped');$('#sub').innerHTML=esc(new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'}))+' · Partnerships: '+L.length+' live'+(S.demo?' · Demo mode: saved in this browser only':'')}else{const T=tgt(),l=dd(TODAY,END);$('#sub').innerHTML=esc(new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'}))+' · Target: '+esc(T.label)+' by '+esc(DL())+` <span class="pill ${l<0?'warn':'gold'}">${l<0?'Target date passed':l===0?'Target day':l+(l===1?' day left':' days left')}</span>`+(S.demo?' · Demo mode: saved in this browser only':'')}
   renderUndo();
   if(!S.pipe.length&&!S.tasks.length){
     $('#main').innerHTML=`<section class="box"><h2>No data yet</h2><p class="meta">${EDIT?'Choose your seed.json file to load the plan, pipeline and events.':'The plan has not been loaded yet.'}</p>${EDIT?'<input type="file" id="seedfile" accept=".json" aria-label="seed.json">':''}</section>`;return}
-  const f={today:vToday,roadmap:vRoadmap,pipeline:vPipeline,sponsors:vSponsors,balance:vBalance,contacts:vContacts,events:vEvents,kit:vKit,score:vScore,deals:vDeals,decisions:vDecisions,notes:vNotes,activity:vActivity,ask:vAsk,review:vReview,coverage:vCoverage,events:()=>vEvents()+vEvOut()+vPlaces(),partners:vPartners,templates:vTemplatesP,wrap:vWrap,...(MODE==='p'?{today:vTodayP,events:()=>vEventsP()+vPlaces()}:{})}[S.tab];
-  const main=$('#main'),y=scrollY,fk=focusKey();main.style.minHeight=main.offsetHeight+'px';main.innerHTML=f();{const vk=MODE+S.tab+(S.rv?S.rv.sub:'');if(vk!==S._vk){S._vk=vk;main.classList.remove('rise');void main.offsetWidth;main.classList.add('rise');clearTimeout(S._rt);S._rt=setTimeout(()=>main.classList.remove('rise'),420)}}restoreFocus(fk);scrollTo({top:y,behavior:'instant'});requestAnimationFrame(()=>{main.style.minHeight='';scrollTo({top:y,behavior:'instant'})});
+  const f={today:vToday,roadmap:vRoadmap,pipeline:vPipeline,sponsors:vSponsors,balance:vBalance,contacts:vContacts,events:vEvents,kit:vKit,score:vScore,deals:vDeals,decisions:vDecisions,notes:vNotes,activity:vActivity,ask:vAsk,review:vReview,coverage:vCoverage,events:()=>vEvents()+vEvOut()+vPlaces(),partners:vPartners,templates:vTemplatesP,wrap:vWrap,people:vPeople,assign:vAssign,approvals:vApprovals,...(MODE==='c'?{today:vTodayC}:{}),...(MODE==='p'?{today:vTodayP,events:()=>vEventsP()+vPlaces()}:{})}[S.tab];
+  const main=$('#main'),y=scrollY,fk=focusKey();main.style.minHeight=main.offsetHeight+'px';main.innerHTML=(S.tab==='today'?vNeeds():'')+f();{const vk=MODE+S.tab+(S.rv?S.rv.sub:'');if(vk!==S._vk){S._vk=vk;main.classList.remove('rise');void main.offsetWidth;main.classList.add('rise');clearTimeout(S._rt);S._rt=setTimeout(()=>main.classList.remove('rise'),420)}}restoreFocus(fk);scrollTo({top:y,behavior:'instant'});requestAnimationFrame(()=>{main.style.minHeight='';scrollTo({top:y,behavior:'instant'})});
 }
 
 /* ---------- Partnerships mode (v29) ---------- */
@@ -726,7 +730,7 @@ const ptCtx=x=>{const e=ptEv(x);return {id:x.id,name:x.name,kind:x.kind,stage:st
 const STYLE_P='You write for Sade Ademola at The Leisurely Life Journal (TLLJ), a global luxury publication for the discerning African reader. She is working in Partnerships mode: non-cash exchanges of access, coverage, content and introductions, such as press invitations, media partnerships and collaborations. Use only facts in DATA. Each partner has "weGive" (what TLLJ offers) and "weGet" (what TLLJ receives). Never invent dates, reach, accreditation, terms or what a partner agreed; if DATA lacks it, say so. Do not quote prices or use the sponsorship rate card, because there is no quote builder here. TLLJ does not partner with alcohol brands. Write warmly, professionally and exactly, in short plain sentences, with no filler.';
 const STY=()=>MODE==='p'?STYLE_P:STYLE_S;
 const ctxP=()=>JSON.stringify({today:TODAY,mode:'Partnerships',partners:PTS().map(ptCtx),followUps:FUS().filter(f=>!f.done).map(f=>({text:f.text,due:f.due,partner:(ptr(f.pipeId)||{}).group||''})),events:S.events.filter(e=>(e.end||e.start)>=addDays(TODAY,-3)).map(e=>({id:e.id,name:e.name,start:e.start,end:e.end,where:e.where})),audience:audLine()});
-function modeSw(){if(!EDIT) return '';return `<span class="seg" role="group" aria-label="Mode"><button data-act="mode" data-id="s" aria-pressed="${MODE==='s'}">Sponsorships</button><button data-act="mode" data-id="p" aria-pressed="${MODE==='p'}">Partnerships</button></span>`}
+function modeSw(){if(!EDIT&&!CONTRIB) return '';return `<span class="seg" role="group" aria-label="Mode"><button data-act="mode" data-id="s" aria-pressed="${MODE==='s'}">Sponsorships</button><button data-act="mode" data-id="p" aria-pressed="${MODE==='p'}">Partnerships</button><button data-act="mode" data-id="c" aria-pressed="${MODE==='c'}">Contributors</button></span>`}
 
 function ptRow(x,note,cls){return `<div class="ptrow ${cls||''}" data-act="openpt" data-id="${x.id}" tabindex="0" role="button"><b>${esc(x.name)}</b><span class="meta">${note}</span></div>`}
 function ptCard(x){
@@ -817,7 +821,7 @@ function openPartner(id){
   dlg.dataset.col='partner';dlg.dataset.id=id;if(!dlg.open) dlg.showModal();dlg.scrollTop=st0;
 }
 async function ptClick(a,id,el){
-  if(a==='mode'){MODE=id==='p'?'p':'s';lsSet('tllj_mode',MODE);S.tab='today';render();return true}
+  if(a==='mode'){MODE=['p','c'].includes(id)?id:'s';lsSet('tllj_mode',MODE);S.tab='today';render();return true}
   if(a==='psf'){S.ps=id;render();return true}
   if(a==='ptclose'){$('#dlg').close();return true}
   if(a==='openpt'){openPartner(id);return true}
@@ -839,6 +843,7 @@ async function ptClick(a,id,el){
   return false;
 }
 async function ptChange(e){
+  if(await ptChange36(e)) return true;
   const t=e.target;if(!t||!t.dataset||!EDIT) return false;
   if(t.id==='ptsel'||t.name==='pttpl'){const r=document.querySelector('input[name="pttpl"]:checked');S.tp={id:$('#ptsel').value,tpl:r?r.value:'media'};S.ptOut=null;render();return true}
   if(t.id==='cv_l'){const d=cvDraft();d.pkgId='';openCoverage(d.id,d);return true}
@@ -1127,6 +1132,602 @@ async function ensureV35(){
     lsSet('tllj_seed_v35','1');render()}catch(e){}
 }
 
+/* ---------- v36: Contributors, approvals, owners, email, handover ---------- */
+let ASSIST=false;
+const OWNER=()=>EDIT&&!ASSIST,MONEY=()=>OWNER()||CONTRIB;
+const CST=['New','Contacted','Test sent','Active','Keep on file','Declined'];
+const CROLES=['Writer','Photographer','Videographer','Stylist'];
+const ASTG=['Pitched','Commissioned','Draft in','Edited','Published'];
+const AKIND=['Article','Photography','Video','Styling'];
+const RST=['Invited','Pitched','Chosen','Not this time'];
+const DKIND=['Outreach','Brief','Proposal','Piece','Reply'];
+const DST={draft:'Draft',pending:'With Fatimah',approved:'Approved',changes:'Changes asked',declined:'Declined',sent:'Sent'};
+const people=()=>S.kit.filter(k=>k.type==='contributor');
+const asgs=()=>S.kit.filter(k=>k.type==='assignment');
+const drafts=()=>S.kit.filter(k=>k.type==='draft');
+const cname=id=>(get('kit',id)||{}).name||'';
+const cfg=()=>window.TLLJ_CONFIG||{};
+const mails=l=>(l||[]).map(x=>String(x).toLowerCase());
+const pickMail=l=>{const m=mails(l).filter(x=>!/^paste/.test(x));return m.find(x=>/theleisurelylifejournal\.com$/.test(x))||m[0]||''};
+const EML={Fatimah:()=>pickMail(cfg().contributors),Praise:()=>pickMail(cfg().assistants),Sade:()=>pickMail(cfg().editors)};
+const who=()=>ASSIST?'Praise':CONTRIB?'Fatimah':'Sade';
+function OWNERS(){const t=S.kit.find(k=>k.id==='team');return [...((t&&t.owners)||['Sade','Fatimah','Praise']),'Both']}
+const first=n=>String(n||'').trim().split(/\s+/)[0]||'';
+const an=k=>(/^[aeiou]/i.test(k)?'an ':'a ')+String(k).toLowerCase();
+const nl2=t=>esc(t).replace(/\n/g,'<br>');
+const link=(u,t)=>u?`<a data-act="none" href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(t||'Open')}</a>`:'';
+const initials=n=>String(n||'?').split(/\s+/).map(s=>s[0]).slice(0,2).join('').toUpperCase();
+const asgOf=cid=>asgs().filter(a=>a.cid===cid||(a.rounds||[]).some(r=>r.cid===cid));
+const linkLabel=id=>{const p=get('pipe',id);if(p) return p.group;const q=get('kit',id);return q?(q.name||''):''};
+const paidTxt=a=>a.paid?'Paid':(a.cid&&a.stage!=='Pitched'?'Unpaid':'');
+function pillSt(s){const c={Active:'ok','Keep on file':'ok',Declined:'warn',New:'gold',approved:'ok',sent:'ok',pending:'gold',changes:'warn',declined:'warn',Published:'ok'}[s]||'';return c}
+
+/* ----- banned words and style check ----- */
+const BANNED=['quiet','quietly','tapestry','realm','unleash','testament','elevate','seamless','robust','leverage','delve','unpack','explore','genuinely','straightforward','honestly','boutique','transformative','pivotal','innovative','cutting-edge','groundbreaking','moreover','furthermore','ultimately','unlock','embark','unwavering','multifaceted','nuance','utilize','facilitate','optimal','unprecedented','synergy','magic','embrace','journey','resonate','captivating','foster','beacon','interplay','landscape','symphony','reimagine','redefine','vibrant','bustling','emerge','highlight','underscore','climate','dynamic','firstly','fabric','weave','woven','craft','reshape','narrative','significant','odyssey','spark','ignite','illuminate','empower','showcase','epic','masterful','intricate','mantra','unparalleled','vast','compelling','crucial','ensure','enhance','forge','imperative','trailblazer','solidify','undeniable','irresistible','mitigate','paramount','streamline','whether','beyond','arrive','arrival','craftsmanship','plethora','tailor','strive','navigate','superpower','masterclass','love letter'];
+const BANRE=new RegExp('\\b('+BANNED.map(w=>w.replace(/[-]/g,'[- ]')).join('|')+')(s|d|ed|ing|es)?\\b','gi');
+function styleCheck(t,ext){
+  t=String(t||'');const out=[];
+  if(/[\u2014\u2013]/.test(t)) out.push('Contains an em dash or en dash. Use a comma, colon or full stop.');
+  const w=[...new Set((t.match(BANRE)||[]).map(x=>x.toLowerCase()))];if(w.length) out.push('Banned words: '+w.slice(0,12).join(', ')+'.');
+  if(ext!==false&&/\bTLLJ\b/.test(t)) out.push('Write "The Leisurely Life Journal" in full in external copy.');
+  if(/\b(not only|not just|isn't just|is not just)\b/i.test(t)) out.push('Contains a "not just" contrast. State the positive directly.');
+  if(/\b(rather than|instead of)\b/i.test(t)) out.push('Contains "rather than" or "instead of". Restate as one positive claim.');
+  if(ext!==false&&!/www\.theleisurelylifejournal\.com/.test(t)) out.push('The sign-off with the website and Instagram links is missing.');
+  return out;
+}
+
+/* ----- dates, links, calendar ----- */
+function gcal(title,date,time,loc,det){
+  if(!date) return '';const d=date.replace(/-/g,'');let dates;
+  if(time&&/^\d\d:\d\d$/.test(time)){const h=(+time.slice(0,2)+1)%24;dates=d+'T'+time.replace(':','')+'00/'+d+'T'+String(h).padStart(2,'0')+time.slice(3,5)+'00'}
+  else dates=d+'/'+addDays(date,1).replace(/-/g,'');
+  return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(title)+'&dates='+dates+(loc?'&location='+encodeURIComponent(loc):'')+(det?'&details='+encodeURIComponent(det):'');
+}
+
+/* ----- mail ----- */
+const MC=()=>({url:lsGet('tllj_as_url'),sec:lsGet('tllj_as_sec'),zoho:lsGet('tllj_zoho_hook'),route:lsGet('tllj_route')||'mailto'});
+const hex=b=>[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
+async function tok(id,r){const c=MC();if(!c.sec||!crypto.subtle) return '';const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(c.sec),{name:'HMAC',hash:'SHA-256'},false,['sign']);return hex(await crypto.subtle.sign('HMAC',k,new TextEncoder().encode(id+':'+r))).slice(0,32)}
+function composeUrl(m,route){
+  const q=encodeURIComponent;
+  if(route==='mailto') return 'mailto:'+(m.to||'')+'?subject='+q(m.subject||'')+'&body='+q(m.text||'')+(m.cc?'&cc='+q(m.cc):'');
+  return 'https://mail.google.com/mail/?view=cm&fs=1&to='+q(m.to||'')+(m.cc?'&cc='+q(m.cc):'')+'&su='+q(m.subject||'')+'&body='+q(m.text||'');
+}
+async function sendMail(m){
+  const c=MC();
+  if(c.route==='script'&&c.url&&c.sec){
+    try{const r=await fetch(c.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({secret:c.sec,action:'send',to:m.to,cc:m.cc||'',subject:m.subject,text:m.text,html:m.html||''})});const j=await r.json();if(j.ok){toast('Sent to '+m.to+'.');return true}toast('Not sent: '+(j.error||'the mailer refused the request'));return false}
+    catch(e){toast('Could not reach the mailer. Opening Gmail instead.');window.open(composeUrl(m,'gmail'),'_blank','noopener');return false}
+  }
+  if(c.route==='zoho'&&c.zoho){
+    try{await fetch(c.zoho,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({to:m.to,cc:m.cc||'',subject:m.subject,text:m.text,html:m.html||''})});toast('Passed to Zoho Flow for '+m.to+'. Check Zoho to confirm it went.');return true}
+    catch(e){toast('Could not reach Zoho Flow.');return false}
+  }
+  if(c.route==='mailto'){location.href=composeUrl(m,'mailto');return true}
+  window.open(composeUrl(m,'gmail'),'_blank','noopener');return true;
+}
+const deskLink=id=>location.origin+location.pathname+(id?'#appr='+id:'');
+async function apprMail(d){
+  const c=MC(),links={};
+  if(c.url&&c.sec){for(const r of ['approved','changes','declined']) links[r]=c.url+'?a=r&id='+encodeURIComponent(d.id)+'&r='+r+'&t='+await tok(d.id,r)}
+  const head='For your approval: '+(d.title||d.kind),body=d.body||'';
+  const text='Hi Fatimah,\n\nSade has '+an(d.kind)+' ready for you.\n\n'+(d.to?'To: '+d.to+'\n':'')+(d.subject?'Subject: '+d.subject+'\n':'')+'\n'+body+'\n\n'+(links.approved?'Approve: '+links.approved+'\nAsk for changes: '+links.changes+'\nDecline: '+links.declined+'\n\n':'')+'Open it in the desk: '+deskLink(d.id)+'\n\nThank you.';
+  const btn=(u,l,bg)=>`<a href="${u}" style="display:inline-block;padding:10px 18px;margin:0 8px 8px 0;border-radius:99px;background:${bg};color:#fff;text-decoration:none;font-family:Arial,sans-serif;font-size:14px">${l}</a>`;
+  const html=`<div style="font-family:Arial,sans-serif;font-size:14px;color:#222;max-width:620px"><p>Hi Fatimah,</p><p>Sade has ${esc(an(d.kind))} ready for you.</p>${d.to?`<p style="color:#666">To: ${esc(d.to)}${d.subject?'<br>Subject: '+esc(d.subject):''}</p>`:''}<div style="border-left:3px solid #b8943f;padding:6px 14px;margin:12px 0;background:#faf7f0">${nl2(body)}</div>${links.approved?`<p>${btn(links.approved,'Approve','#2f6b45')}${btn(links.changes,'Ask for changes','#8a6d1f')}${btn(links.declined,'Decline','#8a3b3b')}</p>`:''}<p><a href="${deskLink(d.id)}">Open it in the desk</a></p></div>`;
+  return {to:EML.Fatimah(),subject:head,text,html};
+}
+
+/* ----- drafts and approvals ----- */
+async function newDraft(o){const id=uid('dr');await save('kit',id,{id,type:'draft',kind:o.kind||'Outreach',title:o.title||'',to:o.to||'',subject:o.subject||'',body:o.body||'',forId:o.forId||'',status:'draft',note:'',by:who(),at:TODAY});return id}
+function draftCard(d){
+  const fo=d.forId?linkLabel(d.forId):'',iss=styleCheck(d.body,true);
+  const mine=EDIT,fat=CONTRIB||OWNER();
+  const acts=[];
+  if(CONTRIB){if(d.status==='pending') acts.push(`<button class="btn sm pri" data-act="dr_ans" data-id="${d.id}" data-r="approved">Approve</button><button class="btn sm" data-act="dr_ans" data-id="${d.id}" data-r="changes">Ask for changes</button><button class="btn sm" data-act="dr_ans" data-id="${d.id}" data-r="declined">Decline</button>`)}
+  else if(mine){
+    if(['draft','changes'].includes(d.status)) acts.push(`<button class="btn sm pri" data-act="dr_send" data-id="${d.id}">Send to Fatimah</button>`);
+    if(d.status==='pending'){acts.push(`<button class="btn sm" data-act="dr_send" data-id="${d.id}">Send the reminder again</button><button class="btn sm" data-act="dr_wa" data-id="${d.id}">Copy WhatsApp note</button>`);if(OWNER()) acts.push(`<button class="btn sm" data-act="dr_rec" data-id="${d.id}">Record her answer</button>`)}
+    if(d.status==='approved') acts.push(`<button class="btn sm pri" data-act="dr_out" data-id="${d.id}">${d.to?'Send it':'Copy it'}</button><button class="btn sm" data-act="dr_mark" data-id="${d.id}">Mark as sent</button>`);
+    if(['draft','changes','declined'].includes(d.status)) acts.push(`<button class="btn sm" data-act="dr_edit" data-id="${d.id}">Edit</button>`);
+    if(d.status==='declined') acts.push(`<button class="btn sm" data-act="dr_redraft" data-id="${d.id}">Draft again</button>`);
+    if(OWNER()) acts.push(`<button class="btn sm" data-act="dr_del" data-id="${d.id}">Delete</button>`);
+  }
+  return `<div class="pt dr" id="dr_${d.id}"><div class="pth"><b>${esc(d.title||d.kind)}</b><span class="pill ${pillSt(d.status)}">${esc((CONTRIB&&d.status==='pending')?'Waiting for you':(DST[d.status]||d.status))}</span></div>
+  <div class="meta"><span>${esc(d.kind)}</span>${fo?`<span>For ${esc(fo)}</span>`:''}${d.to?`<span>To ${esc(d.to)}</span>`:''}<span>By ${esc(d.by||'Sade')}, ${esc(fmt(d.at||TODAY))}</span></div>
+  <details class="drb"><summary>${d.subject?esc(d.subject):'Read the draft'}</summary><div class="drtx">${nl2(d.body||'')}</div></details>
+  ${d.note?`<p class="meta"><b>${d.decidedBy?esc(d.decidedBy)+':':'Note:'}</b> ${esc(d.note)}</p>`:''}
+  ${mine&&iss.length&&['draft','changes'].includes(d.status)?`<p class="meta">${iss.map(esc).join(' ')}</p>`:''}
+  ${acts.length?`<div class="row" style="margin-top:8px">${acts.join('')}</div>`:''}</div>`;
+}
+function vApprovals(){
+  const L=drafts().sort((a,b)=>(b.at||'')<(a.at||'')?-1:1),G=[['pending',CONTRIB?'Waiting for you':'Waiting for Fatimah'],['approved','Approved, ready to send'],['changes','Changes asked'],['draft','Drafts'],['declined','Declined'],['sent','Sent']];
+  const head=CONTRIB?'Waiting for your answer':'Approvals';
+  return `<section class="box"><h2>${head} <small>${L.filter(d=>d.status==='pending').length}${CONTRIB?' for you':' with Fatimah'}</small></h2>
+  <p class="meta">${CONTRIB?'Approve, ask for changes or decline. Your answer goes straight back to Sade.':'Every outreach, brief, proposal and piece goes to Fatimah before it is sent. She approves by email or here.'}</p>
+  ${EDIT?`<div class="row" style="margin:8px 0"><button class="btn pri" data-act="dr_new">New draft</button></div>`:''}</section>
+  ${G.map(([k,l])=>{const x=L.filter(d=>d.status===k);return x.length?`<section class="box"><h3 class="ptg">${l}</h3>${x.map(draftCard).join('')}</section>`:''}).join('')||'<section class="box"><div class="empty">Nothing here yet. Drafts that need Fatimah appear here.</div></section>'}`;
+}
+function vNeeds(){
+  const L=drafts(),mine=[];
+  if(CONTRIB){L.filter(d=>d.status==='pending').forEach(d=>mine.push(`<div class="ptrow" data-act="tab" data-id="approvals" tabindex="0" role="button"><b>${esc(d.title||d.kind)}</b><span class="meta">${esc(d.kind)} waiting for your answer</span></div>`))}
+  else if(EDIT){
+    L.filter(d=>d.status==='approved').forEach(d=>mine.push(`<div class="ptrow" data-act="tab" data-id="approvals" tabindex="0" role="button"><b>${esc(d.title||d.kind)}</b><span class="meta">Approved by Fatimah. Ready to send.</span></div>`));
+    L.filter(d=>d.status==='changes').forEach(d=>mine.push(`<div class="ptrow" data-act="tab" data-id="approvals" tabindex="0" role="button"><b>${esc(d.title||d.kind)}</b><span class="meta">Fatimah asked for changes${d.note?': '+esc(d.note.slice(0,80)):''}</span></div>`));
+    L.filter(d=>d.status==='pending'&&dd(d.sentAt||d.at||TODAY,TODAY)>=2).forEach(d=>mine.push(`<div class="ptrow" data-act="tab" data-id="approvals" tabindex="0" role="button"><b>${esc(d.title||d.kind)}</b><span class="meta">With Fatimah since ${esc(fmt(d.sentAt||d.at))}. A nudge may help.</span></div>`));
+  }
+  return mine.length?`<section class="box needs"><h2>Needs you <small>${mine.length}</small></h2>${mine.join('')}</section>`:'';
+}
+async function drAnswer(id,r,note,by){
+  await act('Answer: '+(get('kit',id)||{}).title,()=>patch('kit',id,{status:r,note:note||'',decidedAt:new Date().toISOString(),decidedBy:by||who()}));
+  toast(r==='approved'?'Approved.':r==='changes'?'Changes sent back to Sade.':'Declined.');render();
+}
+function drEdit(id){
+  const d=id?get('kit',id):{kind:'Outreach',title:'',to:'',subject:'',body:'',forId:''},dlg=$('#dlg');
+  const opts=`<option value="">Nobody in particular</option><optgroup label="Partners">${PTS().map(x=>`<option value="${x.id}" ${d.forId===x.id?'selected':''}>${esc(x.name)}</option>`).join('')}</optgroup><optgroup label="Sponsors">${S.pipe.map(x=>`<option value="${x.id}" ${d.forId===x.id?'selected':''}>${esc(x.group)}</option>`).join('')}</optgroup><optgroup label="Contributors">${people().map(x=>`<option value="${x.id}" ${d.forId===x.id?'selected':''}>${esc(x.name)}</option>`).join('')}</optgroup>`;
+  dlg.innerHTML=`<h2 style="margin-bottom:8px">${id?'Edit draft':'New draft'}</h2><input type="hidden" id="dr_id" value="${esc(id||'')}">
+  <div class="g2"><div class="fld"><label for="dr_k">Type</label><select id="dr_k">${DKIND.map(k=>`<option ${d.kind===k?'selected':''}>${k}</option>`).join('')}</select></div><div class="fld"><label for="dr_f">For</label><select id="dr_f">${opts}</select></div></div>
+  <div class="fld"><label for="dr_t">Title</label><input type="text" id="dr_t" value="${esc(d.title)}" placeholder="For example: Reply to Affinity Gallery"></div>
+  <div class="g2"><div class="fld"><label for="dr_to">To (email)</label><input type="text" id="dr_to" value="${esc(d.to||'')}"></div><div class="fld"><label for="dr_s">Subject</label><input type="text" id="dr_s" value="${esc(d.subject||'')}"></div></div>
+  <div class="fld"><label for="dr_b">Draft</label><textarea id="dr_b" style="min-height:200px">${esc(d.body)}</textarea></div>
+  <div id="dr_chk" class="meta"></div>
+  <div class="row"><button class="btn pri" data-act="dr_save">Save</button><button class="btn" data-act="dr_chk">Check the style</button><button class="btn" data-act="dr_sign">Add the sign-off</button><button class="btn" data-act="ptclose">Cancel</button></div>`;
+  dlg.dataset.col='draft';dlg.dataset.id=id||'';if(!dlg.open) dlg.showModal();
+}
+async function drSave(){
+  const id=$('#dr_id').value||uid('dr'),old=get('kit',id),v={kind:$('#dr_k').value,forId:$('#dr_f').value,title:$('#dr_t').value.trim(),to:$('#dr_to').value.trim(),subject:$('#dr_s').value.trim(),body:$('#dr_b').value};
+  if(!v.title&&!v.body.trim()){toast('Add a title or some text');return}
+  const st=old?(old.status==='changes'?'draft':old.status):'draft';
+  await act((old?'Edit':'New')+' draft: '+(v.title||v.kind).slice(0,30),()=>save('kit',id,{...(old||{}),id,type:'draft',...v,status:st==='declined'?'draft':st,note:old?old.note:'',by:old?old.by:who(),at:old?old.at:TODAY}));
+  $('#dlg').close();toast('Draft saved.');render();
+}
+async function drToFatimah(id){
+  const d=get('kit',id);if(!d) return;
+  if(!EML.Fatimah()){toast('Fatimah\u2019s email is not in the config yet.');return}
+  const c=MC(),m=await apprMail({...d});
+  if(!['script','zoho'].includes(c.route)||(c.route==='script'&&!(c.url&&c.sec))||(c.route==='zoho'&&!c.zoho)){window.open(composeUrl(m,c.route==='mailto'?'mailto':'gmail'),'_blank','noopener')}
+  else await sendMail(m);
+  await act('Send to Fatimah: '+(d.title||d.kind).slice(0,30),()=>patch('kit',id,{status:'pending',sentAt:TODAY,note:'',decidedAt:'',decidedBy:''}));
+  render();
+}
+function waNote(d){return 'Hi Fatimah, '+an(d.kind)+' is ready for your approval in the desk: "'+(d.title||d.kind)+'". '+deskLink(d.id)}
+
+/* ----- People ----- */
+function vTodayC(){
+  const P=people(),A=asgs(),open=A.filter(a=>a.stage!=='Published'),due=open.filter(a=>a.due&&a.due<=addDays(TODAY,7)).sort((x,y)=>x.due<y.due?-1:1);
+  const wait=open.filter(a=>(a.rounds||[]).some(r=>r.status==='Invited')&&!a.cid),pit=open.filter(a=>(a.rounds||[]).some(r=>r.status==='Pitched')&&!a.cid);
+  const unpaid=MONEY()?A.filter(a=>a.stage==='Published'&&a.fee&&!a.paid):[];
+  const newP=P.filter(p=>p.status==='New');
+  const row=(a,n)=>`<div class="ptrow" data-act="openasg" data-id="${a.id}" tabindex="0" role="button"><b>${esc(a.title)}</b><span class="meta">${n}</span></div>`;
+  const sec=(h,L)=>L.length?`<section class="box"><h2>${h} <small>${L.length}</small></h2>${L.join('')}</section>`:'';
+  return sec('Pitches to choose from',pit.map(a=>row(a,(a.rounds||[]).filter(r=>r.status==='Pitched').length+' pitch'+((a.rounds||[]).filter(r=>r.status==='Pitched').length===1?'':'es')+' in'+(a.due?', due '+fmt(a.due):''))))
+   +sec('Waiting for pitches',wait.map(a=>row(a,(a.rounds||[]).filter(r=>r.status==='Invited').map(r=>cname(r.cid)).join(', ')+' invited'+(a.due?', due '+fmt(a.due):''))))
+   +sec('Due this week',due.map(a=>row(a,a.stage+', '+fmt(a.due)+(a.cid?', '+cname(a.cid):''))))
+   +(unpaid.length?sec('Published and not yet paid',unpaid.map(a=>row(a,cname(a.cid)+(a.fee?', '+a.fee:'')))):'')
+   +(newP.length?`<section class="box"><h2>People to contact <small>${newP.length}</small></h2><p class="meta">${newP.slice(0,6).map(p=>esc(p.name)).join(', ')}${newP.length>6?' and '+(newP.length-6)+' more':''}. <button class="btn sm" data-act="tab" data-id="people">Open People</button></p></section>`:'')
+   +(P.length||A.length?`<section class="box"><h2>At a glance</h2><div class="meta"><span>${P.length} people</span><span>${P.filter(p=>p.status==='Active').length} active</span><span>${open.length} open assignment${open.length===1?'':'s'}</span><span>${A.filter(a=>a.stage==='Published').length} published</span></div></section>`:'<section class="box"><div class="empty">No contributors yet. Add a person or import a list.</div></section>');
+}
+function vPeople(){
+  const f=S.pf||'All',q=(S.pq||'').toLowerCase(),r=S.pr||'All';
+  let L=people().filter(p=>(f==='All'||p.status===f)&&(r==='All'||(p.roles||[]).includes(r))&&(!q||(p.name+' '+(p.email||'')+' '+(p.strengths||'')+' '+(p.notes||'')).toLowerCase().includes(q))).sort((a,b)=>CST.indexOf(a.status)-CST.indexOf(b.status)||(a.name<b.name?-1:1));
+  const n=s=>people().filter(p=>p.status===s).length;
+  return `<section class="box"><h2>People <small>${people().length}</small></h2><p class="meta">Writers, photographers, videographers and stylists who work with The Leisurely Life Journal.</p>
+  ${EDIT?`<div class="row" style="margin:8px 0"><button class="btn pri" data-act="pe_new">Add a person</button><button class="btn" data-act="pe_imp">Import a list</button><button class="btn" data-act="pe_match">Who for this brief?</button></div>`:''}
+  <div class="chips">${['All',...CST].map(s=>`<button class="chip" data-act="pe_f" data-id="${s}" aria-pressed="${f===s}">${s}${s==='All'?'':' ('+n(s)+')'}</button>`).join('')}</div>
+  <div class="g2" style="margin-top:8px"><input type="text" id="pe_q" value="${esc(S.pq||'')}" placeholder="Search by name, email or strength" aria-label="Search people"><select id="pe_r" aria-label="Role"><option>All</option>${CROLES.map(x=>`<option ${r===x?'selected':''}>${x}</option>`).join('')}</select></div></section>
+  <section class="box">${L.map(p=>`<div class="ptrow" data-act="pe_open" data-id="${p.id}" tabindex="0" role="button"><span class="av">${esc(initials(p.name))}</span><span class="pn"><b>${esc(p.name)}</b><span class="meta">${esc((p.roles||[]).join(', '))}${p.strengths?' · '+esc(p.strengths):''}${p.years?' · '+esc(p.years):''}</span></span><span class="pill ${pillSt(p.status)}">${esc(p.status)}</span></div>`).join('')||'<div class="empty">Nobody matches. Change the filter or add a person.</div>'}</section>`;
+}
+function openPerson(id){
+  const p=id?get('kit',id):{name:'',email:'',phone:'',roles:['Writer'],strengths:'',years:'',status:'New',source:'',notes:'',portfolio:''},dlg=$('#dlg'),ro=!EDIT;
+  const A=id?asgOf(id):[];
+  dlg.innerHTML=`<h2 style="margin-bottom:8px">${id?esc(p.name):'Add a person'}</h2><input type="hidden" id="pe_id" value="${esc(id||'')}">
+  <fieldset ${ro?'disabled':''} style="border:0;padding:0;margin:0">
+  <div class="g2"><div class="fld"><label for="pe_n">Full name</label><input type="text" id="pe_n" value="${esc(p.name)}"></div><div class="fld"><label for="pe_s">Status</label><select id="pe_s">${CST.map(s=>`<option ${p.status===s?'selected':''}>${s}</option>`).join('')}</select></div></div>
+  <div class="g2"><div class="fld"><label for="pe_e">Email</label><input type="text" id="pe_e" value="${esc(p.email||'')}"></div><div class="fld"><label for="pe_p">Phone or WhatsApp</label><input type="text" id="pe_p" value="${esc(p.phone||'')}"></div></div>
+  <div class="fld"><label>Works as</label><div class="chips">${CROLES.map(r=>`<label class="chip ck"><input type="checkbox" name="pe_r" value="${r}" ${(p.roles||[]).includes(r)?'checked':''}> ${r}</label>`).join('')}</div></div>
+  <div class="g2"><div class="fld"><label for="pe_c">Strongest in</label><input type="text" id="pe_c" value="${esc(p.strengths||'')}" placeholder="For example: Style"></div><div class="fld"><label for="pe_y">Years of experience</label><input type="text" id="pe_y" value="${esc(p.years||'')}" placeholder="For example: 2-5 years"></div></div>
+  <div class="g2"><div class="fld"><label for="pe_so">Where they came from</label><input type="text" id="pe_so" value="${esc(p.source||'')}"></div><div class="fld"><label for="pe_po">Portfolio link</label><input type="text" id="pe_po" value="${esc(p.portfolio||'')}"></div></div>
+  <div class="fld"><label for="pe_no">Notes</label><textarea id="pe_no" style="min-height:70px">${esc(p.notes||'')}</textarea></div></fieldset>
+  ${id&&A.length?`<div class="sec"><h3 class="ptg">Assignments</h3>${A.map(a=>{const r=(a.rounds||[]).find(r=>r.cid===id);return `<div class="ptrow" data-act="openasg" data-id="${a.id}" tabindex="0" role="button"><b>${esc(a.title)}</b><span class="meta">${a.cid===id?esc(a.stage):esc((r||{}).status||'')}${MONEY()&&a.cid===id&&a.fee?' · '+esc(a.fee)+(a.paid?' (paid)':' (unpaid)'):a.cid===id&&paidTxt(a)?' · '+paidTxt(a):''}</span></div>`}).join('')}</div>`:''}
+  <div class="row" style="margin-top:10px">${EDIT?'<button class="btn pri" data-act="pe_save">Save</button>':''}${id&&p.email&&EDIT?`<button class="btn" data-act="pe_mail" data-id="${id}">Email</button>`:''}${id?`<button class="btn" data-act="dossier" data-id="${id}">Everything about ${esc(first(p.name))}</button>`:''}${id&&OWNER()?`<button class="btn" data-act="pe_del" data-id="${id}">Delete</button>`:''}<button class="btn" data-act="ptclose">Close</button></div>`;
+  dlg.dataset.col='person';dlg.dataset.id=id||'';if(!dlg.open) dlg.showModal();
+}
+async function perSave(){
+  const id=$('#pe_id').value||uid('pe'),old=get('kit',id),n=$('#pe_n').value.trim();if(!n){toast('Add a name');return}
+  const e=$('#pe_e').value.trim();if(e&&people().some(p=>p.id!==id&&p.email&&p.email.toLowerCase()===e.toLowerCase())){toast('Someone with that email is already listed.');return}
+  const roles=[...document.querySelectorAll('input[name=pe_r]:checked')].map(x=>x.value);
+  await act((old?'Edit':'Add')+' person: '+n,()=>save('kit',id,{...(old||{}),id,type:'contributor',name:n,email:e,phone:$('#pe_p').value.trim(),roles:roles.length?roles:['Writer'],strengths:$('#pe_c').value.trim(),years:$('#pe_y').value.trim(),status:$('#pe_s').value,source:$('#pe_so').value.trim(),portfolio:$('#pe_po').value.trim(),notes:$('#pe_no').value.trim(),added:old?old.added:TODAY}));
+  $('#dlg').close();toast('Saved.');render();
+}
+/* CSV and paste import */
+function parseCsv(t){
+  t=String(t||'').replace(/^﻿/,'');const rows=[];let r=[],c='',q=false;
+  for(let i=0;i<t.length;i++){const ch=t[i];
+    if(q){if(ch==='"'&&t[i+1]==='"'){c+='"';i++}else if(ch==='"') q=false;else c+=ch}
+    else if(ch==='"') q=true;else if(ch===','||ch==='\t'){r.push(c);c=''}
+    else if(ch==='\n'||ch==='\r'){if(ch==='\r'&&t[i+1]==='\n') i++;r.push(c);c='';if(r.some(x=>x.trim())) rows.push(r);r=[]}
+    else c+=ch}
+  r.push(c);if(r.some(x=>x.trim())) rows.push(r);return rows;
+}
+const STMAP={'new':'New','contacted':'Contacted','test sent':'Test sent','active':'Active','keep':'Keep on file','keep on file':'Keep on file','writers list':'Keep on file','declined':'Declined'};
+function csvPeople(t){
+  const rows=parseCsv(t);if(rows.length<2) return [];
+  const h=rows[0].map(x=>x.trim().toLowerCase()),ix=(...k)=>h.findIndex(x=>k.some(y=>x.startsWith(y)));
+  const cN=ix('full name','name'),cE=ix('email'),cC=ix('category','strong'),cY=ix('years'),cS=ix('status'),cSo=ix('source'),cNo=ix('notes'),cR=ix('role');
+  if(cN<0) return [];
+  return rows.slice(1).map(r=>{const g=i=>i<0?'':String(r[i]||'').trim(),raw=g(cS),st=STMAP[raw.toLowerCase()]||'New',nt=g(cNo);
+    return {name:g(cN),email:g(cE),strengths:g(cC),years:g(cY),status:st,source:g(cSo),notes:[nt,raw&&!STMAP[raw.toLowerCase()]?'Status in the sheet: '+raw:raw.toLowerCase()==='writers list'?'Status in the sheet: Writers list':''].filter(Boolean).join('. '),roles:cR>=0&&g(cR)?g(cR).split(/[;/]/).map(s=>s.trim()).filter(x=>CROLES.includes(x)):['Writer']}}).filter(p=>p.name);
+}
+function openImport(){
+  $('#dlg').innerHTML=`<h2 style="margin-bottom:8px">Import a list</h2><p class="meta">Choose a CSV file or paste rows with a header line. Columns it understands: Full name, Email, Category, Years, Status, Source, Notes, Role. People already listed (same email or name) are skipped.</p>
+  <div class="fld"><input type="file" id="im_f" accept=".csv,.txt" aria-label="CSV file"></div><div class="fld"><label for="im_t">Or paste here</label><textarea id="im_t" style="min-height:140px"></textarea></div><div id="im_p" class="meta"></div>
+  <div class="row"><button class="btn pri" data-act="pe_imp_go">Import</button><button class="btn" data-act="ptclose">Cancel</button></div>`;
+  $('#dlg').dataset.col='import';$('#dlg').dataset.id='';if(!$('#dlg').open) $('#dlg').showModal();
+}
+async function doImport(){
+  const t=$('#im_t').value,L=csvPeople(t);if(!L.length){toast('No rows found. The first line needs a header with a Full name column.');return}
+  const have=p=>people().some(x=>(p.email&&x.email&&x.email.toLowerCase()===p.email.toLowerCase())||x.name.toLowerCase()===p.name.toLowerCase());
+  const add=L.filter(p=>!have(p));
+  await act('Import '+add.length+' people',async()=>{for(const p of add){const id=uid('pe');await save('kit',id,{id,type:'contributor',...p,phone:'',portfolio:'',added:TODAY})}});
+  $('#dlg').close();toast(add.length+' added'+(L.length-add.length?', '+(L.length-add.length)+' already listed.':'.'));render();
+}
+/* matcher */
+const SYN={Style:'style fashion jewellery jeweller jewelry jewel beauty design couture clothing textile accessories runway',Lifestyle:'lifestyle travel food home wellness hospitality hotel dining interiors',Culture:'culture art music film museum gallery exhibition heritage history book theatre',Wealth:'wealth money finance business investing bank economy property'};
+function matchPeople(text,role){
+  const w=new Set((String(text||'').toLowerCase().match(/[a-z]{3,}/g)||[])),R=[];
+  people().forEach(p=>{
+    if(p.status==='Declined') return;let s=0;const why=[];
+    const cat=(p.strengths||'').trim();
+    if(cat){const syn=((SYN[cat]||'')+' '+cat.toLowerCase()).split(/\s+/);if(syn.some(x=>w.has(x))){s+=4;why.push('Strongest in '+cat)}}
+    if(role&&role!=='Any'&&(p.roles||[]).includes(role)){s+=2;why.push(role)}else if(role&&role!=='Any'&&!(p.roles||[]).includes(role)) s-=3;
+    const y=p.years||'';if(/>\s*5/.test(y)){s+=2;why.push('more than 5 years')}else if(/2-5/.test(y)){s+=1;why.push('2 to 5 years')}
+    if(p.status==='Active'){s+=2;why.push('active')}else if(p.status==='Keep on file'){s+=1;why.push('kept on file')}else if(p.status==='Test sent'){s+=1;why.push('test sent')}
+    const done=asgs().filter(a=>a.cid===p.id&&a.stage==='Published').length;if(done){s+=1;why.push(done+' published with us')}
+    if(!p.email&&!p.phone){s-=1;why.push('no contact details yet')}
+    R.push({p,s,why});
+  });
+  return R.filter(x=>x.s>0).sort((a,b)=>b.s-a.s).slice(0,6);
+}
+function openMatcher(text,role,aid){
+  const R=text?matchPeople(text,role):[];
+  $('#dlg').innerHTML=`<h2 style="margin-bottom:8px">Who for this brief?</h2><p class="meta">Describe the piece. The list ranks people by strength, role, experience and status. Declined people are left out.</p>
+  <input type="hidden" id="mt_a" value="${esc(aid||'')}"><div class="fld"><label for="mt_t">Brief</label><textarea id="mt_t" style="min-height:80px" placeholder="For example: a piece on African jewellers and the designers reshaping the trade">${esc(text||'')}</textarea></div>
+  <div class="fld"><label for="mt_r">Role needed</label><select id="mt_r">${['Any',...CROLES].map(x=>`<option ${role===x?'selected':''}>${x}</option>`).join('')}</select></div>
+  <div class="row"><button class="btn pri" data-act="mt_go">Find people</button><button class="btn" data-act="ptclose">Close</button></div>
+  ${text?`<div class="sec">${R.map(x=>`<div class="ptrow"><span class="pn"><b>${esc(x.p.name)}</b><span class="meta">${esc(x.why.join(', '))}</span></span>${aid?`<button class="btn sm" data-act="rd_add" data-id="${aid}" data-c="${x.p.id}">Invite to pitch</button>`:`<button class="btn sm" data-act="pe_open" data-id="${x.p.id}">Open</button>`}</div>`).join('')||'<div class="empty">Nobody fits yet. Add more people or widen the brief.</div>'}${!aid&&R.length?`<div class="row" style="margin-top:8px"><button class="btn" data-act="mt_start">Start an assignment with these ${R.length}</button></div>`:''}</div>`:''}`;
+  $('#dlg').dataset.col='match';$('#dlg').dataset.id='';if(!$('#dlg').open) $('#dlg').showModal();
+}
+/* ----- assignments ----- */
+function vAssign(){
+  const A=asgs(),f=S.af||'Open',L=A.filter(a=>f==='All'||(f==='Open'?a.stage!=='Published':a.stage===f)).sort((a,b)=>(a.due||'9')<(b.due||'9')?-1:1);
+  return `<section class="box"><h2>Assignments <small>${A.length}</small></h2><p class="meta">Every piece from first pitch to publication, with who is writing, shooting or styling it.</p>
+  ${EDIT?`<div class="row" style="margin:8px 0"><button class="btn pri" data-act="as_new">New assignment</button><button class="btn" data-act="pe_match">Who for this brief?</button></div>`:''}
+  <div class="chips">${['Open',...ASTG,'All'].map(s=>`<button class="chip" data-act="as_f" data-id="${s}" aria-pressed="${f===s}">${s}</button>`).join('')}</div></section>
+  <section class="box">${L.map(a=>{const w=a.cid?cname(a.cid):'',np=(a.rounds||[]).filter(r=>r.status==='Pitched').length,ni=(a.rounds||[]).filter(r=>r.status==='Invited').length;
+    return `<div class="pt" data-act="openasg" data-id="${a.id}" tabindex="0" role="button"><div class="pth"><b>${esc(a.title)}</b><span class="pill ${pillSt(a.stage)}">${esc(a.stage)}</span></div><div class="meta"><span>${esc(a.kind)}</span>${a.linkId?`<span>For ${esc(linkLabel(a.linkId))}</span>`:''}${w?`<span>${esc(w)}</span>`:ni||np?`<span>${ni} invited, ${np} pitched</span>`:''}${a.due?`<span>Due ${esc(fmt(a.due))}</span>`:''}${paidTxt(a)?`<span class="pill ${a.paid?'ok':'gold'}">${paidTxt(a)}</span>`:''}</div></div>`}).join('')||'<div class="empty">No assignments here. Start one when a piece needs a writer.</div>'}</section>`;
+}
+function openAsg(id,draft){
+  const a=draft||(id?get('kit',id):null)||{title:'',kind:'Article',stage:'Pitched',linkId:'',due:'',brief:'',draft:'',pub:'',credit:'',fee:'',paid:false,paidOn:'',rounds:[],cid:'',notes:''},dlg=$('#dlg'),ro=!EDIT,rd=a.rounds||[];
+  const linkOpts=`<option value="">Nobody in particular</option><optgroup label="Partners">${PTS().map(x=>`<option value="${x.id}" ${a.linkId===x.id?'selected':''}>${esc(x.name)}</option>`).join('')}</optgroup><optgroup label="Sponsors">${S.pipe.map(x=>`<option value="${x.id}" ${a.linkId===x.id?'selected':''}>${esc(x.group)}</option>`).join('')}</optgroup>`;
+  const inv=people().filter(p=>p.status!=='Declined'&&!rd.some(r=>r.cid===p.id));
+  dlg.innerHTML=`<h2 style="margin-bottom:8px">${id?'Assignment':'New assignment'}</h2><input type="hidden" id="as_id" value="${esc(id||'')}">
+  <fieldset ${ro?'disabled':''} style="border:0;padding:0;margin:0">
+  <div class="fld"><label for="as_t">Title</label><input type="text" id="as_t" value="${esc(a.title)}" placeholder="For example: African jewellers feature"></div>
+  <div class="g2"><div class="fld"><label for="as_k">Type</label><select id="as_k">${AKIND.map(k=>`<option ${a.kind===k?'selected':''}>${k}</option>`).join('')}</select></div><div class="fld"><label for="as_s">Stage</label><select id="as_s">${ASTG.map(k=>`<option ${a.stage===k?'selected':''}>${k}</option>`).join('')}</select></div></div>
+  <div class="g2"><div class="fld"><label for="as_l">For partner or sponsor</label><select id="as_l">${linkOpts}</select></div><div class="fld"><label for="as_d">Due</label><input type="date" id="as_d" value="${esc(a.due||'')}"></div></div>
+  <div class="g2"><div class="fld"><label for="as_b">Brief link</label><input type="text" id="as_b" value="${esc(a.brief||'')}" placeholder="Drive or Docs link"></div><div class="fld"><label for="as_dr">Draft link</label><input type="text" id="as_dr" value="${esc(a.draft||'')}" placeholder="Drive or Docs link"></div></div>
+  <div class="g2"><div class="fld"><label for="as_p">Published link</label><input type="text" id="as_p" value="${esc(a.pub||'')}" placeholder="https://"></div><div class="fld"><label for="as_c">Credit line</label><input type="text" id="as_c" value="${esc(a.credit||'')}" placeholder="${a.cid?esc('By '+cname(a.cid)):'By'}"></div></div>
+  ${MONEY()?`<div class="g2"><div class="fld"><label for="as_f">Agreed fee (optional)</label><input type="text" id="as_f" value="${esc(a.fee||'')}"></div><div class="fld"><label>Payment</label><div class="row"><label class="chip ck"><input type="checkbox" id="as_pd" ${a.paid?'checked':''}> Paid</label><input type="date" id="as_po" value="${esc(a.paidOn||'')}" aria-label="Paid on"></div></div></div>`:`<div class="fld"><label>Payment</label><span class="pill ${a.paid?'ok':'gold'}">${a.cid?(a.paid?'Paid':'Unpaid'):'Not commissioned'}</span></div>`}
+  <div class="fld"><label for="as_n">Notes</label><textarea id="as_n" style="min-height:60px">${esc(a.notes||'')}</textarea></div></fieldset>
+  ${id?`<div class="sec"><h3 class="ptg">Pitch round</h3>
+   ${rd.map((r,i)=>`<div class="ptrow"><span class="pn"><b>${esc(cname(r.cid))}</b><span class="meta">${esc(r.status)}${r.link?'':''}</span></span>${EDIT?`<select data-rd="${id}" data-i="${i}" aria-label="Status for ${esc(cname(r.cid))}">${RST.map(s=>`<option ${r.status===s?'selected':''}>${s}</option>`).join('')}</select>${r.status==='Chosen'?'':`<button class="btn sm" data-act="rd_pick" data-id="${id}" data-c="${r.cid}">Choose</button>`}${r.status==='Invited'?`<button class="btn sm" data-act="rd_inv" data-id="${id}" data-c="${r.cid}">Draft invite</button>`:''}${r.status==='Chosen'?'':`<button class="btn sm" data-act="rd_no" data-id="${id}" data-c="${r.cid}">Draft decline</button>`}<button class="btn sm" data-act="rd_rm" data-id="${id}" data-c="${r.cid}" aria-label="Remove">×</button>`:''}</span></div>`).join('')||'<p class="meta">Nobody invited yet.</p>'}
+   ${EDIT?`<div class="row" style="margin-top:6px"><select id="rd_sel" aria-label="Invite someone"><option value="">Invite someone</option>${inv.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select><button class="btn sm" data-act="rd_add2" data-id="${id}">Add</button><button class="btn sm" data-act="mt_asg" data-id="${id}">Suggest who</button></div>`:''}</div>`:'<p class="meta">Save the assignment first, then invite people to pitch.</p>'}
+  <div class="row" style="margin-top:10px">${EDIT?'<button class="btn pri" data-act="as_save">Save</button>':''}${a.due&&id?`<a class="btn" data-act="none" href="${esc(gcal(a.title,a.due,'','',''))}" target="_blank" rel="noopener noreferrer">Add the due date to Google Calendar</a>`:''}${id&&OWNER()?`<button class="btn" data-act="as_del" data-id="${id}">Delete</button>`:''}<button class="btn" data-act="ptclose">Close</button></div>`;
+  dlg.dataset.col='asg';dlg.dataset.id=id||'';if(!dlg.open) dlg.showModal();
+}
+async function asgSave(){
+  const id=$('#as_id').value||uid('as'),old=get('kit',id),t=$('#as_t').value.trim();if(!t){toast('Give the assignment a title');return}
+  const pub=normUrl($('#as_p').value),stage=$('#as_s').value;
+  const v={title:t,kind:$('#as_k').value,stage,linkId:$('#as_l').value,due:$('#as_d').value,brief:normUrl($('#as_b').value),draft:normUrl($('#as_dr').value),pub,credit:$('#as_c').value.trim(),notes:$('#as_n').value.trim()};
+  if(MONEY()){v.fee=$('#as_f').value.trim();v.paid=$('#as_pd').checked;v.paidOn=v.paid?($('#as_po').value||TODAY):''}
+  if(stage==='Published'&&!pub){toast('Add the published link first');return}
+  await act((old?'Edit':'New')+' assignment: '+t.slice(0,30),async()=>{
+    await save('kit',id,{...(old||{}),id,type:'assignment',rounds:old?old.rounds:[],cid:old?old.cid:'',...v});
+    if(stage==='Published'&&pub&&!covs().some(c=>c.url===pub)){const cv=uid('cv');await save('kit',cv,{id:cv,type:'coverage',title:t,url:pub,where:'Article',date:TODAY,pipeId:v.linkId,pkgId:'',reach:'',notes:(v.credit||((old||{}).cid?'By '+cname(old.cid):''))||''});toast('Logged in Coverage.')}
+  });
+  $('#dlg').close();render();
+}
+async function rdUpdate(id,fn,label){const a=get('kit',id);if(!a) return;await act(label,()=>patch('kit',id,{rounds:fn((a.rounds||[]).map(r=>({...r})))}))}
+async function rdPick(id,c){
+  const a=get('kit',id);await act('Choose '+cname(c)+' for '+a.title.slice(0,24),()=>patch('kit',id,{cid:c,stage:a.stage==='Pitched'?'Commissioned':a.stage,rounds:(a.rounds||[]).map(r=>r.cid===c?{...r,status:'Chosen'}:r.status==='Chosen'?{...r,status:'Pitched'}:r.status==='Pitched'||r.status==='Invited'?{...r,status:'Not this time'}:r)}));
+  const p=get('kit',c);if(p&&p.status!=='Active') await patch('kit',c,{status:'Active'});openAsg(id);toast(cname(c)+' is on this piece. Draft a note for the others if you like.');
+}
+function invText(p,a){return 'Dear '+first(p.name)+',\n\nThank you for your interest in writing for The Leisurely Life Journal. We are looking for a pitch for "'+a.title+'"'+(a.due?'. Please send it by '+fmt(a.due):'')+'.\n\n'+(a.brief?'The brief is here: '+a.brief+'\n\n':'')+'A short paragraph on your angle, the people you would speak to and your timeline is all we need at this stage.\n\nWarm regards,'+SIGN}
+function noText(p,a){return 'Dear '+first(p.name)+',\n\nThank you for your pitch for "'+a.title+'". We have gone with another writer for this piece. Your idea was well considered, and we would like to keep your details on file for future commissions.\n\nWarm regards,'+SIGN}
+
+/* ----- contributors on partners and sponsors ----- */
+function ctbHtml(kind,id){
+  const x=kind==='pipe'?get('pipe',id):get('kit',id),L=(x&&x.contribs)||[],avail=people().filter(p=>!L.includes(p.id)&&p.status!=='Declined');
+  const A=asgs().filter(a=>a.linkId===id);
+  return `<div class="sec" id="ctb" data-kind="${kind}" data-for="${id}"><h3 class="ptg">Contributors</h3>
+  <div class="chips">${L.map(c=>`<span class="chip">${esc(cname(c)||'Removed')}${EDIT?` <button type="button" class="x" data-act="ctb_rm" data-id="${c}" aria-label="Remove ${esc(cname(c))}">×</button>`:''}</span>`).join('')||'<span class="meta">Nobody assigned yet.</span>'}</div>
+  ${EDIT&&avail.length?`<div class="row" style="margin-top:6px"><select id="ctb_sel" aria-label="Add a contributor"><option value="">Add a contributor</option>${avail.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select><button type="button" class="btn sm" data-act="ctb_add">Add</button></div>`:''}
+  ${A.length?`<div class="meta" style="margin-top:6px">${A.map(a=>`<a data-act="openasg" data-id="${a.id}" href="#" role="button">${esc(a.title)}</a> (${esc(a.stage)})`).join(', ')}</div>`:''}
+  <div class="row" style="margin-top:8px"><button type="button" class="btn sm" data-act="dossier" data-id="${id}">Everything about this name</button>${EDIT?`<button type="button" class="btn sm" data-act="dr_for" data-id="${id}">Draft for approval</button>`:''}</div></div>`;
+}
+function ctbMount(kind,id){
+  const dlg=$('#dlg');if(!dlg.open) return;const old=$('#ctb');if(old) old.remove();
+  const rows=[...dlg.querySelectorAll('.row')];const last=rows[rows.length-1];
+  if(last) last.insertAdjacentHTML('beforebegin',ctbHtml(kind,id));else dlg.insertAdjacentHTML('beforeend',ctbHtml(kind,id));
+}
+const _openPartner=openPartner,_openSponsor=openSponsor;
+openPartner=function(id){_openPartner(id);if(get('kit',id)&&get('kit',id).type==='partner') ctbMount('kit',id)};
+openSponsor=function(id,keep){_openSponsor(id,keep);if(get('pipe',id)) ctbMount('pipe',id)};
+
+/* ----- dossier ----- */
+function dossierData(id){
+  const k=get('kit',id)||null,pp=get('pipe',id)||null,item=pp||k;if(!item) return null;
+  const kind=pp?'Sponsor':k.type==='partner'?'Partner':k.type==='contributor'?'Contributor':'Record';
+  const name=pp?pp.group:k.name,T=[],F=[];
+  const push=(d,t)=>{if(t) T.push([d||'',t])};
+  if(pp){F.push(['Status',pp.status],['Owner',pp.owner||''],['Next step',(pp.next||'')+(pp.nextDate?' ('+fmt(pp.nextDate)+')':'')],['Why',pp.why||''],['Notes',pp.notes||'']);
+    contactsOf(id).forEach(c=>F.push(['Contact',[c.name,c.role,c.email,c.phone].filter(Boolean).join(', ')]));
+    logsOf(id).forEach(l=>push(l.date||'',(l.type||'Contact')+': '+(l.note||l.text||l.summary||'')))}
+  if(k&&k.type==='partner'){F.push(['Stage',stLabel(k.stage)],['Kind',k.kind||''],['Contact',k.contact||''],['Next step',(k.next||'')+(k.nextDate?' ('+fmt(k.nextDate)+')':'')],['We give',glTxt(k,'give')],['We get',glTxt(k,'get')],['Notes',k.notes||'']);const e=ptEv(k);if(e) push(e.start,'Event: '+e.name+' ('+evDates(e)+')');(k.outcomes||[]).forEach(o=>push(o.date||'',(o.result||'Outcome')+': '+(o.text||'')))}
+  if(k&&k.type==='contributor'){F.push(['Works as',(k.roles||[]).join(', ')],['Strongest in',k.strengths||''],['Experience',k.years||''],['Status',k.status],['Email',k.email||''],['Phone',k.phone||''],['From',k.source||''],['Notes',k.notes||''])}
+  covOf(id).forEach(c=>push(c.date,'Published: '+c.title+' ('+c.where+')'));
+  S.kit.filter(f=>f.type==='followup'&&f.pipeId===id).forEach(f=>push(f.due,(f.done?'Done: ':'Follow-up: ')+f.text));
+  asgs().filter(a=>a.linkId===id||a.cid===id||(a.rounds||[]).some(r=>r.cid===id)).forEach(a=>push(a.due||'',a.title+': '+a.stage+(a.cid&&a.cid!==id?', with '+cname(a.cid):'')));
+  drafts().filter(d=>d.forId===id).forEach(d=>push(d.at,d.kind+' draft: '+(d.title||'')+' ('+(DST[d.status]||d.status)+')'));
+  S.activity.forEach(a=>(a.changes||[]).forEach(c=>{if(c.name===name) push((a.at||'').slice(0,10),(c.kind||'')+': '+(c.what||a.label))}));
+  return {kind,name,F:F.filter(x=>x[1]&&String(x[1]).trim()),T:T.filter(x=>x[1]).sort((a,b)=>(a[0]||'')<(b[0]||'')?1:-1)};
+}
+function dossierText(d){return d.name+' ('+d.kind+')\n\n'+d.F.map(x=>x[0]+': '+x[1]).join('\n')+'\n\nTimeline\n'+d.T.map(x=>(x[0]?fmt(x[0])+': ':'')+x[1]).join('\n')}
+function openDossier(id){
+  const d=dossierData(id);if(!d){toast('Nothing found for that name.');return}
+  $('#dlg').innerHTML=`<h2 style="margin-bottom:4px">${esc(d.name)}</h2><p class="meta">${esc(d.kind)}. Everything on file, newest first.</p>
+  <div class="sec">${d.F.map(x=>`<div class="kv"><span class="meta">${esc(x[0])}</span><span>${esc(x[1])}</span></div>`).join('')||'<p class="meta">No details yet.</p>'}</div>
+  <div class="sec"><h3 class="ptg">Timeline</h3>${d.T.map(x=>`<div class="kv"><span class="meta">${x[0]?esc(fmt(x[0])):''}</span><span>${esc(x[1])}</span></div>`).join('')||'<p class="meta">Nothing logged yet.</p>'}</div>
+  <div class="row"><button class="btn" data-act="doss_copy" data-id="${id}">Copy</button><button class="btn" data-act="ptclose">Close</button></div>`;
+  $('#dlg').dataset.col='dossier';if(!$('#dlg').open) $('#dlg').showModal();
+}
+
+/* ----- hand over to Praise ----- */
+function handoverData(){
+  const last=(get('kit','handover')||{}).at||'',A=S.activity.filter(a=>a.at>last).sort((a,b)=>a.at<b.at?-1:1),lines=[];
+  A.forEach(a=>(a.changes||[]).forEach(c=>{if(typeof keepCh==='function'&&!keepCh(c)) return;if(c.kind==='Approval') return;lines.push((a.at||'').slice(0,10)+'|'+(c.m==='p'?'Partnership':c.m==='b'?'Both':c.m==='c'?'Contributors':'Sponsorship')+'|'+(c.kind||'')+'|'+(c.name||'')+'|'+(c.what||a.label))}));
+  const uniq=[...new Set(lines)];
+  const open=[...S.pipe.filter(p=>p.nextDate&&['First message sent','In conversation','Proposal sent','Negotiating','Agreed'].includes(p.status)).map(p=>[p.nextDate,'Sponsorship',p.group,p.next||'']),...PTS().filter(p=>p.stage!=='wrapped'&&p.nextDate).map(p=>[p.nextDate,'Partnership',p.name,p.next||''])].sort((a,b)=>a[0]<b[0]?-1:1);
+  return {last,uniq,open};
+}
+function handoverText(){
+  const h=handoverData(),since=h.last?fmt(h.last.slice(0,10)):'the start';
+  let t='Updates for the trackers, since '+since+'\n\n';
+  t+=h.uniq.length?h.uniq.map(l=>{const [d,m,k,n,w]=l.split('|');return '- '+fmt(d)+', '+m+', '+n+' ('+k+'): '+w}).join('\n'):'No changes since the last handover.';
+  t+='\n\nOpen next steps\n'+(h.open.length?h.open.map(o=>'- '+fmt(o[0])+', '+o[2]+' ('+o[1]+'): '+o[3]).join('\n'):'None.');
+  const dr=drafts().filter(d=>d.status==='approved');if(dr.length) t+='\n\nApproved and ready to send\n'+dr.map(d=>'- '+(d.title||d.kind)).join('\n');
+  return t;
+}
+function openHandover(){
+  $('#dlg').innerHTML=`<h2 style="margin-bottom:6px">Push to Praise</h2><p class="meta">Everything that changed since the last push, ready to copy into the trackers.</p>
+  <div class="fld"><textarea id="ho_t" style="min-height:300px">${esc(handoverText())}</textarea></div>
+  <div class="row"><button class="btn pri" data-act="ho_copy">Copy</button><button class="btn" data-act="ho_mail">Email to Praise</button><button class="btn" data-act="ho_mark">Mark as pushed</button><button class="btn" data-act="ptclose">Close</button></div>`;
+  $('#dlg').dataset.col='handover';if(!$('#dlg').open) $('#dlg').showModal();
+}
+
+/* ----- backup, guide ----- */
+function backupNow(){
+  const o={app:'TLLJ Desk',exported:new Date().toISOString(),by:window.TLLJ_USER||''};COLS.forEach(c=>o[c]=S[c]);
+  const b=new Blob([JSON.stringify(o,null,1)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='tllj-desk-backup-'+TODAY+'.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);lsSet('tllj_backup',TODAY);toast('Backup downloaded.');
+}
+const GUIDE=[
+ ['Three modes','Sponsorships, Partnerships and Contributors sit in the toggle at the top. Each has its own tabs. Today always opens first.'],
+ ['Needs you','At the top of Today. It lists anything waiting on you: drafts to approve, approved drafts to send, and drafts that came back with changes.'],
+ ['Approvals','Outreach, briefs, proposals and pieces go to Fatimah before they are sent. She approves from the email or from the Approvals page, and her answer appears on Sade’s Today page.'],
+ ['People and assignments','People holds writers, photographers, videographers and stylists. An assignment follows a piece from pitch to publication. Inviting several people to pitch, choosing one and drafting a note to the others all happen inside the assignment.'],
+ ['Who for this brief?','Describe a piece and the desk ranks people by strength, role, experience and status.'],
+ ['Fees','Agreed fees and payment dates are visible to Sade and Fatimah. Praise sees paid or unpaid.'],
+ ['Push to Praise','On the Activity page. It collects every change since the last push in a format for the trackers, with Copy and Email.'],
+ ['Everything about one name','Open a partner, sponsor or person and choose Everything about this name for the full timeline.'],
+ ['Backup','Settings, Back up now. It downloads every record as a file.']
+];
+function openGuide(first){
+  $('#dlg').innerHTML=`<h2 style="margin-bottom:8px">${first?'Welcome to the desk':'Guide'}</h2>${first?`<p class="meta">${CONTRIB?'You can see all three modes. You can change nothing except your answers on approvals.':ASSIST?'You can add and update everything. Deleting, settings and fee amounts stay with Sade and Fatimah.':'Here is how the desk works.'}</p>`:''}
+  ${GUIDE.map(g=>`<div class="sec" style="margin-top:8px"><b>${esc(g[0])}</b><p class="meta" style="margin:2px 0 0">${esc(g[1])}</p></div>`).join('')}
+  <div class="row" style="margin-top:12px"><button class="btn pri" data-act="ptclose">${first?'Start':'Close'}</button></div>`;
+  $('#dlg').dataset.col='guide';if(!$('#dlg').open) $('#dlg').showModal();
+}
+function welcome(){if(OWNER()) return;const k='tllj_welcome_'+who();if(lsGet(k)) return;lsSet(k,'1');openGuide(true)}
+
+/* ----- settings additions ----- */
+const _openSettings=openSettings;
+openSettings=function(){
+  _openSettings();const dlg=$('#dlg'),c=MC();
+  const rows=[...dlg.querySelectorAll('.row')],last=rows[rows.length-1];
+  const own=OWNER()?`<div class="sec"><h3 class="ptg">Email</h3>
+   <div class="fld"><label for="mc_r">Send approvals and drafts with</label><select id="mc_r"><option value="mailto" ${c.route==='mailto'?'selected':''}>Zoho Mail (opens my mail app)</option><option value="gmail" ${c.route==='gmail'?'selected':''}>Gmail (send from my Gmail)</option><option value="script" ${c.route==='script'?'selected':''}>Apps Script mailer (sends for me)</option><option value="zoho" ${c.route==='zoho'?'selected':''}>Zoho Flow webhook</option></select></div>
+   <div class="fld"><label for="mc_u">Apps Script web app URL</label><input type="text" id="mc_u" value="${esc(c.url)}" autocomplete="off"></div>
+   <div class="fld"><label for="mc_s">Shared secret</label><input type="password" id="mc_s" value="${esc(c.sec)}" autocomplete="off"></div>
+   <div class="fld"><label for="mc_z">Zoho Flow webhook URL</label><input type="text" id="mc_z" value="${esc(c.zoho)}" autocomplete="off"></div>
+   <p class="meta">These stay in this browser only. The Apps Script mailer is also what lets Fatimah approve with one click from her email.</p></div>
+  <div class="sec"><h3 class="ptg">Team</h3><div class="chips">${OWNERS().filter(o=>o!=='Both').map(o=>`<span class="chip">${esc(o)} <button type="button" class="x" data-act="team_rm" data-id="${esc(o)}" aria-label="Remove ${esc(o)}">×</button></span>`).join('')}</div>
+   <div class="row" style="margin-top:6px"><input type="text" id="tm_new" placeholder="Add a name" aria-label="Add a team member"><button type="button" class="btn sm" data-act="team_add">Add</button></div><p class="meta">Everyone listed can be set as the owner of a step, sponsor, partner or task.</p></div>
+  <div class="sec"><h3 class="ptg">Backup</h3><div class="row"><button type="button" class="btn" data-act="backup">Back up now</button></div><p class="meta">${lsGet('tllj_backup')?'Last backup on this device: '+esc(fmt(lsGet('tllj_backup')))+'.':'No backup downloaded on this device yet.'}</p></div>`:'';
+  const g=`<div class="sec"><div class="row"><button type="button" class="btn" data-act="guide">Guide</button></div></div>`;
+  if(last) last.insertAdjacentHTML('beforebegin',own+g);
+};
+
+/* ----- team ----- */
+async function teamSave(list){await act('Team',()=>save('kit','team',{id:'team',type:'team',owners:list}))}
+async function teamRemove(n){
+  const cnt=S.tasks.filter(t=>t.owner===n&&!t.done).length+S.pipe.filter(p=>p.owner===n).length+PTS().filter(p=>p.owner===n).length+S.kit.filter(f=>f.type==='followup'&&f.owner===n&&!f.done).length;
+  if(cnt&&!confirm(n+' still owns '+cnt+' open item'+(cnt===1?'':'s')+'. They will move to Both. Continue?')) return;
+  await act('Remove '+n,async()=>{
+    for(const t of S.tasks.filter(t=>t.owner===n)) await patch('tasks',t.id,{owner:'Both'});
+    for(const p of S.pipe.filter(p=>p.owner===n)) await patch('pipe',p.id,{owner:'Both'});
+    for(const p of PTS().filter(p=>p.owner===n)) await patch('kit',p.id,{owner:'Both'});
+    for(const f of S.kit.filter(f=>f.type==='followup'&&f.owner===n)) await patch('kit',f.id,{owner:'Both'});
+    await save('kit','team',{id:'team',type:'team',owners:OWNERS().filter(o=>o!=='Both'&&o!==n)})});
+  openSettings();
+}
+
+/* ----- seeds ----- */
+const SEEDP=[{"name": "Blessing Stephen", "email": "blessingstephen504@gmail.com", "strengths": "Lifestyle", "years": "2-5 years", "status": "New", "source": "Applied (form)", "notes": "", "roles": ["Writer"]}, {"name": "Odunmorayo Oke", "email": "morayooke@gmail.com", "strengths": "Style", "years": "2-5 years", "status": "New", "source": "Applied (form)", "notes": "", "roles": ["Writer"]}, {"name": "Oluwajuwonlo Afolabi", "email": "afolabioluwajuwonlo258@gmail.com", "strengths": "Wealth", "years": "2-5 years", "status": "New", "source": "Applied (form)", "notes": "", "roles": ["Writer"]}, {"name": "Bolaji Akinwande", "email": "akinwandebola17@gmail.com", "strengths": "Style", "years": ">5 years", "status": "New", "source": "Applied (form)", "notes": "", "roles": ["Writer"]}, {"name": "Isaac Akinleye", "email": "isaac.akinleye10@gmail.com", "strengths": "Lifestyle", "years": "2-5 years", "status": "New", "source": "Applied (form)", "notes": "", "roles": ["Writer"]}, {"name": "Toye Omosefunmi", "email": "toye.omosefunmi@gmail.com", "strengths": "Lifestyle", "years": ">5 years", "status": "Keep on file", "source": "Applied (form)", "notes": "Second commission sent", "roles": ["Writer"]}, {"name": "Joseph Agaba", "email": "josephagaba15@gmail.com", "strengths": "Culture", "years": "2-5 years", "status": "Keep on file", "source": "Applied (form)", "notes": "Status in the sheet: Writers list", "roles": ["Writer"]}, {"name": "Damilola Oderinde", "email": "yvonneoderinde@gmail.com", "strengths": "Culture", "years": "1-2 years", "status": "New", "source": "Applied (form)", "notes": "", "roles": ["Writer"]}, {"name": "Precious Adeyinka", "email": "adeyinkaprecious53@gmail.com", "strengths": "Culture", "years": "1-2 years", "status": "Keep on file", "source": "Applied (form)", "notes": "Status in the sheet: Writers list", "roles": ["Writer"]}, {"name": "Yero S. Bah", "email": "diddybah@gmail.com", "strengths": "Wealth", "years": "2-5 years", "status": "New", "source": "Applied (form)", "notes": "", "roles": ["Writer"]}, {"name": "Mogbonjubola Sadiku", "email": "mogbonjubola.s@gmail.com", "strengths": "Lifestyle", "years": "2-5 years", "status": "New", "source": "Applied (form)", "notes": "", "roles": ["Writer"]}, {"name": "Boniface Oghenekaro Kelvin", "email": "bonifaceoghenekaro30@gmail.com", "strengths": "Culture", "years": "1-2 years", "status": "Keep on file", "source": "Applied (form)", "notes": "", "roles": ["Writer"]}, {"name": "Hephzibah Kogi", "email": "", "strengths": "", "years": "", "status": "Keep on file", "source": "Earlier list", "notes": "Email, category and experience to add", "roles": ["Writer"]}, {"name": "Kafayat Adedeko", "email": "", "strengths": "", "years": "", "status": "Keep on file", "source": "Earlier list", "notes": "Email, category and experience to add", "roles": ["Writer"]}, {"name": "Quadri Balogun", "email": "", "strengths": "", "years": "", "status": "Keep on file", "source": "Earlier list", "notes": "Email, category and experience to add", "roles": ["Writer"]}, {"name": "Faruq Animasahun", "email": "", "strengths": "", "years": "", "status": "Declined", "source": "Earlier list", "notes": "Offered writers list", "roles": ["Writer"]}, {"name": "Olajumoke Oyaleke", "email": "", "strengths": "", "years": "", "status": "Test sent", "source": "Earlier list", "notes": "Email, category and experience to add", "roles": ["Writer"]}, {"name": "Marvelous Ogunleye", "email": "", "strengths": "", "years": "", "status": "Test sent", "source": "Earlier list", "notes": "Email, category and experience to add", "roles": ["Writer"]}, {"name": "Ezeani Stephanie", "email": "", "strengths": "", "years": "", "status": "Test sent", "source": "Earlier list", "notes": "Email, category and experience to add", "roles": ["Writer"]}, {"name": "Kwame Asie", "email": "", "strengths": "", "years": "", "status": "Contacted", "source": "Earlier list", "notes": "Contacted separately", "roles": ["Writer"]}];
+async function ensureV36(){
+  if(!db||!OWNER()||lsGet('tllj_seed_v36')||!S.pipe.length) return;
+  try{
+    if(!get('kit','team')) await save('kit','team',{id:'team',type:'team',owners:['Sade','Fatimah','Praise']});
+    if(!people().length){for(const p of SEEDP){const id=uid('pe');await save('kit',id,{id,type:'contributor',phone:'',portfolio:'',added:TODAY,roles:['Writer'],...p})}}
+    const T=get('kit','target');if(T&&/^one partnership$/i.test(String(T.label||'').trim())) await patch('kit','target',{label:'one signed sponsorship'});
+    lsSet('tllj_seed_v36','1');
+  }catch(e){}
+}
+
+/* ----- clicks ----- */
+function copyText(t,msg){try{navigator.clipboard.writeText(t).then(()=>toast(msg||'Copied.'),()=>toast('Copy failed. Select the text and copy it.'))}catch(e){toast('Copy failed. Select the text and copy it.')}}
+const RO36=new Set(['pe_f','pe_open','openasg','as_f','dossier','doss_copy','dr_ans','dr_ans_go','guide','gox','team_none']);
+async function ptExtra6(a,id,el){
+  if(!EDIT&&!RO36.has(a)) return false;
+  switch(a){
+  case 'gox':{$('#dlg').close();if(el.dataset.col==='pe_open') openPerson(id);else openAsg(id);return true}
+  case 'pe_f': S.pf=id;render();return true;
+  case 'pe_open': openPerson(id);return true;
+  case 'pe_new': openPerson();return true;
+  case 'pe_save': await perSave();return true;
+  case 'pe_imp': openImport();return true;
+  case 'pe_imp_go': await doImport();return true;
+  case 'pe_del': if(!OWNER()) return true;if(confirm('Delete '+cname(id)+'?')){await act('Delete person',()=>remove('kit',id));$('#dlg').close();render()}return true;
+  case 'pe_mail':{const p=get('kit',id);const did=await newDraft({kind:'Outreach',title:'Email to '+p.name,to:p.email,subject:'The Leisurely Life Journal',body:'Dear '+first(p.name)+',\n\n\n\nWarm regards,'+SIGN,forId:id});drEdit(did);return true}
+  case 'pe_match': openMatcher('', 'Any','');return true;
+  case 'mt_go': openMatcher($('#mt_t').value,$('#mt_r').value,$('#mt_a').value);return true;
+  case 'mt_asg':{const x=get('kit',id);openMatcher((x.title||'')+' '+(x.notes||''),x.kind==='Photography'?'Photographer':x.kind==='Video'?'Videographer':x.kind==='Styling'?'Stylist':'Writer',id);return true}
+  case 'mt_start':{const t=$('#mt_t').value.trim(),R=matchPeople(t,$('#mt_r').value);const aid=uid('as');
+    await act('New assignment',()=>save('kit',aid,{id:aid,type:'assignment',title:t.slice(0,60)||'New assignment',kind:'Article',stage:'Pitched',linkId:'',due:'',brief:'',draft:'',pub:'',credit:'',fee:'',paid:false,paidOn:'',notes:t,cid:'',rounds:R.map(x=>({cid:x.p.id,status:'Invited',at:TODAY}))}));openAsg(aid);return true}
+  case 'as_new': openAsg();return true;
+  case 'openasg': openAsg(id);return true;
+  case 'as_f': S.af=id;render();return true;
+  case 'as_save': await asgSave();return true;
+  case 'as_del': if(!OWNER()) return true;if(confirm('Delete this assignment?')){await act('Delete assignment',()=>remove('kit',id));$('#dlg').close();render()}return true;
+  case 'rd_add':{await rdUpdate(id,L=>L.some(r=>r.cid===el.dataset.c)?L:[...L,{cid:el.dataset.c,status:'Invited',at:TODAY}],'Invite '+cname(el.dataset.c));openAsg(id);return true}
+  case 'rd_add2':{const v=$('#rd_sel').value;if(!v){toast('Choose someone to invite');return true}await rdUpdate(id,L=>[...L,{cid:v,status:'Invited',at:TODAY}],'Invite '+cname(v));openAsg(id);return true}
+  case 'rd_rm': await rdUpdate(id,L=>L.filter(r=>r.cid!==el.dataset.c),'Remove from pitch round');openAsg(id);return true;
+  case 'rd_pick': await rdPick(id,el.dataset.c);return true;
+  case 'rd_inv':{const p=get('kit',el.dataset.c),x=get('kit',id);const did=await newDraft({kind:'Outreach',title:'Pitch invitation: '+p.name,to:p.email,subject:'A pitch for The Leisurely Life Journal: '+x.title,body:invText(p,x),forId:p.id});drEdit(did);return true}
+  case 'rd_no':{const p=get('kit',el.dataset.c),x=get('kit',id),r=(x.rounds||[]).find(r=>r.cid===p.id);const did=await newDraft({kind:'Reply',title:'Not this time: '+p.name,to:p.email,subject:'Your pitch for The Leisurely Life Journal',body:(r&&r.status==='Pitched')?noText(p,x):'Dear '+first(p.name)+',\n\nThank you for considering "'+x.title+'". We have commissioned another writer for this piece and would like to keep your details on file for future work.\n\nWarm regards,'+SIGN,forId:p.id});drEdit(did);return true}
+  case 'ctb_add':{const v=$('#ctb_sel').value,b=$('#ctb');if(!v) return true;const kind=b.dataset.kind,fid=b.dataset.for,x=kind==='pipe'?get('pipe',fid):get('kit',fid);await act('Add contributor',()=>patch(kind==='pipe'?'pipe':'kit',fid,{contribs:[...(x.contribs||[]),v]}));ctbMount(kind,fid);return true}
+  case 'ctb_rm':{const b=$('#ctb'),kind=b.dataset.kind,fid=b.dataset.for,x=kind==='pipe'?get('pipe',fid):get('kit',fid);await act('Remove contributor',()=>patch(kind==='pipe'?'pipe':'kit',fid,{contribs:(x.contribs||[]).filter(c=>c!==id)}));ctbMount(kind,fid);return true}
+  case 'dossier': openDossier(id);return true;
+  case 'doss_copy': copyText(dossierText(dossierData(id)),'Copied.');return true;
+  case 'dr_new': drEdit();return true;
+  case 'dr_for': drEdit();if($('#dr_f')) $('#dr_f').value=id;return true;
+  case 'dr_edit': drEdit(id);return true;
+  case 'dr_save': await drSave();return true;
+  case 'dr_chk':{const L=styleCheck($('#dr_b').value,true);$('#dr_chk').innerHTML=L.length?L.map(esc).join('<br>'):'Nothing to fix.';return true}
+  case 'dr_sign':{const b=$('#dr_b');if(!/www\.theleisurelylifejournal\.com/.test(b.value)) b.value=b.value.replace(/\s+$/,'')+(/Warm regards,?\s*$/.test(b.value)?'':'\n\nWarm regards,')+SIGN;return true}
+  case 'dr_send': await drToFatimah(id);return true;
+  case 'dr_wa': copyText(waNote(get('kit',id)),'WhatsApp note copied.');return true;
+  case 'dr_ans':{const r=el.dataset.r;$('#dlg').innerHTML=`<h2 style="margin-bottom:8px">${r==='approved'?'Approve':r==='changes'?'Ask for changes':'Decline'}</h2><p class="meta">${esc((get('kit',id)||{}).title||'')}</p><div class="fld"><label for="dr_note">${r==='approved'?'A note for Sade (optional)':'What should change?'}</label><textarea id="dr_note" style="min-height:90px"></textarea></div><div class="row"><button class="btn pri" data-act="dr_ans_go" data-id="${id}" data-r="${r}">Send my answer</button><button class="btn" data-act="ptclose">Cancel</button></div>`;$('#dlg').dataset.col='dr';if(!$('#dlg').open) $('#dlg').showModal();return true}
+  case 'dr_ans_go':{const r=el.dataset.r,n=$('#dr_note').value.trim();if(r!=='approved'&&!n){toast('Add a line so Sade knows what you need.');return true}$('#dlg').close();await drAnswer(id,r,n);return true}
+  case 'dr_rec':{$('#dlg').innerHTML=`<h2 style="margin-bottom:8px">Record Fatimah’s answer</h2><p class="meta">Use this when she answered by WhatsApp or in person.</p><div class="fld"><label for="dr_ra">Answer</label><select id="dr_ra"><option value="approved">Approved</option><option value="changes">Changes asked</option><option value="declined">Declined</option></select></div><div class="fld"><label for="dr_note">Her note</label><textarea id="dr_note" style="min-height:70px"></textarea></div><div class="row"><button class="btn pri" data-act="dr_rec_go" data-id="${id}">Record</button><button class="btn" data-act="ptclose">Cancel</button></div>`;$('#dlg').dataset.col='dr';if(!$('#dlg').open) $('#dlg').showModal();return true}
+  case 'dr_rec_go':{const r=$('#dr_ra').value,n=$('#dr_note').value.trim();$('#dlg').close();await drAnswer(id,r,n,'Fatimah (recorded by Sade)');return true}
+  case 'dr_out':{const d=get('kit',id);if(d.to) await sendMail({to:d.to,subject:d.subject||d.title,text:d.body});else copyText(d.body,'Copied.');return true}
+  case 'dr_mark': await act('Mark as sent',()=>patch('kit',id,{status:'sent',sentOn:TODAY}));render();return true;
+  case 'dr_redraft': await act('Draft again',()=>patch('kit',id,{status:'draft'}));render();return true;
+  case 'dr_del': if(OWNER()&&confirm('Delete this draft?')){await act('Delete draft',()=>remove('kit',id));render()}return true;
+  case 'team_add':{const n=($('#tm_new').value||'').trim();if(!n){toast('Type a name first');return true}if(OWNERS().map(x=>x.toLowerCase()).includes(n.toLowerCase())){toast(n+' is already on the team.');return true}await teamSave([...OWNERS().filter(o=>o!=='Both'),n]);openSettings();return true}
+  case 'team_rm': await teamRemove(id);return true;
+  case 'backup': backupNow();return true;
+  case 'guide': openGuide(false);return true;
+  case 'handover': openHandover();return true;
+  case 'ho_copy': copyText($('#ho_t').value,'Copied.');return true;
+  case 'ho_mail':{if(!EML.Praise()){toast('Praise’s email is not in the config yet.');return true}await sendMail({to:EML.Praise(),subject:'Tracker updates from the desk, '+fmt(TODAY),text:'Hi Praise,\n\n'+$('#ho_t').value+'\n\nThank you.'});return true}
+  case 'ho_mark': await act('Push to Praise',()=>save('kit','handover',{id:'handover',type:'meta',at:new Date().toISOString()}));$('#dlg').close();toast('Marked as pushed.');render();return true;
+  case 'savesettings':{const c=n=>{const e=document.getElementById(n);return e?e.value.trim():null};const r=c('mc_r');if(r!==null){lsSet('tllj_route',r);lsSet('tllj_as_url',c('mc_u'));lsSet('tllj_as_sec',c('mc_s'));lsSet('tllj_zoho_hook',c('mc_z'))}return false}
+  }
+  return false;
+}
+async function ptChange36(e){
+  const t=e.target;if(!t) return false;
+  if(t.id==='pe_r'){S.pr=t.value;render();return true}
+  if(t.dataset&&t.dataset.rd&&EDIT){const i=+t.dataset.i,id=t.dataset.rd;await rdUpdate(id,L=>{L[i].status=t.value;return L},'Pitch status');return true}
+  return false;
+}
+document.addEventListener('input',e=>{if(e.target&&e.target.id==='pe_q'){S.pq=e.target.value;render()}});
+function hashGo(){const m=/^#appr(?:=(.*))?$/.exec(location.hash||'');if(m){S.tab='approvals';render();const el=m[1]&&document.getElementById('dr_'+m[1]);if(el) el.scrollIntoView({block:'center'})}}
+window.addEventListener('hashchange',hashGo);
+
+/* ----- wrappers: activity, search ----- */
+const _vActivity=vActivity;
+vActivity=function(){return (OWNER()?`<section class="box"><h2>Push to Praise</h2><p class="meta">Collect every change since the last push, formatted for the external trackers.</p><div class="row"><button class="btn pri" data-act="handover">Open the handover</button></div></section>`:'')+_vActivity()};
+const _searchAll=searchAll;
+searchAll=function(q){
+  const R=_searchAll(q),ql=String(q||'').trim().toLowerCase();if(ql.length<2) return R;const has=(...a)=>a.some(x=>x!=null&&String(x).toLowerCase().includes(ql)),P=[];
+  people().filter(p=>has(p.name,p.email,p.strengths,p.notes,p.status)).forEach(p=>P.push({k:'Contributor',t:p.name,s:p.status+(p.strengths?' · '+p.strengths:''),a:'pe_open',col:'pe_open',id:p.id}));
+  asgs().filter(a=>has(a.title,a.notes,cname(a.cid))).forEach(a=>P.push({k:'Assignment',t:a.title,s:a.stage,a:'openasg',col:'openasg',id:a.id}));
+  return R.concat(P).slice(0,60);
+};
+
+
+/* ---------- v37: hide a sponsor until a date ---------- */
+const hidP=p=>!!(p&&p.hideUntil&&p.hideUntil>TODAY&&!p.hideOff);
+const backP=p=>!!(p&&p.hideUntil&&p.hideUntil<=TODAY&&!p.hideAck);
+const _render37=render;
+render=function(){
+  const fp=S.pipe,fk=S.kit,ft=S.tasks;
+  S.hid=fp.filter(hidP);
+  const ids=new Set(S.hid.map(p=>p.id)),gs=new Set(S.hid.map(p=>p.group));
+  S.pipe=fp.filter(p=>!ids.has(p.id));
+  S.kit=fk.filter(k=>!(k.type==='followup'&&ids.has(k.pipeId)));
+  S.tasks=ft.filter(t=>{const g=String(t.target||'').split(';').map(x=>x.trim()).filter(Boolean);return !(g.length&&g.every(x=>gs.has(x)))});
+  try{_render37()}finally{S.pipe=fp;S.kit=fk;S.tasks=ft}
+};
+const HID_PRE=[['1 week',7],['1 month',30],['3 months',90]];
+function hideSecHtml(p){
+  if(!EDIT) return '';
+  if(hidP(p)) return `<div class="sec" id="hidesec"><h3>Hidden for now</h3><p class="meta">Hidden until <b>${esc(fmt(p.hideUntil))}</b>${p.hideNote?'. '+esc(p.hideNote):''}. It comes back on that day with a reminder on Today.</p><div class="row"><button class="btn sm" type="button" data-act="hideshow" data-id="${p.id}">Show it now</button></div><div class="g2" style="margin-top:8px"><div class="fld"><label for="h_date">Change the date</label><input type="date" id="h_date" value="${esc(p.hideUntil)}" min="${addDays(TODAY,1)}"></div><div class="fld"><label for="h_note">Reason</label><input type="text" id="h_note" value="${esc(p.hideNote||'')}"></div></div><div class="row"><button class="btn sm" type="button" data-act="hidego" data-id="${p.id}">Save new date</button></div></div>`;
+  return `<div class="sec" id="hidesec"><h3>Hide for now</h3><p class="meta">Takes this sponsor off every list until the date you choose. It returns that day with a reminder on Today. Search still finds it.</p><div class="g2"><div class="fld"><label for="h_date">Hide until</label><input type="date" id="h_date" min="${addDays(TODAY,1)}"></div><div class="fld"><label for="h_note">Reason, so you remember why</label><input type="text" id="h_note" placeholder="For example: relationship for 2027"></div></div><div class="row">${HID_PRE.map(([l,n])=>`<button class="btn sm" type="button" data-act="hidepre" data-id="${p.id}" data-n="${n}">${l}</button>`).join('')}<button class="btn sm" type="button" data-act="hidepre" data-id="${p.id}" data-n="jan27">Until 4 January 2027</button><button class="btn sm pri" type="button" data-act="hidego" data-id="${p.id}">Hide until the date above</button></div></div>`;
+}
+const _openSponsor37=openSponsor;
+openSponsor=function(id,keep){
+  _openSponsor37(id,keep);
+  const p=get('pipe',id),f=$('#dlg #frm');if(!p||!f||$('#hidesec')) return;
+  f.insertAdjacentHTML('afterend',hideSecHtml(p));
+};
+async function hideApply(id,until,note){
+  const p=get('pipe',id);if(!p) return;
+  if(!until||until<=TODAY){toast('Choose a date after today.');return}
+  await act('Hide '+p.group,()=>patch('pipe',id,{hideUntil:until,hideNote:note||'',hideAck:false,hideOff:false}));
+  $('#dlg').close();render();toast(p.group+' is hidden until '+fmt(until)+'.');
+}
+async function ptExtra7(a,id,el){
+  if(!EDIT) return false;
+  switch(a){
+  case 'hidepre':{const n=el.dataset.n;const d=n==='jan27'?'2027-01-04':addDays(TODAY,+n);const note=($('#h_note')||{}).value||'';await hideApply(id,d,note);return true}
+  case 'hidego':{await hideApply(id,($('#h_date')||{}).value,($('#h_note')||{}).value);return true}
+  case 'hideshow':{const p=get('pipe',id);if(!p) return true;await act('Show '+p.group,()=>patch('pipe',id,{hideUntil:'',hideNote:'',hideAck:false,hideOff:false}));$('#dlg').close();render();toast(p.group+' is back on your lists.');return true}
+  case 'hideack':{const p=get('pipe',id);if(!p) return true;await act('Got it: '+p.group,()=>patch('pipe',id,{hideAck:true}));render();return true}
+  case 'hideagain':{const p=get('pipe',id);if(!p) return true;await act('Hide again: '+p.group,()=>patch('pipe',id,{hideUntil:addDays(TODAY,30),hideAck:false}));render();toast(p.group+' is hidden for 30 more days.');return true}
+  case 'hidepanel':{S.showHid=!S.showHid;render();return true}
+  }
+  return false;
+}
+function hiddenPanel(){
+  if(!EDIT) return '';
+  const L=(S.hid||[]).slice().sort((a,b)=>a.hideUntil<b.hideUntil?-1:1);
+  if(!L.length) return '';
+  return `<section class="box"><h2>Hidden for now <small>${L.length}</small></h2><div class="row"><button class="btn sm" data-act="hidepanel" aria-expanded="${!!S.showHid}">${S.showHid?'Hide this list':'Show this list'}</button></div>${S.showHid?L.map(p=>`<div class="item" style="grid-template-columns:minmax(0,1fr) auto"><div><b>${esc(p.group)}</b><div class="meta">Back on ${esc(fmt(p.hideUntil))}${p.hideNote?' · '+esc(p.hideNote):''}</div></div><span><button class="btn sm" data-act="edit" data-col="pipe" data-id="${p.id}">Open</button> <button class="btn sm" data-act="hideshow" data-id="${p.id}">Show now</button></span></div>`).join(''):`<p class="meta">${L.map(p=>esc(p.group)+' (back '+esc(fmt(p.hideUntil))+')').join(' · ')}</p>`}</section>`;
+}
+function backCards(){
+  if(!EDIT) return '';
+  const L=S.pipe.filter(backP),soon=(S.hid||[]).filter(p=>dd(TODAY,p.hideUntil)<=7);
+  return (soon.length?`<div class="meta" style="margin:0 0 8px">Returning within a week: ${soon.map(p=>esc(p.group)+' ('+esc(fmt(p.hideUntil))+')').join(', ')}.</div>`:'')+L.map(p=>`<div class="banner" style="background:var(--gold-soft);color:var(--gold);border-color:var(--gold)"><b>${esc(p.group)}</b> is back today${p.hideNote?'. You hid it because: '+esc(p.hideNote):''}.<div class="row" style="margin-top:6px"><button class="btn sm" data-act="edit" data-col="pipe" data-id="${p.id}">Open</button><button class="btn sm" data-act="hideack" data-id="${p.id}">Got it</button><button class="btn sm" data-act="hideagain" data-id="${p.id}">Hide 30 more days</button></div></div>`).join('');
+}
+const _vSponsors37=vSponsors;
+vSponsors=function(){return hiddenPanel()+_vSponsors37()};
+const _vPipeline37=vPipeline;
+vPipeline=function(){return hiddenPanel()+_vPipeline37()};
+const _vToday37=vToday;
+vToday=function(){return backCards()+_vToday37()};
+
 /* ---------- v32: templates, inline events, de-duplication ---------- */
 const PTPLS=[['media','Media-partner offer'],['collab','Collaboration proposal'],['press','Press access and coverage request'],['thanks','Coverage follow-up']];
 const ptpls=()=>S.kit.filter(k=>k.type==='ptpl');
@@ -1413,7 +2014,7 @@ async function applyInner(){
     if(x.notes) u.notes=((p.notes?p.notes+' ':'')+x.notes).trim();
     if(Object.keys(u).length&&await patch('pipe',p.id,u)){n++;if(u.status==='Agreed'&&!S.deals.some(d=>d.pipeId===p.id)) await newDeal(p.id)}}
   for(const x of r.steps||[]){if(!get('tasks',x.id)) continue;const u={};if(typeof x.done==='boolean') u.done=x.done;if(dOK(x.due)) u.due=x.due;if(x.action) u.action=x.action;if(Object.keys(u).length&&await patch('tasks',x.id,u)) n++}
-  for(const x of r.newSteps||[]){if(await save('tasks',uid('t'),{week:'Added',dates:'',goal:'',action:x.action,target:'',owner:['Sade','Fatimah','Both'].includes(x.owner)?x.owner:'Sade',done:false,due:dOK(x.due)?x.due:null})) n++}
+  for(const x of r.newSteps||[]){if(await save('tasks',uid('t'),{week:'Added',dates:'',goal:'',action:x.action,target:'',owner:OWNERS().includes(x.owner)?x.owner:'Sade',done:false,due:dOK(x.due)?x.due:null})) n++}
   for(const x of r.events||[]){const ex=get('events',x.id);
     if(x.remove){if(ex){await remove('events',ex.id);n++}continue}
     const u={};['name','where','status','note'].forEach(k=>{if(x[k]) u[k]=x[k]});if(dOK(x.start)) u.start=x.start;if(dOK(x.end)) u.end=x.end;
@@ -1447,6 +2048,8 @@ document.addEventListener('click',async e=>{
   if(await ptExtra3(a,id,el)) return;
   if(await ptExtra4(a,id,el)) return;
   if(await ptExtra5(a,id,el)) return;
+  if(await ptExtra7(a,id,el)) return;
+  if(await ptExtra6(a,id,el)) return;
   if(a==='askq'){await askq();return}
   if(a==='tillytest'){const o=$('#tt');o.textContent='Testing…';try{const t=await aiText('Reply with the single word: ready');o.textContent='Tilly works. Reply: '+t.trim().slice(0,60)}catch(e){o.textContent='Tilly failed: '+(e.message||e)}return}
   if(a==='startfresh'){const ot=S.tasks.filter(t=>!t.done&&t.due&&t.due<TODAY),op=S.pipe.filter(p=>p.nextDate&&p.nextDate<TODAY&&!['Agreed','Declined','On hold'].includes(p.status));if(!ot.length&&!op.length){toast('Nothing is overdue.');return}
@@ -1607,7 +2210,8 @@ $('#dlg').addEventListener('close',()=>render());
 /* ---------- editing everywhere, ripple warnings, balance ---------- */
 const REGIONS=['Nigeria','Africa','Global'];
 const optsOf=(k,base)=>[...new Set([...base,...S.pipe.map(p=>p[k]).filter(Boolean)])];
-function fieldsFor(col){
+function fieldsFor(col){return fieldsFor0(col).map(f=>typeof f[2]==='string'&&f[2]==='sel:Sade,Fatimah,Both'?[f[0],f[1],'sel:'+OWNERS().join(',')]:f)}
+function fieldsFor0(col){
   if(col==='pipe') return [['group','Sponsor group','text'],['tab','Region','sel:'+REGIONS.join(',')],['category','Category','text'],['score','Score (higher comes first)','text'],['chance','Chance of a yes','sel:'+optsOf('chance',['Likely','Feasible','Possible','Big dream']).join(',')],['size','Size','sel:'+optsOf('size',['Big','Bigger','Biggest']).join(',')],['when','When to approach','sel:'+optsOf('when',['Start now','Second wave','Long-term target']).join(',')],['owner','Owner','sel:Sade,Fatimah,Both'],['first','Write to first','area'],['propose','Propose first','area'],['why','Why they should care','area']];
   if(col==='contacts') return [['name','Name','text'],['role','Role','text'],['email','Email','text'],['phone','Phone','text'],['route','Route in','area']];
   if(col==='decisions') return [['n','Number','text'],['decision','Decision','text'],['proposed','Proposed answer','area'],['why','Why it matters','area']];
@@ -1734,7 +2338,7 @@ function vSponsors0(){
     <div class="row" style="margin-bottom:8px"><button class="btn pri sm" data-act="newsp" data-id="${r}">Add to ${r}</button></div>
     <div class="tbl"><table><tr><th>Sponsor</th><th>Category</th><th>Score</th><th>Chance</th><th>Owner</th><th>Status</th><th></th></tr>
     ${a.map(p=>`<tr><td><input type="text" data-cell="pipe" data-id="${p.id}" data-k="group" value="${esc(p.group)}" aria-label="Sponsor"></td><td><input type="text" data-cell="pipe" data-id="${p.id}" data-k="category" value="${esc(p.category)}" aria-label="Category"></td><td><input type="text" style="width:56px" data-cell="pipe" data-id="${p.id}" data-k="score" value="${esc(p.score)}" aria-label="Score"></td>
-    <td><select data-cell="pipe" data-id="${p.id}" data-k="chance" aria-label="Chance">${sel(ch,p.chance)}</select></td><td><select data-cell="pipe" data-id="${p.id}" data-k="owner" aria-label="Owner">${sel(['Sade','Fatimah','Both'],p.owner)}</select></td><td><select data-cell="pipe" data-id="${p.id}" data-k="status" aria-label="Status">${sel(STATUSES,p.status)}</select></td>
+    <td><select data-cell="pipe" data-id="${p.id}" data-k="chance" aria-label="Chance">${sel(ch,p.chance)}</select></td><td><select data-cell="pipe" data-id="${p.id}" data-k="owner" aria-label="Owner">${sel(OWNERS(),p.owner)}</select></td><td><select data-cell="pipe" data-id="${p.id}" data-k="status" aria-label="Status">${sel(STATUSES,p.status)}</select></td>
     <td style="white-space:nowrap"><button class="btn sm" data-act="edit" data-col="pipe" data-id="${p.id}">Open</button> <button class="btn sm" data-act="editfull" data-id="${p.id}">All fields</button> ${EDIT?`<button class="btn sm del" data-act="rmsp" data-id="${p.id}">Remove</button>`:''}</td></tr>`).join('')||'<tr><td colspan="7" class="empty">No sponsors here yet.</td></tr>'}
     </table></div></section>`}).join('');
 }
@@ -1744,16 +2348,19 @@ function vSponsors0(){
 const NAMEKEY={pipe:'group',tasks:'action',events:'name',contacts:'name',decisions:'decision',kit:'title',prep:'text'};
 const FRIENDLY={pipe:'Sponsor',tasks:'Plan step',events:'Event',contacts:'Contact',decisions:'Decision',kit:'Proposal Kit',prep:'Event prep',deals:'Deal',log:'Outreach log'};
 const shortV=v=>{v=v==null||v===''?'blank':String(v);return v.length>48?v.slice(0,48)+'…':v};
-function nameOfRec(col,r){if(!r) return '';if(col==='kit'&&(r.type==='partner'||r.type==='ptpl')) return shortV(r.name);if(col==='kit'&&r.type==='followup') return shortV(r.text);if(col==='log'||col==='deals'){const p=get('pipe',r.pipeId);return (p?p.group+': ':'')+(col==='log'?(r.type+' '+(r.summary||'')).trim():'Deal tracker')}if(col==='contacts'&&!r.name&&r.email) return r.email;return shortV(r[NAMEKEY[col]]||r.id)}
+function nameOfRec(col,r){if(!r) return '';if(col==='kit'&&(r.type==='partner'||r.type==='ptpl')) return shortV(r.name);if(col==='kit'&&r.type==='followup') return shortV(r.text);if(col==='kit'&&r.type==='contributor') return r.name;if(col==='kit'&&(r.type==='assignment'||r.type==='draft')) return shortV(r.title||r.kind);if(col==='log'||col==='deals'){const p=get('pipe',r.pipeId);return (p?p.group+': ':'')+(col==='log'?(r.type+' '+(r.summary||'')).trim():'Deal tracker')}if(col==='contacts'&&!r.name&&r.email) return r.email;return shortV(r[NAMEKEY[col]]||r.id)}
 function diffOf(col,prev,now){
   if(!prev&&now) return 'added';if(prev&&!now) return 'removed';
-  const skip=new Set(['id','checks','n','rows','items','body']);const out=[];
+  const skip=new Set(['id','checks','n','rows','items','body','fee','paidOn','rounds','cid','forId','linkId','sentAt','decidedAt','decidedBy','sentOn','at','by','contribs']);const out=[];
   Object.keys(now).forEach(k=>{if(skip.has(k)||JSON.stringify(prev[k])===JSON.stringify(now[k])) return;out.push(k+': '+shortV(prev[k])+' → '+shortV(now[k]))});
   if(col==='kit'&&JSON.stringify(prev.rows)!==JSON.stringify(now.rows)) out.push('rate card edited');
   if(col==='kit'&&JSON.stringify(prev.items)!==JSON.stringify(now.items)) out.push('ideas edited');
   if(col==='kit'&&prev.body!==now.body) out.push('template text edited');
   if(JSON.stringify(prev.checks)!==JSON.stringify(now.checks)&&now.checks) out.push('proposal checklist updated');
-  return out.slice(0,4).join('; ')||'edited';
+  if(col==='kit'&&now.type==='assignment'&&prev.cid!==now.cid) out.push('writer: '+(cname(now.cid)||'none'));
+  if(col==='kit'&&now.type==='assignment'&&JSON.stringify(prev.rounds||[].map(r=>r.status))!==JSON.stringify(now.rounds||[].map(r=>r.status))) out.push('pitch round updated');
+  if(now.type==='draft'&&prev.status!==now.status) out.push('status: '+(DST[prev.status]||prev.status)+' → '+(DST[now.status]||now.status));
+  return out.filter(x=>!(now.type==='draft'&&/^status: (draft|pending|approved|changes|declined|sent) /.test(x))).slice(0,4).join('; ')||'edited';
 }
 async function addNote(text,date){
   if(!db||!EDIT){toast('Saving is not available in this view.');return false}
@@ -1767,7 +2374,7 @@ function recordActivity(label,items){
   try{
     const seen=new Set(),ch=[];
     items.forEach(it=>{const k=it.col+'/'+it.id;if(seen.has(k)||['activity','evsug'].includes(it.col)) return;seen.add(k);const now=get(it.col,it.id);
-      const rr=(now||it.prev)||{},isP=it.col==='kit'&&rr.type==='partner',isF=it.col==='kit'&&rr.type==='followup',isC=it.col==='kit'&&rr.type==='coverage';ch.push({col:it.col,m:isP?'p':isC?(get('kit',rr.pipeId)?'p':'s'):isF?(rr.mode==='P'?'p':rr.mode==='Both'?'b':'s'):it.col==='events'?'b':'s',kind:isF?'Follow-up':isP?'Partner':isC?'Coverage':(FRIENDLY[it.col]||it.col),name:nameOfRec(it.col,now||it.prev),what:diffOf(it.col,it.prev,now)})});
+      const rr=(now||it.prev)||{},isK=it.col==='kit'&&['contributor','assignment','draft'].includes(rr.type),isP=it.col==='kit'&&rr.type==='partner',isF=it.col==='kit'&&rr.type==='followup',isC=it.col==='kit'&&rr.type==='coverage';ch.push({col:it.col,m:isK?'c':isP?'p':isC?(get('kit',rr.pipeId)?'p':'s'):isF?(rr.mode==='P'?'p':rr.mode==='Both'?'b':'s'):it.col==='events'?'b':'s',kind:isK?(rr.type==='contributor'?'Contributor':rr.type==='assignment'?'Assignment':'Approval'):isF?'Follow-up':isP?'Partner':isC?'Coverage':(FRIENDLY[it.col]||it.col),name:nameOfRec(it.col,now||it.prev),what:diffOf(it.col,it.prev,now)})});
     if(items.length&&(!ch.length||ch.every(c=>c.what==='proposal checklist updated'))) return;
     const last=S.activity.slice().sort((a,b)=>a.at<b.at?1:-1)[0];
     if(last&&last.label===label&&Date.now()-new Date(last.at)<60000&&last.changes[0]&&ch[0]&&last.changes[0].name===ch[0].name) return;
@@ -1781,6 +2388,9 @@ async function pruneActivity(){
 }
 const fromAt=a=>iso(new Date(a));
 function keepCh(c){const w=c.what||'';
+  if(c.kind==='Contributor') return w==='added'||/status:/.test(w);
+  if(c.kind==='Assignment') return w==='added'||/stage:|writer:|paid:/.test(w);
+  if(c.kind==='Approval') return /status:/.test(w);
   if(c.col==='note') return true;
   if(c.kind==='Follow-up') return w==='added'||/done: [^;]*→ true/.test(w);
   if(c.col==='log'||c.col==='deals') return c.col==='deals'||w==='added';
@@ -2069,7 +2679,7 @@ function searchAll0(q){
   S.evsug.forEach(e=>has(e.name,e.where,e.why)&&R.push({k:'Event idea',t:e.name,s:fmt(e.start),a:'tab',id:'events'}));
   return R.slice(0,60);
 }
-function searchHtml(q){const r=searchAll(q);return r.length?r.map(x=>`<div class="item" style="grid-template-columns:90px minmax(0,1fr);cursor:pointer" data-act="${x.a==='tab'?'gotab':x.a==='openpt'?'gopt':'gosearch'}" data-id="${esc(x.id)}" data-col="${x.col||''}"><span class="pill" style="height:fit-content">${esc(x.k)}</span><div><b>${esc(x.t)}</b><div class="meta">${esc(x.s)}</div></div></div>`).join(''):(q.trim().length<2?'<div class="empty">Type two letters or more.</div>':'<div class="empty">Nothing found.</div>')}
+function searchHtml(q){const r=searchAll(q);return r.length?r.map(x=>`<div class="item" style="grid-template-columns:90px minmax(0,1fr);cursor:pointer" data-act="${x.a==='tab'?'gotab':x.a==='openpt'?'gopt':(x.a==='pe_open'||x.a==='openasg')?'gox':'gosearch'}" data-id="${esc(x.id)}" data-col="${x.col||''}"><span class="pill" style="height:fit-content">${esc(x.k)}</span><div><b>${esc(x.t)}</b><div class="meta">${esc(x.s)}</div></div></div>`).join(''):(q.trim().length<2?'<div class="empty">Type two letters or more.</div>':'<div class="empty">Nothing found.</div>')}
 function openSearch(){
   const d=$('#dlg');d.innerHTML=`<h2 style="margin-bottom:10px">Search</h2><input type="text" id="gq" placeholder="Search partners, sponsors, contacts, events, coverage, steps, decisions" aria-label="Search everything"><div id="gres" style="margin-top:10px">${searchHtml('')}</div><div class="row" style="margin-top:10px"><button class="btn" data-act="close">Close</button></div>`;
   d.dataset.col='';d.dataset.id='';d.showModal();$('#gq').focus();
@@ -2106,11 +2716,11 @@ function restoreFocus(k){if(!k) return;try{const el=$('#main').querySelector(k.s
 
 window.TLLJ_STATE=()=>S;window.fuDue=fuDue;window.fuSoon=(f,t)=>!f.done&&!!f.due&&dd(t,f.due)>=1&&dd(t,f.due)<=2;
 async function startApp(env){
-  db=env.db;sample=env.sample;EDIT=env.edit;CONTRIB=!!env.contrib&&!env.edit;document.body.classList.toggle('contrib',CONTRIB);S.demo=!!env.demo;
+  db=env.db;sample=env.sample;ASSIST=!!env.assist&&!env.edit;EDIT=!!env.edit||ASSIST;CONTRIB=!!env.contrib&&!EDIT;document.body.classList.toggle('contrib',CONTRIB);document.body.classList.toggle('assist',ASSIST);if(!EDIT&&!CONTRIB) MODE='s';S.demo=!!env.demo;
   $('#signout').hidden=!env.auth;
-  render();
+  render();hashGo();setTimeout(welcome,700);
   if(!db) return;
-  for(const c of COLS){db.collection(c).onSnapshot(s=>{S[c]=s.docs.map(d=>({...d.data(),id:d.id}));S.loaded[c]=true;softRender();if(EDIT&&!S.fixed&&['tasks','pipe','decisions','kit','evsug','activity'].every(k=>S.loaded[k])&&S.pipe.length){S.fixed=true;fixWording().then(()=>ensureRecords()).then(()=>ensureFocus()).then(()=>ensureFiles()).then(()=>ensureGov()).then(()=>ensureNoAlcohol()).then(()=>ensureAudience()).then(()=>ensureRates()).then(()=>ensureV25()).then(()=>ensureV26()).then(()=>ensureV27()).then(()=>ensureV28()).then(()=>ensureV29()).then(()=>ensureV30()).then(()=>ensureV35()).then(()=>{pruneActivity();return dailyEvents()})}},e=>toast('Could not load '+c+': '+(e.code||e.message||'')))}
+  for(const c of COLS){db.collection(c).onSnapshot(s=>{S[c]=s.docs.map(d=>({...d.data(),id:d.id}));S.loaded[c]=true;softRender();if(EDIT&&!ASSIST&&!S.fixed&&['tasks','pipe','decisions','kit','evsug','activity'].every(k=>S.loaded[k])&&S.pipe.length){S.fixed=true;fixWording().then(()=>ensureRecords()).then(()=>ensureFocus()).then(()=>ensureFiles()).then(()=>ensureGov()).then(()=>ensureNoAlcohol()).then(()=>ensureAudience()).then(()=>ensureRates()).then(()=>ensureV25()).then(()=>ensureV26()).then(()=>ensureV27()).then(()=>ensureV28()).then(()=>ensureV29()).then(()=>ensureV30()).then(()=>ensureV35()).then(()=>ensureV36()).then(()=>{pruneActivity();return dailyEvents()})}},e=>toast('Could not load '+c+': '+(e.code||e.message||'')))}
 }
 function lsGet(k){try{return localStorage.getItem(k)||''}catch(e){return ''}}
 function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
@@ -2243,13 +2853,13 @@ if(!configured){
         document.getElementById('login').onclick=()=>{note('');Au.signInWithPopup(auth,new Au.GoogleAuthProvider()).catch(e=>{const c=e.code||'';note('Sign-in stopped ('+c+'). '+(c==='auth/unauthorized-domain'?'Add '+location.hostname+' under Authentication, Settings, Authorized domains.':c==='auth/operation-not-allowed'?'Turn on the Google provider under Authentication, Sign-in method.':c==='auth/popup-blocked'?'Allow pop-ups for this site and try again.':c==='auth/api-key-not-valid.-please-pass-a-valid-api-key.'||c==='auth/invalid-api-key'?'The apiKey in firebase-config.js is wrong.':(e.message||'')))})};
         return;
       }
-      const email=(user.email||'').toLowerCase(),edit=lower(C.editors).includes(email),contrib=!lower(C.editors).includes(email)&&lower(C.contributors).includes(email),view=lower(C.viewers).includes(email);
-      if(!edit&&!contrib&&!view){
+      const email=(user.email||'').toLowerCase(),edit=lower(C.editors).includes(email),contrib=!lower(C.editors).includes(email)&&lower(C.contributors).includes(email),view=lower(C.viewers).includes(email),assist=!edit&&lower(C.assistants).includes(email);
+      if(!edit&&!contrib&&!view&&!assist){
         main.innerHTML='<section class="box"><h2>No access</h2><p class="meta">'+email+' has not been given access. Ask Sade to add it.</p><button class="btn" id="out">Sign out</button></section>';
         document.getElementById('out').onclick=()=>window.signOutApp();return;
       }
       started=true;
-      window.TLLJ_USER=email;window.startApp({db:fdb,sample:makeSample(),edit,contrib,auth:true});
+      window.TLLJ_USER=email;window.startApp({db:fdb,sample:makeSample(),edit,contrib:contrib&&!assist,assist,auth:true});
     });
   }catch(e){
     main.innerHTML='<section class="box"><h2>Could not start</h2><p class="meta">'+String(e.message||e)+'</p></section>';

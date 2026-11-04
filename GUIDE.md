@@ -132,3 +132,30 @@ Use the toggle above the tabs to switch between Sponsorships and Partnerships. T
 - **Tabs.** The tabs are centred with a soft pill around each one. The current tab is filled.
 - **Pasting an email.** The preview now has a time box beside the date. It fills in when the email gives a time.
 - **Added from your emails.** ART X: the Tokini slot on Sat 7 Nov (3pm to 4pm, 20 minutes) is the next step, and the Das or Fall interview is noted as pending. Affinity Gallery is a new partner with the materials marked received, an Affinity Gallery exhibition event (5 Nov to 31 Dec) and a place.
+
+## Version 36: Contributors, approvals, team
+- **Contributors mode.** The third button in the header. **People** holds writers, photographers, videographers and stylists, each with a status (New, Contacted, Test sent, Active, Keep on file, Declined). **Import a list** takes a CSV file or pasted rows. **Who for this brief?** ranks people for a piece.
+- **Assignments.** One piece from pitch to publication: invite several people to pitch, choose one, draft a "not this time" note for the others, and add the brief, draft and published links. Setting the stage to Published logs the piece in Coverage. Agreed fee and Paid are visible to Sade and Fatimah. Praise sees paid or unpaid.
+- **Approvals.** Outreach, briefs, proposals and pieces move from Draft to With Fatimah, then Approved, Changes asked or Declined. Fatimah answers from the email or from the Approvals page. Sade sends once it is approved. **Needs you** sits at the top of Today in every mode. **Copy WhatsApp note** and **Record her answer** cover answers given outside the desk. **Check the style** flags em dashes, banned words and "TLLJ" in external copy.
+- **Team.** Settings, Team: add or remove people. Everyone listed can own a step, sponsor, partner or task.
+- **Roles.** Sade has full access. Fatimah sees all three modes and answers approvals. Praise adds and updates everything but cannot delete, change settings or see fee amounts.
+- **Push to Praise.** Activity page. Collects every change since the last push for the trackers, with Copy and Email.
+- **Everything about one name.** In a partner, sponsor or person window.
+- **Back up now.** Settings. Downloads every record as a file.
+- **Google Calendar.** Assignment due dates have an Add to Google Calendar link.
+
+### Email setup (optional)
+Without setup, Send opens a Gmail compose window (or your mail app) with the text filled in. For one-click approvals and sending from the desk:
+1. Open script.google.com, create a project, paste `Code.gs` and `appsscript.json` (Project Settings, show the manifest).
+2. Fill in CONFIG at the top: a long secret phrase, your Firebase project ID, the desk link and the three addresses.
+3. Deploy, New deployment, Web app. Execute as Me. Access: Anyone. Authorise when asked.
+4. In the desk, Settings, Email: choose the Apps Script mailer, paste the web app URL and the same secret phrase.
+5. Run `setupTriggers` once in the script for the 7:30 am daily digest (Lagos time).
+Zoho: choose **My mail app** to open Zoho Mail from the desk, or paste a Zoho Flow webhook URL and choose the Zoho Flow route. The webhook receives to, cc, subject, text and html. Approval buttons in an email need the Apps Script URL.
+
+### Access (rules and config)
+Publish `firestore.rules` in Firestore, Rules. Copy the lists from `firebase-config.js` into your own config file. Each TLLJ address needs a Google account with a verified email to sign in.
+
+## Hiding a sponsor for a while (v37)
+
+Open a sponsor and use **Hide for now**. Pick 1 week, 1 month, 3 months, until 4 January 2027, or any date, and add a reason. The sponsor leaves every list, the Scoreboard counts and its follow-ups until that day. Search still finds it, and **Hidden for now** (on Sponsors and Pipeline) lists everything hidden, with **Show now**. A week before the date, Today shows it under "Returning within a week". On the date it comes back with a card on Today: **Got it**, or **Hide 30 more days**.
