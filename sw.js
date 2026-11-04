@@ -1,4 +1,4 @@
-const V='tllj-v37';
+const V='tllj-v38';
 const SHELL=['./','index.html','styles.css','firebase-config.js','manifest.webmanifest','icon-192.png','icon-512.png','apple-touch-icon.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(V).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==V).map(x=>caches.delete(x)))).then(()=>self.clients.claim()))});
@@ -7,4 +7,5 @@ self.addEventListener('fetch',e=>{
   if(r.method!=='GET'||u.origin!==location.origin) return;
   e.respondWith(fetch(r).then(res=>{const cp=res.clone();caches.open(V).then(c=>c.put(r,cp));return res}).catch(()=>caches.match(r).then(m=>m||caches.match('index.html'))));
 });
-self.addEventListener('notificationclick',e=>{e.notification.close();e.waitUntil(clients.matchAll({type:'window'}).then(l=>l.length?l[0].focus():clients.openWindow('./')))});
+self.addEventListener('push',e=>{let d={};try{d=e.data?e.data.json():{}}catch(x){}const x=d.data||d.notification||d;e.waitUntil(self.registration.showNotification(x.title||'TLLJ Desk',{body:x.body||'',icon:'icon-192.png',badge:'icon-192.png',tag:x.tag||'tllj-push',data:{link:x.link||'./'}}))});
+self.addEventListener('notificationclick',e=>{e.notification.close();const u=(e.notification.data&&e.notification.data.link)||'./';e.waitUntil(clients.matchAll({type:'window',includeUncontrolled:true}).then(l=>l.length?(l[0].navigate?l[0].navigate(u).then(c=>(c||l[0]).focus()).catch(()=>l[0].focus()):l[0].focus()):clients.openWindow(u)))});

@@ -159,3 +159,9 @@ Publish `firestore.rules` in Firestore, Rules. Copy the lists from `firebase-con
 ## Hiding a sponsor for a while (v37)
 
 Open a sponsor and use **Hide for now**. Pick 1 week, 1 month, 3 months, until 4 January 2027, or any date, and add a reason. The sponsor leaves every list, the Scoreboard counts and its follow-ups until that day. Search still finds it, and **Hidden for now** (on Sponsors and Pipeline) lists everything hidden, with **Show now**. A week before the date, Today shows it under "Returning within a week". On the date it comes back with a card on Today: **Got it**, or **Hide 30 more days**.
+
+## Sent mail log and push notifications (v38)
+
+**Sent mail.** Activity, at the top, lists every email sent from the desk: date, recipient, subject and what happened. "Sent by the mailer" means the Apps Script mailer sent it. "Opened in your mail app" or "Opened in Gmail" means the desk opened the draft and you pressed Send there, so check your Sent folder to be sure.
+
+**Push notifications (free Firebase plan).** Everyone with desk access opens Settings, then Notifications, then Turn on for this device. It needs two values in firebase-config.js: `messagingSenderId` (inside the firebase block) and `vapidKey` (the web push key from Firebase, Project settings, Cloud Messaging, Web configuration). The Apps Script in Code.gs does the sending: the daily digest, Fatimah's answers, and a draft waiting for Fatimah. On iPhone, add the desk to the Home Screen first. Run `testPush` in Apps Script to send yourself a test.

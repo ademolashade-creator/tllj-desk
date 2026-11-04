@@ -1728,6 +1728,85 @@ vPipeline=function(){return hiddenPanel()+_vPipeline37()};
 const _vToday37=vToday;
 vToday=function(){return backCards()+_vToday37()};
 
+
+/* ---------- v38: sent-mail log and push notifications ---------- */
+const mailLog=()=>S.kit.filter(k=>k.type==='mail').sort((a,b)=>(b.at||'')<(a.at||'')?-1:1);
+function mailWhen(iso){try{return new Date(iso).toLocaleString('en-GB',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'Africa/Lagos'})}catch(e){return iso||''}}
+async function logMail(m,state){
+  if(!EDIT||!m||!m.to) return;
+  try{const id='mail_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+    await save('kit',id,{id,type:'mail',to:m.to||'',cc:m.cc||'',subject:String(m.subject||'').slice(0,160),state,at:new Date().toISOString(),by:window.TLLJ_USER||'demo'})}catch(e){}
+}
+let _inSend=false;
+const _composeUrl38=composeUrl;
+composeUrl=function(m,r){if(!_inSend) logMail(m,r==='mailto'?'Opened in your mail app':'Opened in Gmail');return _composeUrl38(m,r)};
+const _sendMail38=sendMail;
+sendMail=async function(m){
+  const c=MC();let ok=false;_inSend=true;
+  try{ok=await _sendMail38(m)}finally{_inSend=false}
+  const st=!ok?'Not sent by the mailer':c.route==='script'&&c.url&&c.sec?'Sent by the mailer':c.route==='zoho'&&c.zoho?'Passed to Zoho Flow':c.route==='mailto'?'Opened in your mail app':'Opened in Gmail';
+  logMail(m,st);return ok;
+};
+function mailBox(){
+  if(!EDIT) return '';
+  const L=mailLog(),n=S.showMail?L.length:30,rows=L.slice(0,n);
+  return `<section class="box"><h2>Sent mail <small>${L.length}</small></h2><p class="meta">Every email you send from the desk, with the date and where it went. Mail opened in Zoho or Gmail shows as opened, because the desk cannot see you press Send there. Check your Sent folder to be sure.</p>
+  ${rows.length?rows.map(x=>`<div class="item" style="grid-template-columns:minmax(0,1fr)"><div><b>${esc(x.subject||'No subject')}</b><div class="meta">${esc(mailWhen(x.at))} · To ${esc(x.to)}${x.cc?' · Cc '+esc(x.cc):''} · ${esc(x.state||'')}</div></div></div>`).join(''):'<div class="empty">Nothing sent from the desk yet.</div>'}
+  <div class="row" style="margin-top:8px">${L.length>30?`<button class="btn sm" data-act="mailall">${S.showMail?'Show the latest 30':'Show all '+L.length}</button>`:''}${L.length?'<button class="btn sm" data-act="mailcopy">Copy as text</button>':''}</div></section>`;
+}
+const _vActivity38=vActivity;
+vActivity=function(){return mailBox()+_vActivity38()};
+document.addEventListener('click',e=>{
+  const b=e.target.closest&&e.target.closest('[data-act="mailall"],[data-act="mailcopy"]');if(!b) return;
+  if(b.dataset.act==='mailall'){S.showMail=!S.showMail;render();return}
+  const t=mailLog().map(x=>mailWhen(x.at)+' | To '+x.to+(x.cc?' | Cc '+x.cc:'')+' | '+(x.subject||'No subject')+' | '+(x.state||'')).join('\n');
+  copyText(t,'Copied.');
+});
+
+/* push */
+const pushHash=s=>{let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return (h>>>0).toString(36)+s.length.toString(36)+s.slice(-8).replace(/[^A-Za-z0-9]/g,'')};
+const pushReady=()=>{const c=window.TLLJ_CONFIG||{};return !!(window.fcmEnable&&c.vapidKey&&!/^PASTE/i.test(c.vapidKey)&&c.firebase&&c.firebase.messagingSenderId&&!/^PASTE/i.test(c.firebase.messagingSenderId))};
+function pushOnDevice(){try{return localStorage.getItem('tllj_push_id')||''}catch(e){return ''}}
+function pushSecHtml(){
+  const on=pushOnDevice(),ready=pushReady();
+  const msg=S.demo?'Push needs the live desk.':!ready?'Push is not set up yet. Two values are missing from firebase-config.js: the web push key and the sender ID. Ask Sade.':on?'Notifications are on for this device. You get the daily reminder and anything that needs you.':'Turn this on to get a notification on this device when something needs you. On iPhone, add the desk to the Home Screen first and open it from there.';
+  return `<div class="sec" id="pushsec"><h3 class="ptg">Notifications</h3><p class="meta" id="pushmsg">${esc(msg)}</p><div class="row"><button type="button" class="btn" data-act="pushon" ${S.demo||!ready?'disabled':''}>${on?'Turn on again':'Turn on for this device'}</button>${on?'<button type="button" class="btn sm" data-act="pushoff">Turn off</button>':''}</div></div>`;
+}
+const _openSettings38=openSettings;
+openSettings=function(){
+  _openSettings38();const dlg=$('#dlg'),g=dlg.querySelector('[data-act="guide"]'),sec=g&&g.closest('.sec');
+  if(sec) sec.insertAdjacentHTML('beforebegin',pushSecHtml());
+};
+document.addEventListener('click',async e=>{
+  const b=e.target.closest&&e.target.closest('[data-act="pushon"],[data-act="pushoff"]');if(!b) return;
+  if(b.dataset.act==='pushoff'){
+    const id=pushOnDevice();try{if(id) await patch('kit',id,{off:true});localStorage.removeItem('tllj_push_id')}catch(x){}
+    toast('Notifications are off for this device.');openSettings();return;
+  }
+  try{
+    toast('Asking your browser for permission.');
+    const token=await window.fcmEnable();
+    const id='push_'+pushHash(token),email=(window.TLLJ_USER||'').toLowerCase();
+    if(!email){toast('Sign in first.');return}
+    const ok=await save('kit',id,{id,type:'push',email,token,off:false,at:new Date().toISOString(),device:String(navigator.userAgent||'').slice(0,90)});
+    if(ok){try{localStorage.setItem('tllj_push_id',id)}catch(x){}toast('Notifications are on for this device.');openSettings()}
+  }catch(err){toast(String(err&&err.message||err).slice(0,140))}
+});
+async function pushNotify(to,title,body,link){
+  const c=MC();if(!(c.url&&c.sec)) return false;
+  try{await fetch(c.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({secret:c.sec,action:'push',to,title,body,link})});return true}catch(e){return false}
+}
+const _drToFatimah38=drToFatimah;
+drToFatimah=async function(id){
+  const d=get('kit',id);await _drToFatimah38(id);
+  if(d&&(get('kit',id)||{}).status==='pending') pushNotify('fatimah','Waiting for your answer',(d.title||d.kind||'A draft'),deskLink(id));
+};
+const _drAnswer38=drAnswer;
+drAnswer=async function(id,r,note,by){
+  const d=get('kit',id);await _drAnswer38(id,r,note,by);
+  if(d) pushNotify('sade',(r==='approved'?'Approved: ':r==='changes'?'Changes asked: ':'Declined: ')+(d.title||d.kind||'draft'),'Fatimah answered in the desk.',deskLink(id));
+};
+
 /* ---------- v32: templates, inline events, de-duplication ---------- */
 const PTPLS=[['media','Media-partner offer'],['collab','Collaboration proposal'],['press','Press access and coverage request'],['thanks','Coverage follow-up']];
 const ptpls=()=>S.kit.filter(k=>k.type==='ptpl');
@@ -2841,6 +2920,7 @@ if(!configured){
     const [A,Au,F]=await Promise.all([import(base+'firebase-app.js'),import(base+'firebase-auth.js'),import(base+'firebase-firestore.js')]);
     const app=A.initializeApp(C.firebase),auth=Au.getAuth(app),fs=F.getFirestore(app);
     window.signOutApp=async()=>{await Au.signOut(auth);location.reload()};
+    window.fcmEnable=async()=>{const M=await import(base+'firebase-messaging.js');if(!(await M.isSupported())) throw new Error('This browser cannot receive push notifications. On iPhone, add the desk to the Home Screen and open it from there.');if(!('Notification' in window)) throw new Error('Notifications are not available here.');const p=await Notification.requestPermission();if(p!=='granted') throw new Error('Notifications are blocked. Allow them for this site in your browser or phone settings, then try again.');const reg=await navigator.serviceWorker.ready;return await M.getToken(M.getMessaging(app),{vapidKey:C.vapidKey,serviceWorkerRegistration:reg})};
     const fdb={collection:c=>({
       onSnapshot:(cb,err)=>F.onSnapshot(F.collection(fs,c),snap=>cb({docs:snap.docs.map(d=>({id:d.id,data:()=>d.data()}))}),err),
       doc:id=>({set:d=>F.setDoc(F.doc(fs,c,id),d),delete:()=>F.deleteDoc(F.doc(fs,c,id)),get:async()=>{const x=await F.getDoc(F.doc(fs,c,id));return {data:()=>x.data()}}})})};
