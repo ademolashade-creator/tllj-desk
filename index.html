@@ -4,36 +4,7 @@
 <script>try{var t=localStorage.getItem("tllj_theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="apple-touch-icon.png"><meta name="theme-color" content="#630551"><meta name="color-scheme" content="light dark"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="TLLJ Desk">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Instrument+Sans:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="styles.css"><style id="v41css">
-.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-top:10px}
-.pcard{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--surface);cursor:pointer;display:flex;flex-direction:column;gap:7px;min-width:0}
-.pcard:hover,.pcard:focus-visible{border-color:var(--accent);outline:none}
-.pcard .pch{display:flex;align-items:center;gap:10px}
-.pcard .pn{display:flex;flex-direction:column;min-width:0;flex:1}
-.pcard .pn b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pcard .pill{margin-left:0;flex:none}
-.pcard .rl{display:flex;flex-wrap:wrap;gap:4px}
-.pcard .rl span{font-size:11px;border:1px solid var(--line);border-radius:99px;padding:1px 8px;color:var(--mute)}
-.pcard .pcm{font-size:13px;overflow-wrap:anywhere}
-.pcard .pnote{font-size:13px;line-height:1.4}
-.pcard .pft{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto}
-.chip.static{cursor:default}
-.trow{display:flex;gap:8px;margin-top:6px}.trow input{flex:1;min-width:0}.trow .btn{flex:none}
-.xbtn{border:0;background:none;color:inherit;font:inherit;cursor:pointer;padding:0 0 0 4px}
-details.more>summary{cursor:pointer}
-
-#metfab{position:fixed;right:16px;bottom:16px;z-index:30;border-radius:99px;padding:12px 20px;font-size:15px;box-shadow:0 6px 18px rgba(0,0,0,.22)}
-#metfab[hidden]{display:none}
-body[data-fab="1"] main{padding-bottom:88px}
-body[data-fab="1"] .toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
-.nmr{cursor:default;display:block}.nmr>.pill{margin-right:8px;vertical-align:middle}.nmr>b{display:inline}.nmr>.meta{display:block;margin:4px 0 0}
-#dlg .stick{position:sticky;bottom:0;background:var(--surface);padding:10px 0 2px;margin-top:8px}
-.nmact{flex-basis:100%;display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
-.nmact .btn{min-height:40px;padding:8px 16px}
-.ptrow.doc{cursor:default;align-items:center}.ptrow.doc .pn{flex:1;min-width:0;display:flex;flex-direction:column}.docact{display:flex;gap:6px;flex-wrap:wrap}
-@media(max-width:600px){.nmact .btn{flex:1 1 calc(50% - 8px);min-height:48px;font-size:15px}.docact{width:100%}.docact .btn{flex:1;min-height:44px}#metfab{right:12px;bottom:12px}}
-@media print{#metfab{display:none!important}}
-</style></head><body>
+<link rel="stylesheet" href="styles.css"></head><body>
 <div class="wrap">
 <header>
  <div class="top"><h1>TLLJ Partnerships Desk</h1><span id="modesw"></span><div class="row"><div class="sub" id="sub"></div><button class="btn" id="undo" data-act="undo" disabled>Undo</button><span id="tools" class="row"><button class="btn" data-act="search" title="Search everything (press /)">Search</button><button class="btn" id="tillybtn" data-act="tilly">Tilly</button><button class="btn" data-act="export">Export</button></span><button class="btn" id="apprbtn" data-act="tab" data-id="approvals" hidden>Approvals</button><button class="btn" id="notesbtn" data-act="tab" data-id="notes">Suggestions</button><button class="btn" id="themebtn" data-act="theme" aria-label="Switch between light and dark">Dark</button><button class="btn" data-act="settings">Settings</button><button class="btn" id="signout" data-act="signout" hidden aria-label="Sign out" title="Sign out"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div></div>
@@ -330,7 +301,7 @@ function vPipeline(){
   const whens=['All',...new Set(S.pipe.map(x=>x.when))];
   const lanes=STATUSES.filter(s=>S.fs==='All'||s===S.fs).map(s=>{
     const c=p.filter(x=>x.status===s).sort((a,b)=>b.score-a.score);
-    return `<div class="lane"><h3>${esc(s)} <span class="pill">${c.length}</span></h3>${c.map(x=>{const cf=conflictFor(x).length&&ACTIVE.includes(x.status);return `<div class="card" data-act="edit" data-col="pipe" data-id="${x.id}"><b>${esc(x.group)}</b><div class="meta"><span>Score ${esc(x.score)}</span><span>${esc(x.owner)}</span><span>${esc(x.category||x.tab)}</span>${cf?'<span class="pill warn">Same category active</span>':''}${edPill(x)}</div>${x.next?`<div class="meta">${x.nextDate?esc(fmt(x.nextDate))+': ':''}${esc(x.next.slice(0,110))}${x.next.length>110?'…':''}</div>`:''}</div>`}).join('')||'<div class="empty">None</div>'}</div>`}).join('');
+    return `<div class="lane"><h3>${esc(s)} <span class="pill">${c.length}</span></h3>${c.map(x=>{const cf=conflictFor(x).length&&ACTIVE.includes(x.status);return `<div class="card" data-act="edit" data-col="pipe" data-id="${x.id}"><b>${esc(x.group)}</b><div class="meta"><span>Score ${esc(x.score)}</span><span>${esc(x.owner)}</span><span>${esc(x.category||x.tab)}</span>${cf?'<span class="pill warn">Same category active</span>':''}</div>${x.next?`<div class="meta">${x.nextDate?esc(fmt(x.nextDate))+': ':''}${esc(x.next.slice(0,110))}${x.next.length>110?'…':''}</div>`:''}</div>`}).join('')||'<div class="empty">None</div>'}</div>`}).join('');
   const opt=(a,v)=>a.map(o=>`<option ${o===v?'selected':''}>${esc(o)}</option>`).join('');
   return `<div class="filters"><select id="fo" aria-label="Owner">${opt(owners,S.fo)}</select><select id="fw" aria-label="When to approach">${opt(whens,S.fw)}</select><select id="fs" aria-label="Status">${opt(['All',...STATUSES],S.fs)}</select><button class="btn pri" data-act="new" data-col="pipe">Add sponsor</button></div><div class="board">${lanes}</div>`;
 }
@@ -729,9 +700,9 @@ function openPrep(eid){
 /* ---------- render ---------- */
 function render(){
   applyTarget();
-  const all=[['today','Today'],['roadmap','Roadmap'],['sponsors','Sponsors'],['pipeline','Pipeline'],['contacts','Contacts'],['events','Events'],['coverage','Coverage'],['kit','Proposal Kit'],['docs','Documents'],['balance','Balance'],['score','Scoreboard'],['deals','Deals'],['decisions','Decisions'],['review','Review'],['ask','Ask Tilly'],['activity','Activity']];
+  const all=[['today','Today'],['roadmap','Roadmap'],['sponsors','Sponsors'],['pipeline','Pipeline'],['contacts','Contacts'],['events','Events'],['coverage','Coverage'],['kit','Proposal Kit'],['balance','Balance'],['score','Scoreboard'],['deals','Deals'],['decisions','Decisions'],['review','Review'],['ask','Ask Tilly'],['activity','Activity']];
   const allP=[['today','Today'],['partners','Partners'],['events','Events'],['coverage','Coverage'],['templates','Templates'],['wrap','Wrap-ups'],['ask','Ask Tilly'],['review','Review'],['activity','Activity']];
-  const allC=[['today','Today'],['people','People'],['assign','Assignments'],['coverage','Coverage'],['activity','Activity']];const tabs=MODE==='c'?(EDIT?allC:allC.filter(([k])=>k!=='activity')):MODE==='p'?(EDIT?allP:allP.filter(([k])=>['today','partners','events','coverage','wrap','review'].includes(k))):EDIT?all:all.filter(([k])=>(CONTRIB?['today','sponsors','pipeline','contacts','events','docs','score','decisions','review']:['today','score','decisions','review']).includes(k));
+  const allC=[['today','Today'],['people','People'],['assign','Assignments'],['coverage','Coverage'],['activity','Activity']];const tabs=MODE==='c'?(EDIT?allC:allC.filter(([k])=>k!=='activity')):MODE==='p'?(EDIT?allP:allP.filter(([k])=>['today','partners','events','coverage','wrap','review'].includes(k))):EDIT?all:all.filter(([k])=>(CONTRIB?['today','sponsors','pipeline','contacts','events','score','decisions','review']:['today','score','decisions','review']).includes(k));
   if(S.tab!=='notes'&&S.tab!=='approvals'&&!tabs.some(([k])=>k===S.tab)) S.tab=tabs[0][0];
   const bc=EDIT?balanceChecks().filter(x=>x.level!=='info').length:0,nc=EDIT?S.notes.filter(x=>x.status==='New').length:0;
   document.body.dataset.mode=MODE;$('#modesw').innerHTML=modeSw();$('#nav').innerHTML=tabs.map(([k,l])=>`<button data-act="tab" data-id="${k}" ${S.tab===k?'aria-current="true"':''}>${S.tab===k?tabIc(k):''}${l}${k==='balance'&&bc?' ('+bc+')':''}</button>`).join('');const ab=$('#apprbtn'),an=CONTRIB?drafts().filter(d=>d.status==='pending').length:EDIT?drafts().filter(d=>['approved','changes'].includes(d.status)).length:0;ab.textContent='Approvals'+(an?' ('+an+')':'');ab.setAttribute('aria-current',S.tab==='approvals'?'true':'false');ab.hidden=!(EDIT||CONTRIB);const nb=$('#notesbtn');nb.textContent='Suggestions'+(nc?' ('+nc+')':'');nb.setAttribute('aria-current',S.tab==='notes'?'true':'false');$('#tools').hidden=!(EDIT||CONTRIB);$('#tillybtn').hidden=!EDIT;
@@ -739,7 +710,7 @@ function render(){
   renderUndo();
   if(!S.pipe.length&&!S.tasks.length){
     $('#main').innerHTML=`<section class="box"><h2>No data yet</h2><p class="meta">${EDIT?'Choose your seed.json file to load the plan, pipeline and events.':'The plan has not been loaded yet.'}</p>${EDIT?'<input type="file" id="seedfile" accept=".json" aria-label="seed.json">':''}</section>`;return}
-  const f={today:vToday,roadmap:vRoadmap,pipeline:vPipeline,sponsors:vSponsors,balance:vBalance,contacts:vContacts,events:vEvents,kit:vKit,score:vScore,deals:vDeals,decisions:vDecisions,notes:vNotes,activity:vActivity,ask:vAsk,review:vReview,coverage:vCoverage,events:()=>vEvents()+vEvOut()+vPlaces(),partners:vPartners,templates:vTemplatesP,wrap:vWrap,people:vPeople,assign:vAssign,approvals:vApprovals,docs:vDocs,...(MODE==='c'?{today:vTodayC}:{}),...(MODE==='p'?{today:vTodayP,events:()=>vEventsP()+vPlaces()}:{})}[S.tab];
+  const f={today:vToday,roadmap:vRoadmap,pipeline:vPipeline,sponsors:vSponsors,balance:vBalance,contacts:vContacts,events:vEvents,kit:vKit,score:vScore,deals:vDeals,decisions:vDecisions,notes:vNotes,activity:vActivity,ask:vAsk,review:vReview,coverage:vCoverage,events:()=>vEvents()+vEvOut()+vPlaces(),partners:vPartners,templates:vTemplatesP,wrap:vWrap,people:vPeople,assign:vAssign,approvals:vApprovals,...(MODE==='c'?{today:vTodayC}:{}),...(MODE==='p'?{today:vTodayP,events:()=>vEventsP()+vPlaces()}:{})}[S.tab];
   const main=$('#main'),y=scrollY,fk=focusKey();main.style.minHeight=main.offsetHeight+'px';main.innerHTML=(S.tab==='today'?vNeeds():'')+f();{const vk=MODE+S.tab+(S.rv?S.rv.sub:'');if(vk!==S._vk){S._vk=vk;main.classList.remove('rise');void main.offsetWidth;main.classList.add('rise');clearTimeout(S._rt);S._rt=setTimeout(()=>main.classList.remove('rise'),420)}}restoreFocus(fk);scrollTo({top:y,behavior:'instant'});requestAnimationFrame(()=>{main.style.minHeight='';scrollTo({top:y,behavior:'instant'})});
 }
 
@@ -1350,9 +1321,9 @@ function openPerson(id){
   const A=id?asgOf(id):[];
   dlg.innerHTML=`<h2 style="margin-bottom:8px">${id?esc(p.name):'Add a person'}</h2><input type="hidden" id="pe_id" value="${esc(id||'')}">
   <fieldset ${ro?'disabled':''} style="border:0;padding:0;margin:0">
-  <div class="g2"><div class="fld"><label for="pe_n">Full name</label><input type="text" id="pe_n" value="${esc(p.name)}"></div><div class="fld"><label for="pe_s">Status</label><select id="pe_s">${statusList().map(s=>`<option ${p.status===s?'selected':''}>${esc(s)}</option>`).join('')}</select></div></div>
+  <div class="g2"><div class="fld"><label for="pe_n">Full name</label><input type="text" id="pe_n" value="${esc(p.name)}"></div><div class="fld"><label for="pe_s">Status</label><select id="pe_s">${CST.map(s=>`<option ${p.status===s?'selected':''}>${s}</option>`).join('')}</select></div></div>
   <div class="g2"><div class="fld"><label for="pe_e">Email</label><input type="text" id="pe_e" value="${esc(p.email||'')}"></div><div class="fld"><label for="pe_p">Phone or WhatsApp</label><input type="text" id="pe_p" value="${esc(p.phone||'')}"></div></div>
-  <div class="fld"><label>Works as</label><div class="chips">${roleList().concat((p.roles||[]).filter(x=>!roleList().includes(x))).map(r=>`<label class="chip ck"><input type="checkbox" name="pe_r" value="${esc(r)}" ${(p.roles||[]).includes(r)?'checked':''}> ${esc(r)}</label>`).join('')}</div>${EDIT?'<input type="text" id="pe_nr" style="margin-top:6px" placeholder="Add another type, for example Illustrator" aria-label="Add another type">':''}</div>
+  <div class="fld"><label>Works as</label><div class="chips">${CROLES.map(r=>`<label class="chip ck"><input type="checkbox" name="pe_r" value="${r}" ${(p.roles||[]).includes(r)?'checked':''}> ${r}</label>`).join('')}</div></div>
   <div class="g2"><div class="fld"><label for="pe_c">Strongest in</label><input type="text" id="pe_c" value="${esc(p.strengths||'')}" placeholder="For example: Style"></div><div class="fld"><label for="pe_y">Years of experience</label><input type="text" id="pe_y" value="${esc(p.years||'')}" placeholder="For example: 2-5 years"></div></div>
   <div class="g2"><div class="fld"><label for="pe_so">Where they came from</label><input type="text" id="pe_so" value="${esc(p.source||'')}"></div><div class="fld"><label for="pe_po">Portfolio link</label><input type="text" id="pe_po" value="${esc(p.portfolio||'')}"></div></div>
   <div class="fld"><label for="pe_no">Notes</label><textarea id="pe_no" style="min-height:70px">${esc(p.notes||'')}</textarea></div></fieldset>
@@ -1363,7 +1334,7 @@ function openPerson(id){
 async function perSave(){
   const id=$('#pe_id').value||uid('pe'),old=get('kit',id),n=$('#pe_n').value.trim();if(!n){toast('Add a name');return}
   const e=$('#pe_e').value.trim();if(e&&people().some(p=>p.id!==id&&p.email&&p.email.toLowerCase()===e.toLowerCase())){toast('Someone with that email is already listed.');return}
-  const nr=((($('#pe_nr')||{}).value)||'').split(',').map(s=>crCanon(s)).filter(Boolean),roles=[...new Set([...document.querySelectorAll('input[name=pe_r]:checked')].map(x=>x.value).concat(nr))];
+  const roles=[...document.querySelectorAll('input[name=pe_r]:checked')].map(x=>x.value);
   await act((old?'Edit':'Add')+' person: '+n,()=>save('kit',id,{...(old||{}),id,type:'contributor',name:n,email:e,phone:$('#pe_p').value.trim(),roles:roles.length?roles:['Writer'],strengths:$('#pe_c').value.trim(),years:$('#pe_y').value.trim(),status:$('#pe_s').value,source:$('#pe_so').value.trim(),portfolio:$('#pe_po').value.trim(),notes:$('#pe_no').value.trim(),added:old?old.added:TODAY}));
   $('#dlg').close();toast('Saved.');render();
 }
@@ -1420,7 +1391,7 @@ function openMatcher(text,role,aid){
   const R=text?matchPeople(text,role):[];
   $('#dlg').innerHTML=`<h2 style="margin-bottom:8px">Who for this brief?</h2><p class="meta">Describe the piece. The list ranks people by strength, role, experience and status. Declined people are left out.</p>
   <input type="hidden" id="mt_a" value="${esc(aid||'')}"><div class="fld"><label for="mt_t">Brief</label><textarea id="mt_t" style="min-height:80px" placeholder="For example: a piece on African jewellers and the designers reshaping the trade">${esc(text||'')}</textarea></div>
-  <div class="fld"><label for="mt_r">Role needed</label><select id="mt_r">${['Any',...roleList()].map(x=>`<option ${role===x?'selected':''}>${esc(x)}</option>`).join('')}</select></div>
+  <div class="fld"><label for="mt_r">Role needed</label><select id="mt_r">${['Any',...CROLES].map(x=>`<option ${role===x?'selected':''}>${x}</option>`).join('')}</select></div>
   <div class="row"><button class="btn pri" data-act="mt_go">Find people</button><button class="btn" data-act="ptclose">Close</button></div>
   ${text?`<div class="sec">${R.map(x=>`<div class="ptrow"><span class="pn"><b>${esc(x.p.name)}</b><span class="meta">${esc(x.why.join(', '))}</span></span>${aid?`<button class="btn sm" data-act="rd_add" data-id="${aid}" data-c="${x.p.id}">Invite to pitch</button>`:`<button class="btn sm" data-act="pe_open" data-id="${x.p.id}">Open</button>`}</div>`).join('')||'<div class="empty">Nobody fits yet. Add more people or widen the brief.</div>'}${!aid&&R.length?`<div class="row" style="margin-top:8px"><button class="btn" data-act="mt_start">Start an assignment with these ${R.length}</button></div>`:''}</div>`:''}`;
   $('#dlg').dataset.col='match';$('#dlg').dataset.id='';if(!$('#dlg').open) $('#dlg').showModal();
@@ -1441,7 +1412,7 @@ function openAsg(id,draft){
   dlg.innerHTML=`<h2 style="margin-bottom:8px">${id?'Assignment':'New assignment'}</h2><input type="hidden" id="as_id" value="${esc(id||'')}">
   <fieldset ${ro?'disabled':''} style="border:0;padding:0;margin:0">
   <div class="fld"><label for="as_t">Title</label><input type="text" id="as_t" value="${esc(a.title)}" placeholder="For example: African jewellers feature"></div>
-  <div class="g2"><div class="fld"><label for="as_k">Type</label><select id="as_k">${kindList().map(k=>`<option ${a.kind===k?'selected':''}>${esc(k)}</option>`).join('')}</select></div><div class="fld"><label for="as_s">Stage</label><select id="as_s">${stageList().map(k=>`<option ${a.stage===k?'selected':''}>${esc(k)}</option>`).join('')}</select></div></div>
+  <div class="g2"><div class="fld"><label for="as_k">Type</label><select id="as_k">${AKIND.map(k=>`<option ${a.kind===k?'selected':''}>${k}</option>`).join('')}</select></div><div class="fld"><label for="as_s">Stage</label><select id="as_s">${ASTG.map(k=>`<option ${a.stage===k?'selected':''}>${k}</option>`).join('')}</select></div></div>
   <div class="g2"><div class="fld"><label for="as_l">For partner or sponsor</label><select id="as_l">${linkOpts}</select></div><div class="fld"><label for="as_d">Due</label><input type="date" id="as_d" value="${esc(a.due||'')}"></div></div>
   <div class="g2"><div class="fld"><label for="as_b">Brief link</label><input type="text" id="as_b" value="${esc(a.brief||'')}" placeholder="Drive or Docs link"></div><div class="fld"><label for="as_dr">Draft link</label><input type="text" id="as_dr" value="${esc(a.draft||'')}" placeholder="Drive or Docs link"></div></div>
   <div class="g2"><div class="fld"><label for="as_p">Published link</label><input type="text" id="as_p" value="${esc(a.pub||'')}" placeholder="https://"></div><div class="fld"><label for="as_c">Credit line</label><input type="text" id="as_c" value="${esc(a.credit||'')}" placeholder="${a.cid?esc('By '+cname(a.cid)):'By'}"></div></div>
@@ -1835,382 +1806,6 @@ drAnswer=async function(id,r,note,by){
   const d=get('kit',id);await _drAnswer38(id,r,note,by);
   if(d) pushNotify('sade',(r==='approved'?'Approved: ':r==='changes'?'Changes asked: ':'Declined: ')+(d.title||d.kind||'draft'),'Fatimah answered in the desk.',deskLink(id));
 };
-
-
-/* ---------- v39: editor's approval and editor's note on sponsors ---------- */
-const EDAP=['Not yet reviewed','Approved','Approved with conditions','Not approved'];
-const edVal=p=>EDAP.includes(p&&p.edApproval)?p.edApproval:'Not yet reviewed';
-const edCan=()=>OWNER()||CONTRIB;
-const edPill=p=>{const v=edVal(p);return v==='Not yet reviewed'?'':`<span class="pill ${v==='Approved'?'ok':v==='Not approved'?'warn':''}">Editor: ${esc(v)}</span>`};
-function edSecHtml(p){
-  const can=edCan();
-  return `<div class="sec" id="edsec"><h3>Editor’s approval</h3>
-  <div class="fld"><label for="ed_sel">Does this sponsor fit The Leisurely Life Journal?</label><select id="ed_sel" ${can?'':'disabled'}>${EDAP.map(o=>`<option ${o===edVal(p)?'selected':''}>${o}</option>`).join('')}</select></div>
-  <div class="fld"><label for="ed_note">Editor’s note</label><textarea id="ed_note" style="min-height:60px" ${can?'':'disabled'} placeholder="${can?'Why it fits, or what must change':''}">${esc(p.edNote||'')}</textarea></div>
-  ${can?`<div class="row"><button type="button" class="btn sm pri" data-act="ednote" data-id="${p.id}">Save editor’s note</button></div>`:'<p class="meta">Only Fatimah and Sade change this.</p>'}</div>`;
-}
-const _openSponsor39=openSponsor;
-openSponsor=function(id,keep){
-  _openSponsor39(id,keep);
-  const p=get('pipe',id),f=$('#dlg #frm');if(!p||!f||$('#edsec')) return;
-  f.insertAdjacentHTML('beforebegin',edSecHtml(p));
-};
-async function edSave(id){
-  const p=get('pipe',id),sel=$('#ed_sel'),nt=$('#ed_note');if(!p||!sel||!nt||!edCan()) return;
-  await act('Editor’s approval: '+p.group,()=>patch('pipe',id,{edApproval:sel.value,edNote:nt.value.trim()}));
-  toast('Saved.');render();
-}
-document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-act="ednote"]');if(b) edSave(b.dataset.id)});
-document.addEventListener('change',e=>{const t=e.target;if(t&&t.id==='ed_sel'){const d=$('#dlg'),b=d&&d.querySelector('[data-act="ednote"]');if(b) edSave(b.dataset.id)}});
-const _vPipeline39=vPipeline;
-vPipeline=function(){
-  const f=S.fe||'All',keep=S.pipe;
-  if(f!=='All') S.pipe=keep.filter(p=>edVal(p)===f);
-  let h;try{h=_vPipeline39()}finally{S.pipe=keep}
-  h=h.replace('<button class="btn pri" data-act="new" data-col="pipe">Add sponsor</button>',`<select id="fe" aria-label="Editor’s approval">${['All',...EDAP].map(o=>`<option ${o===f?'selected':''}>${esc(o)}</option>`).join('')}</select><button class="btn pri" data-act="new" data-col="pipe">Add sponsor</button>`);
-  return h;
-};
-document.addEventListener('change',e=>{const t=e.target;if(t&&t.id==='fe'){S.fe=t.value;render()}});
-
-
-/* ---------- v40: Fatimah's list notes (4 Nov 2026) ---------- */
-async function ensureV40(){
-  if(!db||!OWNER()||lsGet('tllj_seed_v40')||!S.pipe.length) return;
-  try{
-    const byG=g=>S.pipe.find(p=>p.group===g);
-    const N=()=>Math.max(0,...S.pipe.map(p=>p.n||0))+1;
-    // 1. Big dream is now Aspirational
-    for(const p of S.pipe.filter(p=>p.chance==='Big dream')) await patch('pipe',p.id,{chance:'Aspirational'});
-    // 2. Fatimah's notes on existing sponsors
-    const fx=async(g,patchObj)=>{const p=byG(g);if(p) await patch('pipe',p.id,patchObj)};
-    await fx('Atedo Peterside and AnapJets',{when:'Second wave',score:4,edNote:'Fatimah, 4 Nov: not sure about this one and wants to know why we chose it. Reason on the desk: its chairman, Atedo Peterside, already supports ART X. VistaJet, ExecuJet and Air France are being researched as alternatives in the same category.'});
-    await fx('Ikoyi Club 1938',{when:'Long-term target',score:3,edNote:'Fatimah, 4 Nov: Ikoyi Club has dropped in quality. Moved down the list.'});
-    await fx('Mìlíkì Private Club',{status:'Declined',outcome:'Mìlíkì has said it does not want to partner (Fatimah, 4 Nov 2026).',next:'',nextDate:'',edNote:'Fatimah, 4 Nov: Mìlíkì has said they do not want to partner.'});
-    await fx('Coca-Cola HBC',{status:'On hold',when:'Long-term target',score:1,edApproval:'Not approved',edNote:'Fatimah, 4 Nov: Coca-Cola does not share our values. We say we want people to live a higher quality life, and high-sugar soft drinks do not support that.',next:'',nextDate:''});
-    await fx('Robert Taylor Media clients',{edNote:'Fatimah, 4 Nov: we have Banke Kuku. Prove to her that we can deliver one piece, then expand from there.'});
-    await fx('Mercedes-Benz',{when:'Second wave',score:6,why:'Mercedes-Benz was the VIP Experience partner of Lagos Gallery Weekend in March 2026, supplying luxury shuttle cars and hosting a programme at its showroom. A car brand already backing the Lagos gallery calendar is a real prospect, not a dream.'});
-    // 3. New sponsors
-    const add=async o=>{if(byG(o.group)) return;const id=uid('p');await save('pipe',id,{id,n:N(),tab:'Nigeria',size:'Bigger',owner:'Sade',status:'Not started',when:'Second wave',nextDate:'',notes:'Added from Fatimah’s list, 4 Nov 2026.',outcome:'',...o})}
-    await add({group:'Polanco',category:'Cars',score:4,chance:'Possible',first:'Fatimah to confirm the exact name and the dealer.',next:'Ask Fatimah for the full name of the brand or dealer, then research it.',propose:'Confirm the brand first.',why:'Added at Fatimah’s request as another car brand. A first search found no Nigerian car brand under this name, so the spelling or full name needs checking.'});
-    await add({group:'Porsche (Nigeria)',category:'Cars',score:5,chance:'Possible',first:'Porsche in Nigeria, route to find. Ask who ran the Luxe Eko project.',next:'Find who markets Porsche in Nigeria, then propose a feature on Nigerian creatives.',propose:'A sponsored feature or short series on Nigerian creatives, priced from the rate card.',why:'Porsche has backed Nigerian creatives before: the Luxe Eko Porsche Assisted Lifestyle Project with Chisom Njoku, and a BoF x Porsche project with Omoyemi Akerele (2023). Ask when Luxe Eko ran.'});
-    await add({group:'Air France Nigeria',category:'Travel and aviation',score:6,chance:'Feasible',first:'Jean-Luc Mevellec, General Manager, Air France Nigeria (named at the January 2026 exhibition).',next:'Write to the Air France Nigeria office with a proposal for a Paris-Lagos travel and culture feature.',propose:'A sponsored travel and culture feature tied to the Lagos and Paris creative calendar (template A, scaled to one piece).',why:'Air France marked 80 years in Nigeria with an exhibition at Alliance Française Lagos (16 Jan to 7 Feb 2026), and describes itself as an ambassador of French culture. Daily Lagos to Paris flights. Ask what it pays for in Nigeria.'});
-    await add({group:'VistaJet',category:'Travel and aviation',score:4,chance:'Possible',first:'VistaJet West Africa team, route to find.',next:'Find the VistaJet contact for West Africa, then ask who decides on editorial partnerships.',propose:'A sponsored feature for high-net-worth readers. First ask whether VistaJet sponsors publications.',why:'VistaJet held its first West Africa roadshow with a static display in Lagos, Accra, Abidjan and Abuja, and places aircraft in the region. Its customers are corporations, businesses and governments. No sponsorship of a publication has been found. Ask.'});
-    await add({group:'ExecuJet Africa',category:'Travel and aviation',score:4,chance:'Possible',first:'ExecuJet Lagos, route to find. Fatimah wrote "executive jet": confirm this is the one she means.',next:'Confirm with Fatimah that this is the right company, then find the contact.',propose:'A sponsored feature on private aviation for high-net-worth readers.',why:'ExecuJet Africa runs a private aviation base at Lagos airport with a hangar, VIP customs and handling, serving corporate clients and high-net-worth individuals. No sponsorship or partnership has been found. Ask.'});
-    await add({group:'Legend Hotel Lagos Airport',category:'Hotels',score:5,chance:'Possible',first:'The hotel’s marketing team, route to find.',next:'Find the hotel’s marketing contact and ask about sponsored features or a hosted stay.',propose:'A hosted stay for a contributor, or a sponsored feature (template A).',why:'Curio Collection by Hilton, with 54 rooms, art and sculpture in the interiors, a sky lounge and a board room. It sits at the airport and targets business travellers. No arts programme or sponsorship has been found. Ask.'});
-    await add({group:'Mbari Kola',category:'Clubs',tab:'Nigeria',score:6,chance:'Feasible',first:'Ugoma Ebilah, founder (curator and founder of BLOOM Art).',next:'Write to Ugoma Ebilah about covering the society’s programme, and ask how members and partners are chosen.',propose:'A commissioned feature or members’ edition on the society’s programme (template C).',why:'A private arts society in Ikoyi with a gallery, library, residencies and a members’ lounge, launched in 2026. It matches TLLJ’s readers. No partners are named in the launch coverage and membership fees are not published. Ask.'});
-    await add({group:'Stanbic IBTC Pension Managers',category:'Banking and finance',score:6,chance:'Feasible',first:'Stanbic IBTC Pension Managers marketing team, route to find.',next:'Research in full tomorrow (sponsor of the day).',propose:'A sponsored series tied to ART X week.',why:'Stanbic IBTC Pension Managers has sponsored ART X Lagos year after year, and backs creative programmes for young people.'});
-    await add({group:'South African Tourism (Visit South Africa)',tab:'Africa',category:'Government and tourism',score:5,chance:'Possible',first:'South African Tourism office in Lagos, route to find.',next:'Find the South African Tourism contact in Lagos and ask about media partnerships.',propose:'A sponsored travel and culture feature for Nigerian readers.',why:'South Africa is working to win back Nigerian travellers: a South Africa Tourism Connect event in Ikoyi agreed joint marketing, with South African Airways and Nigerian travel associations involved. Nigeria is one of its major source markets.'});
-    await add({group:'Ghana Tourism Authority (Visit Ghana)',tab:'Africa',category:'Government and tourism',score:5,chance:'Possible',first:'Ghana Tourism Authority, route to find.',next:'Find the Ghana Tourism Authority contact for the Nigerian market.',propose:'A sponsored travel and culture feature on Accra for Nigerian readers.',why:'About 176,000 Nigerians visited Ghana in 2025, making Nigeria its second-largest source of visitors (Radio Nigeria, 22 July 2026). Ghana’s deputy tourism minister called Nigeria one of its most important markets.'});
-    await add({group:'Visit Rwanda (Rwanda Development Board)',tab:'Africa',category:'Government and tourism',score:3,chance:'Aspirational',size:'Biggest',first:'Rwanda Development Board, route to find.',next:'Find out whether Rwanda Development Board works with African media or only with sports partners.',propose:'Start with a travel feature. First ask whether it backs African publications.',why:'Visit Rwanda spends heavily, but its deals found so far are with sports teams (Aston Villa, PSG, Atletico Madrid, LA Clippers). No arts or media sponsorship in Nigeria has been found. Ask.'});
-    await add({group:'Ecobank Nigeria',category:'Banking and finance',score:4,chance:'Possible',first:'Ecobank Nigeria marketing team, route to find.',next:'Check what Ecobank backs in the arts, then find the contact.',propose:'A sponsored feature tied to the +234 Art Fair, which is held at the Ecobank Pan African Centre.',why:'The +234 Art Fair is held at the Ecobank Pan African Centre in Lagos, and a headline links Ecobank to its second edition. Ask what Ecobank pays for.'});
-    // 4. Partner ideas
-    const addP=async o=>{if(S.kit.some(k=>k.type==='partner'&&k.name===o.name)) return;const id=uid('pt');await save('kit',id,{id,type:'partner',stage:'idea',pkgs:[],eventId:'',accred:'Not needed',attendees:'',contact:'',nextDate:'',ask:'',wrap:{},outcomes:[],created:TODAY,...o})}
-    await addP({name:'Lagos Gallery Weekend',kind:'Media partner',next:'Ask Art Report Africa about media partnership for the March 2027 edition.',notes:'Presented by Art Report Africa, with +234 Art Fair and the Lagos State Commissioner for Tourism, Arts and Culture as special support. Mercedes-Benz was VIP Experience partner in 2026. The 2026 edition ran 4 to 8 March. 2027 dates: ask.'});
-    await addP({name:'Alliance Française Lagos',kind:'Collaboration',next:'Ask Marc Brebant, Director, about a collaboration on the French-Nigerian cultural calendar.',notes:'Hosted the Air France 80 years exhibition (Jan 2026) and is the Lagos Gallery Weekend hub. Marc Brebant is named as Director.'});
-    // 5. CANEX comes off the plan
-    const cx=/canex|creative africa nexus/i;
-    for(const t of S.tasks.filter(t=>cx.test(t.action||'')||cx.test(String(t.target||'')))) await remove('tasks',t.id);
-    for(const e of S.events.filter(e=>cx.test(e.name||''))) await remove('events',e.id);
-    for(const e of (S.evsug||[]).filter(e=>cx.test(e.name||''))) await remove('evsug',e.id);
-    for(const k of S.kit.filter(k=>(k.type==='followup'&&cx.test(k.text||''))||(k.type==='partner'&&cx.test(k.name||'')))) await remove('kit',k.id);
-    // 6. Afreximbank is stored for 2027
-    const af=S.pipe.find(p=>/^Afreximbank$/i.test(p.group));
-    if(af&&!af.hideUntil) await patch('pipe',af.id,{hideUntil:'2027-01-04',hideNote:'2027 media-partnership relationship. Start with Emmy Kasbit. Research is saved.',hideAck:false});
-    lsSet('tllj_seed_v40','1');
-    toast('List updated with Fatimah’s notes.');
-  }catch(e){}
-}
-
-/* ---------- v41: your own contributor types, and a People page that shows the key facts ---------- */
-const CROLES_BASE=['Writer','Photographer','Videographer','Stylist'];
-const crCustom=()=>{const d=S.kit.find(k=>k.id==='croles');return (d&&d.roles)||[]};
-function roleList(){const seen=new Set(),out=[];[...CROLES_BASE,...crCustom(),...people().flatMap(p=>p.roles||[])].forEach(r=>{const k=String(r||'').trim();if(!k||seen.has(k.toLowerCase())) return;seen.add(k.toLowerCase());out.push(k)});return out}
-const crTidy=s=>{s=String(s||'').trim().replace(/\s+/g,' ');return s?s[0].toUpperCase()+s.slice(1):''};
-const crCanon=s=>{const t=crTidy(s);return roleList().find(r=>r.toLowerCase()===t.toLowerCase())||t};
-const clGet=k=>(S.kit.find(x=>x.id==='clists')||{})[k]||[];
-const clUniq=a=>{const s=new Set(),o=[];a.forEach(x=>{const t=String(x||'').trim();if(t&&!s.has(t.toLowerCase())){s.add(t.toLowerCase());o.push(t)}});return o};
-const statusList=()=>clUniq([...CST,...clGet('statuses'),...people().map(p=>p.status)]);
-const STAGE_PRE=['Looking for a writer','Looking for a photographer'];
-const stageList=()=>clUniq([...STAGE_PRE,...ASTG.filter(s=>s!=='Published'),...clGet('stages'),...asgs().map(a=>a.stage).filter(s=>s&&s!=='Published'),'Published']);
-const kindList=()=>clUniq([...AKIND,...clGet('kinds'),...asgs().map(a=>a.kind)]);
-const peopleOrder=()=>clUniq(['Active','Test sent','Contacted','New',...clGet('statuses'),'Keep on file','Declined',...statusList()]);
-function clEditor(k,label,items,base,usedFn,ph){
-  const cust=clGet(k);
-  return `<div class="fld" style="margin-top:10px"><label${EDIT?` for="cl_new_${k}"`:''}>${esc(label)}</label><div class="chips">${items.map(x=>`<span class="chip static">${esc(x)}${EDIT&&cust.includes(x)&&!base.includes(x)&&!usedFn(x)?` <button class="xbtn" data-act="cl_rm" data-k="${k}" data-id="${esc(x)}" aria-label="Remove ${esc(x)}">×</button>`:''}</span>`).join('')}</div>${EDIT?`<div class="trow"><input type="text" id="cl_new_${k}" placeholder="${esc(ph)}" aria-label="${esc(label)}"><button class="btn" data-act="cl_add" data-k="${k}">Add</button></div>`:''}</div>`}
-vPeople=function(){
-  const f=S.pf||'All',q=(S.pq||'').toLowerCase().trim(),r=S.pr||'All',P=people(),A=asgs(),RL=roleList(),custom=crCustom();
-  const n=s=>P.filter(p=>p.status===s).length;
-  const ok=p=>(f==='All'||p.status===f)&&(r==='All'||(p.roles||[]).includes(r))&&(!q||(p.name+' '+(p.email||'')+' '+(p.strengths||'')+' '+(p.notes||'')+' '+(p.roles||[]).join(' ')).toLowerCase().includes(q));
-  const L=P.filter(ok).sort((a,b)=>a.name<b.name?-1:1);
-  const card=p=>{
-    const o=A.filter(a=>a.cid===p.id&&a.stage!=='Published').length,note=String(p.notes||'').replace(/\s+/g,' ').trim(),
-      foot=o?o+' open assignment'+(o===1?'':'s'):(p.source?'From '+p.source:'');
-    return `<div class="pcard" data-act="pe_open" data-id="${p.id}" tabindex="0" role="button">
-      <div class="pch"><span class="av">${esc(initials(p.name))}</span><span class="pn"><b>${esc(p.name)}</b><span class="meta">${esc([p.strengths,p.years].filter(Boolean).join(' · ')||'Strengths not added yet')}</span></span><span class="pill ${pillSt(p.status)}">${esc(p.status)}</span></div>
-      <div class="rl">${(p.roles||[]).map(x=>`<span>${esc(x)}</span>`).join('')}</div>
-      ${p.email||p.phone?`<div class="pcm">${[p.email,p.phone].filter(Boolean).map(esc).join('<br>')}</div>`:'<div class="pcm meta">No email or phone yet</div>'}
-      ${note?`<div class="pnote meta">${esc(note.slice(0,120))}${note.length>120?'…':''}</div>`:''}
-      ${foot||(EDIT&&p.email)?`<div class="pft"><span class="meta">${esc(foot)}</span>${EDIT&&p.email?`<button class="btn sm" data-act="pe_mail" data-id="${p.id}">Email</button>`:''}</div>`:''}</div>`};
-  const filtered=f!=='All'||r!=='All'||!!q;
-  const groups=peopleOrder().map(s=>{const g=L.filter(p=>p.status===s);if(!g.length) return '';
-    const body=`<div class="pgrid">${g.map(card).join('')}</div>`,head=`${esc(s)} <small>${g.length}</small>`;
-    return (s==='Keep on file'||s==='Declined')&&!filtered
-      ?`<section class="box"><details class="more"><summary><b>${head}</b> <span class="meta">${esc(g.slice(0,4).map(p=>p.name).join(', '))}${g.length>4?' and '+(g.length-4)+' more':''}</span></summary>${body}</details></section>`
-      :`<section class="box"><h2>${head}</h2>${body}</section>`}).join('');
-  const types=`<div class="fld" style="margin-top:10px"><label${EDIT?' for="cr_new"':''}>Types of contributor</label><div class="chips">${RL.map(x=>{const c=P.filter(p=>(p.roles||[]).includes(x)).length;return `<span class="chip static">${esc(x)} (${c})${EDIT&&custom.includes(x)&&!c?` <button class="xbtn" data-act="cr_rm" data-id="${esc(x)}" aria-label="Remove the type ${esc(x)}">×</button>`:''}</span>`}).join('')}</div>${EDIT?`<div class="trow"><input type="text" id="cr_new" placeholder="Add a type, for example Illustrator" aria-label="New type of contributor"><button class="btn" data-act="cr_add">Add type</button></div>`:''}</div>`;
-  return `<section class="box"><h2>People <small>${P.length}</small></h2><p class="meta">Everyone who works with The Leisurely Life Journal, grouped by where they are with us. Those who need action come first.</p>
-  ${EDIT?`<div class="row" style="margin:8px 0"><button class="btn pri" data-act="pe_new">Add a person</button><button class="btn" data-act="pe_imp">Import a list</button><button class="btn" data-act="pe_match">Who for this brief?</button></div>`:''}
-  <div class="chips">${['All',...statusList()].map(s=>`<button class="chip" data-act="pe_f" data-id="${esc(s)}" aria-pressed="${f===s}">${esc(s)}${s==='All'?'':' ('+n(s)+')'}</button>`).join('')}</div>
-  <div class="g2" style="margin-top:8px"><input type="text" id="pe_q" value="${esc(S.pq||'')}" placeholder="Search by name, email, type or strength" aria-label="Search people"><select id="pe_r" aria-label="Type"><option>All</option>${RL.map(x=>`<option ${r===x?'selected':''}>${esc(x)}</option>`).join('')}</select></div>${types}${clEditor('statuses','Statuses a person can have',statusList(),CST,x=>P.some(p=>p.status===x),'Add a status, for example Looking for photographers')}</section>
-  ${groups||'<section class="box"><div class="empty">Nobody matches. Change the filter or add a person.</div></section>'}`;
-};
-const _pt7v41=ptExtra7;
-ptExtra7=async function(a,id,el){
-  if(EDIT){
-    if(a==='cr_add'){const i=$('#cr_new'),v=crTidy(i&&i.value);
-      if(!v){toast('Type the name of the new type first.');return true}
-      if(roleList().some(r=>r.toLowerCase()===v.toLowerCase())){toast(v+' is already a type.');return true}
-      await act('Add type: '+v,()=>save('kit','croles',{id:'croles',type:'meta',roles:[...crCustom(),v]}));render();toast('Added the type '+v+'.');return true}
-    if(a==='cr_rm'){if(people().some(p=>(p.roles||[]).includes(id))){toast('Someone still has this type. Change their type first.');return true}
-      await act('Remove type: '+id,()=>save('kit','croles',{id:'croles',type:'meta',roles:crCustom().filter(r=>r!==id)}));render();toast('Removed the type '+id+'.');return true}
-    if(a==='cl_add'||a==='cl_rm'){const k=el.dataset.k,M={statuses:[statusList,x=>people().some(p=>p.status===x)],stages:[stageList,x=>asgs().some(q=>q.stage===x)],kinds:[kindList,x=>asgs().some(q=>q.kind===x)]}[k];if(!M) return true;
-      if(a==='cl_add'){const v=crTidy(($('#cl_new_'+k)||{}).value);
-        if(!v){toast('Type the name first.');return true}
-        if(M[0]().some(x=>x.toLowerCase()===v.toLowerCase())){toast(v+' is already there.');return true}
-        await act('Add: '+v,()=>patch('kit','clists',{id:'clists',type:'meta',[k]:[...clGet(k),v]}));render();toast('Added '+v+'.');return true}
-      if(M[1](id)){toast('Something still uses this. Change it first.');return true}
-      await act('Remove: '+id,()=>patch('kit','clists',{id:'clists',type:'meta',[k]:clGet(k).filter(x=>x!==id)}));render();toast('Removed '+id+'.');return true}
-  }
-  return _pt7v41(a,id,el);
-};
-document.addEventListener('keydown',e=>{const t=e.target;if(!t||!t.matches) return;
-  if(e.key==='Enter'&&t.matches('.pcard')){e.preventDefault();t.click()}
-  if(e.key==='Enter'&&t.id==='cr_new'){e.preventDefault();const b=document.querySelector('[data-act=cr_add]');if(b) b.click()}
-  if(e.key==='Enter'&&/^cl_new_/.test(t.id||'')){e.preventDefault();const b=document.querySelector('[data-act=cl_add][data-k="'+t.id.slice(7)+'"]');if(b) b.click()}});
-
-const _vAssign41=vAssign;
-vAssign=function(){
-  const A=asgs(),f=S.af||'Open',SL=stageList(),KL=kindList();
-  const L=A.filter(a=>f==='All'||(f==='Open'?a.stage!=='Published':a.stage===f)).sort((a,b)=>(a.due||'9')<(b.due||'9')?-1:1);
-  const n=s=>A.filter(a=>a.stage===s).length;
-  return `<section class="box"><h2>Assignments <small>${A.length}</small></h2><p class="meta">Every piece from first pitch to publication, with who is writing, shooting or styling it.</p>
-  ${EDIT?`<div class="row" style="margin:8px 0"><button class="btn pri" data-act="as_new">New assignment</button><button class="btn" data-act="pe_match">Who for this brief?</button></div>`:''}
-  <div class="chips">${['Open',...SL,'All'].map(s=>`<button class="chip" data-act="as_f" data-id="${esc(s)}" aria-pressed="${f===s}">${esc(s)}${s==='Open'||s==='All'?'':' ('+n(s)+')'}</button>`).join('')}</div>
-  ${clEditor('stages','Stages a piece can be in',SL,[...STAGE_PRE,...ASTG],x=>A.some(a=>a.stage===x),'Add a stage, for example Looking for a stylist')}
-  ${clEditor('kinds','Types of piece',KL,AKIND,x=>A.some(a=>a.kind===x),'Add a type, for example Podcast')}</section>
-  <section class="box">${L.map(a=>{const w=a.cid?cname(a.cid):'',np=(a.rounds||[]).filter(r=>r.status==='Pitched').length,ni=(a.rounds||[]).filter(r=>r.status==='Invited').length;
-    return `<div class="pt" data-act="openasg" data-id="${a.id}" tabindex="0" role="button"><div class="pth"><b>${esc(a.title)}</b><span class="pill ${pillSt(a.stage)}">${esc(a.stage)}</span></div><div class="meta"><span>${esc(a.kind)}</span>${a.linkId?`<span>For ${esc(linkLabel(a.linkId))}</span>`:''}${w?`<span>${esc(w)}</span>`:ni||np?`<span>${ni} invited, ${np} pitched</span>`:''}${a.due?`<span>Due ${esc(fmt(a.due))}</span>`:''}${paidTxt(a)?`<span class="pill ${a.paid?'ok':'gold'}">${paidTxt(a)}</span>`:''}</div></div>`}).join('')||'<div class="empty">No assignments here. Start one when a piece needs a writer.</div>'}</section>`;
-};
-
-/* ---------- v43: CANEX comes back as a networking event, with Afreximbank for January ---------- */
-async function ensureV43(){
-  if(!db||!OWNER()||lsGet('tllj_seed_v43')||!S.pipe.length) return;
-  try{
-    if(!S.events.some(e=>/canex/i.test(e.name||''))){
-      const id=uid('e');
-      await save('events',id,{id,name:'CANEX WKND 2026',start:'2026-11-05',end:'2026-11-08',where:'Lagos (the Wole Soyinka Centre for Cultural and Creative Arts, at the National Theatre)',who:'Fatimah, Praise',reach:'Afreximbank and the people around its Creative Africa Nexus (CANEX) programme.',how:'Networking only. Fatimah and Praise have signed up.',status:'Fatimah and Praise registered for networking',note:'No press pass and no media-partnership pitch this time. Note who you meet and what they care about. The Afreximbank approach starts in January 2027 (see Afreximbank, hidden until 4 January).'});
-    }
-    const af=S.pipe.find(p=>/^Afreximbank$/i.test(p.group));
-    if(af){
-      const line='CANEX WKND 2026 (5 to 8 Nov, Lagos): Fatimah and Praise registered for networking only. The media-partnership approach waits for January 2027. Write down who they meet there.';
-      const add=(af.notes||'').includes('registered for networking')?{}:{notes:(af.notes?af.notes+'\n':'')+line};
-      await patch('pipe',af.id,{...add,next:'January 2027: start with Emmy Kasbit, using what Fatimah and Praise learn at CANEX WKND.'});
-    }
-    lsSet('tllj_seed_v43','1');
-    toast('CANEX is back as a networking event, with Afreximbank for January.');
-  }catch(e){}
-}
-
-/* ---------- v44: Met someone, call log, Documents, week in review, big Today buttons ---------- */
-const CAN_LOG=()=>EDIT||CONTRIB;
-const dlgOpen=(html,col)=>{const d=$('#dlg');d.innerHTML=html;d.dataset.col=col;d.dataset.id='';if(!d.open) d.showModal()};
-const radioChips=(name,items,sel)=>`<div class="chips" role="radiogroup">${items.map(([v,l])=>`<label class="chip ck"><input type="radio" name="${name}" value="${esc(String(v))}" ${String(sel)===String(v)?'checked':''}> ${esc(l)}</label>`).join('')}</div>`;
-const hiddenNow=p=>p.hideUntil&&p.hideUntil>TODAY&&!p.hideOff;
-
-/* --- Met someone --- */
-function openMet(){
-  const evs=S.events.filter(e=>e.start&&e.end&&e.end>=addDays(TODAY,-1)&&e.start<=addDays(TODAY,1));
-  const sp=S.pipe.slice().sort((a,b)=>a.group<b.group?-1:1);
-  dlgOpen(`<h2 style="margin-bottom:4px">Met someone</h2><p class="meta">About a minute. It saves the contact, notes the meeting on the sponsor and sets a follow-up.</p>
-  <div class="fld"><label for="mt_nm">Their name</label><input type="text" id="mt_nm" autocomplete="off"></div>
-  <div class="g2"><div class="fld"><label for="mt_co">Company, from your list</label><select id="mt_co"><option value="">Not on the list</option>${sp.map(p=>`<option value="${p.id}">${esc(p.group)}${hiddenNow(p)?' (hidden until '+esc(fmt(p.hideUntil))+')':''}</option>`).join('')}</select></div>
-  <div class="fld"><label for="mt_cn">Or type the company</label><input type="text" id="mt_cn" autocomplete="off"></div></div>
-  <div class="fld"><label for="mt_ln">What did they say or care about?</label><textarea id="mt_ln" style="min-height:70px"></textarea></div>
-  <div class="fld"><label>Follow up</label>${radioChips('mt_fu',[[2,'In 2 days'],[7,'In a week'],[14,'In 2 weeks'],[0,'No follow-up']],7)}</div>
-  <details class="more" id="mt_more"><summary>Add email, phone, role, or change where</summary>
-  <div class="g2"><div class="fld"><label for="mt_ro">Their role</label><input type="text" id="mt_ro" autocomplete="off"></div>
-  <div class="fld"><label for="mt_ev">Where</label><select id="mt_ev">${evs.map(e=>`<option value="${esc(e.name)}">${esc(e.name)}</option>`).join('')}<option value="">Somewhere else</option></select></div></div>
-  <div class="g2"><div class="fld"><label for="mt_em">Email</label><input type="text" id="mt_em" inputmode="email" autocomplete="off"></div>
-  <div class="fld"><label for="mt_ph">Phone or WhatsApp</label><input type="text" id="mt_ph" inputmode="tel" autocomplete="off"></div></div></details>
-  <div class="row stick"><button class="btn pri" data-act="met_save">Save</button><button class="btn" data-act="ptclose">Cancel</button></div>`,'met');
-  setTimeout(()=>{const i=$('#mt_nm');if(i) i.focus()},60);
-}
-async function metSave(){
-  const v=i=>(($(i)||{}).value||'').trim(),nm=v('#mt_nm'),co=v('#mt_co'),cn=v('#mt_cn'),ln=v('#mt_ln'),ro=v('#mt_ro'),em=v('#mt_em'),ph=v('#mt_ph'),evn=v('#mt_ev');
-  const fr=document.querySelector('input[name=mt_fu]:checked'),days=fr?+fr.value:0;
-  if(!nm){toast('Add their name.');return}
-  if(!co&&!cn){toast('Pick a company or type one.');return}
-  let pid=co,made=false;
-  if(!pid){const m=S.pipe.find(p=>String(p.group).toLowerCase()===cn.toLowerCase());pid=m?m.id:''}
-  const where=evn?' at '+evn:'';
-  await act('Met '+nm,async()=>{
-    if(!pid){made=true;pid=uid('p');await save('pipe',pid,{id:pid,n:Math.max(0,...S.pipe.map(p=>p.n||0))+1,group:cn,tab:'Nigeria',category:'Met in person',score:3,chance:'Possible',size:'Bigger',owner:'Sade',status:'Contact found',when:'Second wave',first:nm+(ro?', '+ro:''),next:'',nextDate:'',propose:'',why:ln||'Met in person.',notes:'Met '+nm+where+' on '+fmt(TODAY)+'.',outcome:''})}
-    await addContact(pid,{name:nm,role:ro,email:em,phone:ph,route:'Met in person'+where});
-    await addLog(pid,{type:'Meeting',date:TODAY,summary:nm+(ro?' ('+ro+')':'')+': '+(ln||'met in person')+where});
-    if(days>0){const due=addDays(TODAY,days),text='Follow up with '+nm+(ln?': '+ln.slice(0,80):'');
-      if(EDIT){const id=uid('fu');await save('kit',id,{id,type:'followup',text,due,repeat:0,pipeId:pid,who:nm,done:false,created:TODAY,mode:'Both'})}
-      else{const p=get('pipe',pid);if(p&&(!p.nextDate||p.nextDate>due)) await patch('pipe',pid,{next:text,nextDate:due})}}
-  });
-  $('#dlg').close();render();toast(made?nm+' saved, with '+cn+' as a new lead.':nm+' saved on '+linkName(pid)+'.');
-}
-
-/* --- One-tap call log --- */
-const CALL_OUT=[['int','Spoke, and they are interested','Send them the proposal',3],['prop','Asked for a proposal','Send the proposal',3],['mtg','Meeting booked','Meeting',7],['later','Not now, try later','Check in again',30],['none','No answer','Call again',2],['no','Said no','',0]];
-function openCall(pid){
-  const p=get('pipe',pid);if(!p) return;
-  const cs=S.contacts.filter(c=>c.pipeId===pid);
-  dlgOpen(`<h2 style="margin-bottom:6px">Log a call: ${esc(p.group)}</h2>
-  <div class="fld"><label>How did it go?</label>${radioChips('cl_out',CALL_OUT.map(o=>[o[0],o[1]]),'')}</div>
-  <div class="fld"><label for="cl_wh">Who did you speak to?</label><input type="text" id="cl_wh" list="cl_wl" value="" autocomplete="off"><datalist id="cl_wl">${cs.map(c=>`<option value="${esc(c.name)}">`).join('')}</datalist></div>
-  <div class="fld"><label for="cl_nt">What was said (optional)</label><textarea id="cl_nt" style="min-height:60px"></textarea></div>
-  <div class="fld"><label for="cl_nx">Next step</label><input type="text" id="cl_nx" value="${esc(p.next||'')}"></div>
-  <div class="fld"><label for="cl_nd">Next step date</label><input type="date" id="cl_nd" value="${esc(p.nextDate||'')}"><div class="chips">${[[1,'Tomorrow'],[3,'In 3 days'],[7,'In a week'],[14,'In 2 weeks']].map(([n,l])=>`<button type="button" class="chip" data-act="call_day" data-n="${n}">${l}</button>`).join('')}</div></div>
-  <div class="row" style="margin-top:10px"><button class="btn pri" data-act="call_save" data-id="${pid}">Save call</button><button class="btn" data-act="ptclose">Cancel</button></div>`,'call');
-}
-async function callSave(pid){
-  const p=get('pipe',pid),o=document.querySelector('input[name=cl_out]:checked');if(!p) return;
-  if(!o){toast('Pick how the call went.');return}
-  const def=CALL_OUT.find(x=>x[0]===o.value),v=i=>(($(i)||{}).value||'').trim(),who=v('#cl_wh'),nt=v('#cl_nt'),nx=v('#cl_nx'),nd=v('#cl_nd');
-  const summary=def[1]+(who?' with '+who:'')+(nt?'. '+nt:'');
-  await act('Call: '+p.group,async()=>{
-    await addLog(pid,{type:'Call',date:TODAY,summary});
-    if(o.value==='no') await patch('pipe',pid,{status:'Declined',outcome:'Said no on a call, '+fmt(TODAY)+(nt?'. '+nt:''),next:'',nextDate:''});
-    else await patch('pipe',pid,{next:nx,nextDate:nd});
-  });
-  $('#dlg').close();render();toast(o.value==='no'?'Logged. '+p.group+' is marked Declined.':'Call logged'+(nd?'. Next step on '+fmt(nd)+'.':'.'));
-}
-const _openSponsor44=openSponsor;
-openSponsor=function(id,keep){
-  _openSponsor44(id,keep);
-  const p=get('pipe',id),f=$('#dlg #frm');if(!p||!f||$('#callrow')||!CAN_LOG()) return;
-  f.insertAdjacentHTML('beforebegin',`<div class="row" id="callrow" style="margin:8px 0"><button class="btn pri" data-act="call_open" data-id="${id}">Log a call</button><button class="btn" data-act="met_open">Met someone here</button></div>`);
-};
-
-/* --- Documents --- */
-function docMatch(name){
-  const n=String(name).toLowerCase().replace(/[^a-z0-9]+/g,' ');let best=null,bl=0;
-  S.pipe.forEach(p=>{const w=String(p.group).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean)[0]||'';if(w.length>=4&&n.includes(w)&&w.length>bl){best=p;bl=w.length}});
-  return best;
-}
-function vDocs(){
-  const by={};S.kit.filter(k=>k.type==='file').forEach(f=>{const g=f.pipeId||'general';(by[g]=by[g]||[]).push(f)});
-  const ids=Object.keys(by).filter(g=>g==='general'||get('pipe',g)||ptr(g)).sort((a,b)=>String(by[b].map(f=>f.at).sort().pop()).localeCompare(String(by[a].map(f=>f.at).sort().pop())));
-  const nm=g=>g==='general'?'General':linkName(g);
-  const up=EDIT?`<div class="fld" style="margin-top:8px"><label for="doc_for">Attach to</label><select id="doc_for"><option value="">Match by file name</option><option value="general">General, not tied to a sponsor</option>${S.pipe.slice().sort((a,b)=>a.group<b.group?-1:1).map(p=>`<option value="${p.id}">${esc(p.group)}</option>`).join('')}</select></div>
-  <input type="file" id="docup" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" aria-label="Add documents"><p class="meta">Up to 700 KB each. Matching reads the sponsor's first word in the file name, so “Leadway - Day Pack.pdf” goes to Leadway.</p>`:'';
-  return `<section class="box"><h2>Documents <small>${S.kit.filter(k=>k.type==='file'&&ids.includes(k.pipeId||'general')).length}</small></h2><p class="meta">Every research document and pack, in one place. Anyone with access to the desk can open them. Files stay in your private database, not on the public website.</p>${up}</section>
-  ${ids.map(g=>`<section class="box"><h2>${esc(nm(g))} <small>${by[g].length}</small></h2>${by[g].slice().sort((a,b)=>String(b.at).localeCompare(String(a.at))).map(f=>`<div class="ptrow doc"><span class="pn"><b style="overflow-wrap:anywhere">${esc(f.name)}</b><span class="meta">${esc(kb(f.size||0))} · ${esc(f.at?fmt(f.at):'')}${f.by?' · '+esc(f.by):''}</span></span><span class="docact"><button class="btn sm pri" data-act="docdl" data-id="${f.id}">Open</button>${g!=='general'?`<button class="btn sm" data-act="${get('pipe',g)?'opensp':'openpt'}" data-id="${g}">Sponsor</button>`:''}${OWNER()?`<button class="btn sm" data-act="docrm" data-id="${f.id}">Remove</button>`:''}</span></div>`).join('')}</section>`).join('')||'<section class="box"><div class="empty">No documents yet. Add the Leadway Day Pack and research above.</div></section>'}`;
-}
-async function docUpload(inp){
-  const files=[...inp.files],sel=($('#doc_for')||{}).value||'',miss=[];inp.value='';
-  for(const f of files){const pid=sel||((docMatch(f.name)||{}).id)||'';if(!pid){miss.push(f.name);continue}await fupload(f,pid)}
-  if(miss.length) toast('Pick who '+miss.join(', ')+(miss.length>1?' are':' is')+' for, then add '+(miss.length>1?'them':'it')+' again.');
-  render();
-}
-
-/* --- Week in review for Fatimah --- */
-const WK_LAB={'Email sent':['email sent','emails sent'],'Email received':['reply received','replies received'],'Call':['call','calls'],'Meeting':['meeting','meetings'],'Note':['note','notes']};
-function weekText(){
-  const since=addDays(TODAY,-6),nxt=addDays(TODAY,7),days=Math.max(0,dd(TODAY,END));
-  const logs=S.log.filter(l=>l.date>=since&&l.date<=TODAY),byP={};
-  logs.forEach(l=>{const g=(get('pipe',l.pipeId)||{}).group;if(!g) return;const o=byP[g]=byP[g]||{};o[l.type]=(o[l.type]||0)+1});
-  const moves=Object.entries(byP).map(([g,o])=>'- '+g+': '+Object.entries(o).map(([t,n])=>{const L=WK_LAB[t]||[t.toLowerCase(),t.toLowerCase()+'s'];return n+' '+(n===1?L[0]:L[1])}).join(', '));
-  const fuDone=S.kit.filter(k=>k.type==='followup'&&k.done&&k.doneAt>=since).length;
-  const live=S.pipe.filter(p=>LIVE.includes(p.status)).length,signed=S.pipe.filter(p=>p.status==='Agreed').length;
-  const nextP=S.pipe.filter(p=>p.nextDate&&p.nextDate>TODAY&&p.nextDate<=nxt&&!FINAL.includes(p.status)&&!hiddenNow(p)).sort((a,b)=>a.nextDate<b.nextDate?-1:1).map(p=>'- '+fmt(p.nextDate)+': '+p.group+(p.next?', '+shortV(p.next):''));
-  const nextF=S.kit.filter(k=>k.type==='followup'&&!k.done&&k.due&&k.due>TODAY&&k.due<=nxt).sort((a,b)=>a.due<b.due?-1:1).map(k=>'- '+fmt(k.due)+': '+String(k.text).slice(0,100));
-  const nextE=S.events.filter(e=>e.start>=TODAY&&e.start<=nxt).sort((a,b)=>a.start<b.start?-1:1).slice(0,5).map(e=>'- '+evDates(e)+': '+e.name);
-  const nxtAll=[...nextE,...nextP.slice(0,6),...nextF.slice(0,6)];
-  const pend=drafts().filter(d=>d.status==='pending').length,dec=S.decisions.filter(d=>!d.answer&&!d.archived);
-  const you=[];if(pend) you.push(pend+(pend===1?' draft is':' drafts are')+' waiting for your approval in the desk');
-  if(dec.length) you.push(dec.length+(dec.length===1?' decision is':' decisions are')+' still open ('+dec.slice(0,3).map(d=>shortV(d.decision)).join('; ')+')');
-  return `Hi Fatimah,
-
-Here is the week, ${fmt(since)} to ${fmt(TODAY)}.
-
-${days} day${days===1?'':'s'} to ${DL()}. Signed so far: ${signed}. In live conversation: ${live}.
-
-What moved
-${moves.length?moves.join('\n'):'- Nothing was logged this week.'}${fuDone?'\n- '+fuDone+(fuDone===1?' follow-up':' follow-ups')+' closed':''}
-
-Coming up next week
-${nxtAll.length?nxtAll.join('\n'):'- Nothing is scheduled yet.'}
-
-${you.length?'On your side: '+you.join(', and ')+'.':'Nothing is waiting on you this week.'}${SIGN}`;
-}
-function openWeek(){
-  dlgOpen(`<h2 style="margin-bottom:4px">Week in review</h2><p class="meta">Built from what you logged this week. Edit anything before it goes.</p><textarea id="wk_t" style="min-height:340px;width:100%">${esc(weekText())}</textarea>
-  <div class="row" style="margin-top:10px"><button class="btn pri" data-act="wk_send">Email Fatimah</button><button class="btn" data-act="wk_copy">Copy</button><button class="btn" data-act="ptclose">Close</button></div>`,'week');
-}
-
-/* --- Today: big one-tap buttons --- */
-function nmBtns(r){
-  const k=r.kind,id=r.b[1],b=(a,l,c)=>`<button class="btn ${c||''}" data-act="${a}" data-id="${id}">${l}</button>`;
-  if(k==='Follow-up') return b('fudone','Done','pri')+b('fusent','Sent')+b('fureply','Replied')+b('funore','No reply')+b('snz_fu','Snooze');
-  if(r.b[0]==='opensp') return b('opensp','Open','pri')+b('call_open','Log a call')+b('snz_sp','Snooze');
-  if(r.b[0]==='outopen') return `<button class="btn pri" data-act="outopen" data-id="${id}" data-k="${r.b[3]}">${r.b[2]}</button>`;
-  if(r.b[0]==='edit'&&r.b[3]==='tasks') return `<button class="btn pri" data-act="edit" data-id="${id}" data-col="tasks">Open</button>`+b('snz_t','Snooze');
-  return `<button class="btn pri" data-act="${r.b[0]}" data-id="${id}">${r.b[2]}</button>`;
-}
-vNextMoves=function(){
-  if(!EDIT) return '';
-  const R=nextMoves();S._nm=R.slice(0,5).filter(r=>r.b[0]==='outopen').map(r=>r.b[1]);
-  const n=R.filter(r=>r.d<=TODAY).length,hr=new Date().getHours(),g=hr<12?'Good morning':hr<17?'Good afternoon':'Good evening';
-  const line=n?`${g}, Sade. ${n===1?'1 thing needs':n+' things need'} you today.`:R.length?`${g}, Sade. Nothing is due today; ${R.length===1?'one thing is':R.length+' things are'} coming up.`:`${g}, Sade. Nothing is due. A good time to move something forward.`;
-  return `<section class="box nm"><h2>${esc(line)}</h2>${R.length?`<p class="meta" style="margin:0 0 6px">Your next moves, most urgent first. The full lists are below.</p>`+R.slice(0,5).map(r=>`<div class="ptrow nmr ${r.d<TODAY?'late':''}"><span class="pill">${r.kind}</span><b>${esc(shortV(r.t))}</b><span class="meta" style="flex:1">${r.sub?esc(shortV(r.sub))+' · ':''}<span class="${r.tag.c==='warn'?'late-t':''}">${esc(r.tag.t+(tm(r.tm)?', '+tm(r.tm):''))}</span></span><div class="nmact">${nmBtns(r)}</div></div>`).join('')+(R.length>5?`<p class="meta" style="margin:6px 0 0">+${R.length-5} more below.</p>`:''):''}<p class="meta" style="margin:10px 0 0">Met someone, or want to send Fatimah the week? <button class="btn sm" data-act="met_open">Met someone</button> <button class="btn sm" data-act="wk_open">Week in review</button></p></section>`;
-};
-const _vToday44=vToday;
-vToday=function(){
-  const fri=EDIT&&MODE!=='p'&&MODE!=='c'&&pd(TODAY).getDay()===5;
-  return (fri?`<div class="banner" role="status">It is Friday. Send Fatimah the week in review. <button class="btn sm pri" data-act="wk_open">Write it</button></div>`:'')+_vToday44();
-};
-
-/* --- Floating "Met someone" button --- */
-function ensureFab(){
-  let b=document.getElementById('metfab');
-  if(!b){b=document.createElement('button');b.id='metfab';b.type='button';b.className='btn pri';b.setAttribute('data-act','met_open');b.textContent='Met someone';document.body.appendChild(b)}
-  b.hidden=!(CAN_LOG()&&S.pipe.length);document.body.dataset.fab=b.hidden?'':'1';
-}
-const _render44=render;
-render=function(){const r=_render44.apply(this,arguments);try{ensureFab()}catch(e){}return r};
-
-/* --- Events --- */
-document.addEventListener('click',async e=>{
-  const el=e.target.closest&&e.target.closest('[data-act]');if(!el) return;
-  const a=el.dataset.act,id=el.dataset.id;
-  try{
-    if(a==='docdl'){await fdownload(id);return}
-    if(!CAN_LOG()) return;
-    if(a==='met_open'){openMet();return}
-    if(a==='met_save'){await metSave();return}
-    if(a==='call_open'){openCall(id);return}
-    if(a==='call_day'){const d=$('#cl_nd');if(d) d.value=addDays(TODAY,+el.dataset.n);return}
-    if(a==='call_save'){await callSave(id);return}
-    if(!EDIT) return;
-    if(a==='wk_open'){openWeek();return}
-    if(a==='wk_copy'){const t=($('#wk_t')||{}).value||'';try{await navigator.clipboard.writeText(t);toast('Copied.')}catch(x){const ta=$('#wk_t');if(ta){ta.select();document.execCommand('copy');toast('Copied.')}}return}
-    if(a==='wk_send'){const t=($('#wk_t')||{}).value||'';if(!t.trim()) return;const ok=await sendMail({to:EML.Fatimah(),subject:'Week in review: sponsorships, '+fmt(TODAY),text:t});if(ok){$('#dlg').close()}return}
-    if(a==='docrm'){await fremove(id);render();return}
-    if(a==='snz_fu'){await act('Snooze',()=>patch('kit',id,{due:addDays(TODAY,1)}));render();toast('Moved to tomorrow.');return}
-    if(a==='snz_sp'){await act('Snooze',()=>patch('pipe',id,{nextDate:addDays(TODAY,1)}));render();toast('Moved to tomorrow.');return}
-    if(a==='snz_t'){await act('Snooze',()=>patch('tasks',id,{due:addDays(TODAY,1)}));render();toast('Moved to tomorrow.');return}
-  }catch(err){toast('Something went wrong: '+(err.message||err))}
-});
-document.addEventListener('change',e=>{
-  const t=e.target;if(!t) return;
-  if(t.name==='cl_out'){const o=CALL_OUT.find(x=>x[0]===t.value);if(!o) return;const nx=$('#cl_nx'),nd=$('#cl_nd');if(nx) nx.value=o[2];if(nd) nd.value=o[3]?addDays(TODAY,o[3]):''}
-  if(t.id==='docup'&&EDIT&&t.files&&t.files.length) docUpload(t);
-});
 
 /* ---------- v32: templates, inline events, de-duplication ---------- */
 const PTPLS=[['media','Media-partner offer'],['collab','Collaboration proposal'],['press','Press access and coverage request'],['thanks','Coverage follow-up']];
@@ -2696,7 +2291,7 @@ const REGIONS=['Nigeria','Africa','Global'];
 const optsOf=(k,base)=>[...new Set([...base,...S.pipe.map(p=>p[k]).filter(Boolean)])];
 function fieldsFor(col){return fieldsFor0(col).map(f=>typeof f[2]==='string'&&f[2]==='sel:Sade,Fatimah,Both'?[f[0],f[1],'sel:'+OWNERS().join(',')]:f)}
 function fieldsFor0(col){
-  if(col==='pipe') return [['group','Sponsor group','text'],['tab','Region','sel:'+REGIONS.join(',')],['category','Category','text'],['score','Score (higher comes first)','text'],['chance','Chance of a yes','sel:'+optsOf('chance',['Likely','Feasible','Possible','Aspirational']).join(',')],['size','Size','sel:'+optsOf('size',['Big','Bigger','Biggest']).join(',')],['when','When to approach','sel:'+optsOf('when',['Start now','Second wave','Long-term target']).join(',')],['owner','Owner','sel:Sade,Fatimah,Both'],['first','Write to first','area'],['propose','Propose first','area'],['why','Why they should care','area']];
+  if(col==='pipe') return [['group','Sponsor group','text'],['tab','Region','sel:'+REGIONS.join(',')],['category','Category','text'],['score','Score (higher comes first)','text'],['chance','Chance of a yes','sel:'+optsOf('chance',['Likely','Feasible','Possible','Big dream']).join(',')],['size','Size','sel:'+optsOf('size',['Big','Bigger','Biggest']).join(',')],['when','When to approach','sel:'+optsOf('when',['Start now','Second wave','Long-term target']).join(',')],['owner','Owner','sel:Sade,Fatimah,Both'],['first','Write to first','area'],['propose','Propose first','area'],['why','Why they should care','area']];
   if(col==='contacts') return [['name','Name','text'],['role','Role','text'],['email','Email','text'],['phone','Phone','text'],['route','Route in','area']];
   if(col==='decisions') return [['n','Number','text'],['decision','Decision','text'],['proposed','Proposed answer','area'],['why','Why it matters','area']];
   return FIELDS[col];
@@ -2815,16 +2410,15 @@ function vBalance(){
 }
 function vSponsors0(){
   const sel=(o,v)=>o.map(x=>`<option ${x===v?'selected':''}>${esc(x)}</option>`).join('');
-  const ch=optsOf('chance',['Likely','Feasible','Possible','Aspirational']);
+  const ch=optsOf('chance',['Likely','Feasible','Possible','Big dream']);
   return `<p class="meta" style="margin-bottom:12px">${S.pipe.length} sponsor groups. Change any cell and it saves. A change that affects something else warns you first.</p>`+REGIONS.map(r=>{
     const a=S.pipe.filter(p=>p.tab===r).sort((x,y)=>y.score-x.score);
     return `<section class="box"><h2>${r} <small>${a.length} group${a.length===1?'':'s'} · ${a.filter(p=>ACTIVE.includes(p.status)).length} active</small></h2>
     <div class="row" style="margin-bottom:8px"><button class="btn pri sm" data-act="newsp" data-id="${r}">Add to ${r}</button></div>
-    <div class="tbl"><table><tr><th>Sponsor</th><th>Category</th><th>Score</th><th>Chance</th><th>Owner</th><th>Status</th><th>Editor’s approval</th><th>Editor’s note</th><th></th></tr>
+    <div class="tbl"><table><tr><th>Sponsor</th><th>Category</th><th>Score</th><th>Chance</th><th>Owner</th><th>Status</th><th></th></tr>
     ${a.map(p=>`<tr><td><input type="text" data-cell="pipe" data-id="${p.id}" data-k="group" value="${esc(p.group)}" aria-label="Sponsor"></td><td><input type="text" data-cell="pipe" data-id="${p.id}" data-k="category" value="${esc(p.category)}" aria-label="Category"></td><td><input type="text" style="width:56px" data-cell="pipe" data-id="${p.id}" data-k="score" value="${esc(p.score)}" aria-label="Score"></td>
     <td><select data-cell="pipe" data-id="${p.id}" data-k="chance" aria-label="Chance">${sel(ch,p.chance)}</select></td><td><select data-cell="pipe" data-id="${p.id}" data-k="owner" aria-label="Owner">${sel(OWNERS(),p.owner)}</select></td><td><select data-cell="pipe" data-id="${p.id}" data-k="status" aria-label="Status">${sel(STATUSES,p.status)}</select></td>
-    <td><select data-cell="pipe" data-id="${p.id}" data-k="edApproval" aria-label="Editor’s approval" ${edCan()?'':'disabled'}>${sel(EDAP,edVal(p))}</select></td><td><input type="text" style="min-width:160px" data-cell="pipe" data-id="${p.id}" data-k="edNote" value="${esc(p.edNote||'')}" aria-label="Editor’s note" ${edCan()?'':'disabled'}></td>
-    <td style="white-space:nowrap"><button class="btn sm" data-act="edit" data-col="pipe" data-id="${p.id}">Open</button> <button class="btn sm" data-act="editfull" data-id="${p.id}">All fields</button> ${EDIT?`<button class="btn sm del" data-act="rmsp" data-id="${p.id}">Remove</button>`:''}</td></tr>`).join('')||'<tr><td colspan="9" class="empty">No sponsors here yet.</td></tr>'}
+    <td style="white-space:nowrap"><button class="btn sm" data-act="edit" data-col="pipe" data-id="${p.id}">Open</button> <button class="btn sm" data-act="editfull" data-id="${p.id}">All fields</button> ${EDIT?`<button class="btn sm del" data-act="rmsp" data-id="${p.id}">Remove</button>`:''}</td></tr>`).join('')||'<tr><td colspan="7" class="empty">No sponsors here yet.</td></tr>'}
     </table></div></section>`}).join('');
 }
 
@@ -3205,7 +2799,7 @@ async function startApp(env){
   $('#signout').hidden=!env.auth;
   render();hashGo();setTimeout(welcome,700);
   if(!db) return;
-  for(const c of COLS){db.collection(c).onSnapshot(s=>{S[c]=s.docs.map(d=>({...d.data(),id:d.id}));S.loaded[c]=true;softRender();if(EDIT&&!ASSIST&&!S.fixed&&['tasks','pipe','decisions','kit','evsug','activity'].every(k=>S.loaded[k])&&S.pipe.length){S.fixed=true;fixWording().then(()=>ensureRecords()).then(()=>ensureFocus()).then(()=>ensureFiles()).then(()=>ensureGov()).then(()=>ensureNoAlcohol()).then(()=>ensureAudience()).then(()=>ensureRates()).then(()=>ensureV25()).then(()=>ensureV26()).then(()=>ensureV27()).then(()=>ensureV28()).then(()=>ensureV29()).then(()=>ensureV30()).then(()=>ensureV35()).then(()=>ensureV36()).then(()=>ensureV40()).then(()=>ensureV43()).then(()=>{pruneActivity();return dailyEvents()})}},e=>toast('Could not load '+c+': '+(e.code||e.message||'')))}
+  for(const c of COLS){db.collection(c).onSnapshot(s=>{S[c]=s.docs.map(d=>({...d.data(),id:d.id}));S.loaded[c]=true;softRender();if(EDIT&&!ASSIST&&!S.fixed&&['tasks','pipe','decisions','kit','evsug','activity'].every(k=>S.loaded[k])&&S.pipe.length){S.fixed=true;fixWording().then(()=>ensureRecords()).then(()=>ensureFocus()).then(()=>ensureFiles()).then(()=>ensureGov()).then(()=>ensureNoAlcohol()).then(()=>ensureAudience()).then(()=>ensureRates()).then(()=>ensureV25()).then(()=>ensureV26()).then(()=>ensureV27()).then(()=>ensureV28()).then(()=>ensureV29()).then(()=>ensureV30()).then(()=>ensureV35()).then(()=>ensureV36()).then(()=>{pruneActivity();return dailyEvents()})}},e=>toast('Could not load '+c+': '+(e.code||e.message||'')))}
 }
 function lsGet(k){try{return localStorage.getItem(k)||''}catch(e){return ''}}
 function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}

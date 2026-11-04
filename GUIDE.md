@@ -165,36 +165,3 @@ Open a sponsor and use **Hide for now**. Pick 1 week, 1 month, 3 months, until 4
 **Sent mail.** Activity, at the top, lists every email sent from the desk: date, recipient, subject and what happened. "Sent by the mailer" means the Apps Script mailer sent it. "Opened in your mail app" or "Opened in Gmail" means the desk opened the draft and you pressed Send there, so check your Sent folder to be sure.
 
 **Push notifications (free Firebase plan).** Everyone with desk access opens Settings, then Notifications, then Turn on for this device. It needs two values in firebase-config.js: `messagingSenderId` (inside the firebase block) and `vapidKey` (the web push key from Firebase, Project settings, Cloud Messaging, Web configuration). The Apps Script in Code.gs does the sending: the daily digest, Fatimah's answers, and a draft waiting for Fatimah. On iPhone, add the desk to the Home Screen first. Run `testPush` in Apps Script to send yourself a test.
-
-## Editor's approval (v39)
-
-Every sponsor has an **Editor's approval** (Not yet reviewed, Approved, Approved with conditions, Not approved) and an **Editor's note**. Fatimah and Sade set them in the sponsor window or in the Sponsors table. Praise sees them and cannot change them. Pipeline cards show a pill once a sponsor is reviewed, and Pipeline has a filter for it.
-
-## List update of 4 November 2026 (v40)
-
-The first time Sade opens the desk after this update, it applies Fatimah's notes once: Big dream is now Aspirational, new sponsors are added (cars, aviation, hotels, a members' arts society, tourism boards, banks), Ikoyi Club, AnapJets and Coca-Cola are moved down with her reasons in the Editor's note, Mìlíkì is marked Declined, CANEX comes off the plan, and Afreximbank is hidden until 4 January 2027.
-
-## v41: your own types, statuses and stages, and a clearer People page
-
-- **Add your own contributor types.** On People, under "Types of contributor", type a name (for example Illustrator) and press Add type. It appears in the filter, in the Add a person form and in "Who for this brief?". You can also type a new type while adding or editing a person.
-- **Add your own statuses for people.** Under "Statuses a person can have", add one (for example Looking for photographers). It appears as a filter button and in the person's Status list.
-- **Add your own stages for assignments.** On Assignments, under "Stages a piece can be in", add one (for example Looking for a stylist). Two are ready for you: Looking for a writer and Looking for a photographer. Types of piece (Article, Photography, Video, Styling) can be added to in the same way.
-- **Removing.** A type, status or stage you added shows a small x when nothing uses it.
-- **People are grouped by where they are with us.** Active, Test sent, Contacted, New and your own statuses are open, with each person's types, strengths, email, phone and a short note visible. Keep on file and Declined are folded away until you open them. Searching or filtering opens everything.
-- **Email button on each card** for anyone with an email address.
-- Upload `index.html`, `sw.js` and `GUIDE.md`. Nothing changes in Firebase, Apps Script or the config.
-
-## v43: CANEX is back, as a networking event
-
-- **CANEX WKND 2026** (5 to 8 November, Lagos) is on Events again, with Fatimah and Praise registered for networking only. There is no press pass and no media-partnership pitch this time.
-- **Afreximbank** stays hidden until 4 January 2027. Its notes now say the approach waits for January and to write down who they meet at CANEX.
-- Runs once, the first time you open the desk as owner after the upload.
-
-## v44: Met someone, call log, Documents, week in review, bigger buttons
-
-- **Met someone.** The round button at the bottom right of every screen. Type a name, pick or type the company, write what they said, choose a follow-up and press Save. It saves the contact, notes the meeting on the sponsor and sets the follow-up. A company that is not on your list becomes a new lead. Hidden sponsors, such as Afreximbank, can still be picked. Fatimah can use it too; her follow-up becomes the sponsor's next step.
-- **Log a call.** Open a sponsor and press Log a call, or use the button on Today. Pick how it went, say who you spoke to, set the next step and date, and Save. Said no marks the sponsor Declined.
-- **Documents.** A new tab for everyone with desk access. Add files (up to 700 KB each); the sponsor is found from the first word of the file name. Files stay in your private database, never on the public website.
-- **Week in review.** On Today, press Week in review (it is also a banner on Fridays). It writes a short message for Fatimah from what you logged and what is coming. Edit it, then press Email Fatimah or Copy.
-- **Bigger buttons on Today.** Each next move has its own buttons: Done, Sent, Replied, No reply and Snooze for follow-ups; Open, Log a call and Snooze for sponsors. They are large on a phone.
-- Upload `index.html`, `styles.css`, `sw.js` and `GUIDE.md`. Nothing changes in Firebase, Apps Script or the config.
