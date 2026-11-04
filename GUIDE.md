@@ -165,3 +165,11 @@ Open a sponsor and use **Hide for now**. Pick 1 week, 1 month, 3 months, until 4
 **Sent mail.** Activity, at the top, lists every email sent from the desk: date, recipient, subject and what happened. "Sent by the mailer" means the Apps Script mailer sent it. "Opened in your mail app" or "Opened in Gmail" means the desk opened the draft and you pressed Send there, so check your Sent folder to be sure.
 
 **Push notifications (free Firebase plan).** Everyone with desk access opens Settings, then Notifications, then Turn on for this device. It needs two values in firebase-config.js: `messagingSenderId` (inside the firebase block) and `vapidKey` (the web push key from Firebase, Project settings, Cloud Messaging, Web configuration). The Apps Script in Code.gs does the sending: the daily digest, Fatimah's answers, and a draft waiting for Fatimah. On iPhone, add the desk to the Home Screen first. Run `testPush` in Apps Script to send yourself a test.
+
+## Editor's approval (v39)
+
+Every sponsor has an **Editor's approval** (Not yet reviewed, Approved, Approved with conditions, Not approved) and an **Editor's note**. Fatimah and Sade set them in the sponsor window or in the Sponsors table. Praise sees them and cannot change them. Pipeline cards show a pill once a sponsor is reviewed, and Pipeline has a filter for it.
+
+## List update of 4 November 2026 (v40)
+
+The first time Sade opens the desk after this update, it applies Fatimah's notes once: Big dream is now Aspirational, new sponsors are added (cars, aviation, hotels, a members' arts society, tourism boards, banks), Ikoyi Club, AnapJets and Coca-Cola are moved down with her reasons in the Editor's note, Mìlíkì is marked Declined, CANEX comes off the plan, and Afreximbank is hidden until 4 January 2027.

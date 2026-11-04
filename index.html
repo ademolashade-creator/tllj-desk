@@ -301,7 +301,7 @@ function vPipeline(){
   const whens=['All',...new Set(S.pipe.map(x=>x.when))];
   const lanes=STATUSES.filter(s=>S.fs==='All'||s===S.fs).map(s=>{
     const c=p.filter(x=>x.status===s).sort((a,b)=>b.score-a.score);
-    return `<div class="lane"><h3>${esc(s)} <span class="pill">${c.length}</span></h3>${c.map(x=>{const cf=conflictFor(x).length&&ACTIVE.includes(x.status);return `<div class="card" data-act="edit" data-col="pipe" data-id="${x.id}"><b>${esc(x.group)}</b><div class="meta"><span>Score ${esc(x.score)}</span><span>${esc(x.owner)}</span><span>${esc(x.category||x.tab)}</span>${cf?'<span class="pill warn">Same category active</span>':''}</div>${x.next?`<div class="meta">${x.nextDate?esc(fmt(x.nextDate))+': ':''}${esc(x.next.slice(0,110))}${x.next.length>110?'…':''}</div>`:''}</div>`}).join('')||'<div class="empty">None</div>'}</div>`}).join('');
+    return `<div class="lane"><h3>${esc(s)} <span class="pill">${c.length}</span></h3>${c.map(x=>{const cf=conflictFor(x).length&&ACTIVE.includes(x.status);return `<div class="card" data-act="edit" data-col="pipe" data-id="${x.id}"><b>${esc(x.group)}</b><div class="meta"><span>Score ${esc(x.score)}</span><span>${esc(x.owner)}</span><span>${esc(x.category||x.tab)}</span>${cf?'<span class="pill warn">Same category active</span>':''}${edPill(x)}</div>${x.next?`<div class="meta">${x.nextDate?esc(fmt(x.nextDate))+': ':''}${esc(x.next.slice(0,110))}${x.next.length>110?'…':''}</div>`:''}</div>`}).join('')||'<div class="empty">None</div>'}</div>`}).join('');
   const opt=(a,v)=>a.map(o=>`<option ${o===v?'selected':''}>${esc(o)}</option>`).join('');
   return `<div class="filters"><select id="fo" aria-label="Owner">${opt(owners,S.fo)}</select><select id="fw" aria-label="When to approach">${opt(whens,S.fw)}</select><select id="fs" aria-label="Status">${opt(['All',...STATUSES],S.fs)}</select><button class="btn pri" data-act="new" data-col="pipe">Add sponsor</button></div><div class="board">${lanes}</div>`;
 }
@@ -1807,6 +1807,91 @@ drAnswer=async function(id,r,note,by){
   if(d) pushNotify('sade',(r==='approved'?'Approved: ':r==='changes'?'Changes asked: ':'Declined: ')+(d.title||d.kind||'draft'),'Fatimah answered in the desk.',deskLink(id));
 };
 
+
+/* ---------- v39: editor's approval and editor's note on sponsors ---------- */
+const EDAP=['Not yet reviewed','Approved','Approved with conditions','Not approved'];
+const edVal=p=>EDAP.includes(p&&p.edApproval)?p.edApproval:'Not yet reviewed';
+const edCan=()=>OWNER()||CONTRIB;
+const edPill=p=>{const v=edVal(p);return v==='Not yet reviewed'?'':`<span class="pill ${v==='Approved'?'ok':v==='Not approved'?'warn':''}">Editor: ${esc(v)}</span>`};
+function edSecHtml(p){
+  const can=edCan();
+  return `<div class="sec" id="edsec"><h3>Editor’s approval</h3>
+  <div class="fld"><label for="ed_sel">Does this sponsor fit The Leisurely Life Journal?</label><select id="ed_sel" ${can?'':'disabled'}>${EDAP.map(o=>`<option ${o===edVal(p)?'selected':''}>${o}</option>`).join('')}</select></div>
+  <div class="fld"><label for="ed_note">Editor’s note</label><textarea id="ed_note" style="min-height:60px" ${can?'':'disabled'} placeholder="${can?'Why it fits, or what must change':''}">${esc(p.edNote||'')}</textarea></div>
+  ${can?`<div class="row"><button type="button" class="btn sm pri" data-act="ednote" data-id="${p.id}">Save editor’s note</button></div>`:'<p class="meta">Only Fatimah and Sade change this.</p>'}</div>`;
+}
+const _openSponsor39=openSponsor;
+openSponsor=function(id,keep){
+  _openSponsor39(id,keep);
+  const p=get('pipe',id),f=$('#dlg #frm');if(!p||!f||$('#edsec')) return;
+  f.insertAdjacentHTML('beforebegin',edSecHtml(p));
+};
+async function edSave(id){
+  const p=get('pipe',id),sel=$('#ed_sel'),nt=$('#ed_note');if(!p||!sel||!nt||!edCan()) return;
+  await act('Editor’s approval: '+p.group,()=>patch('pipe',id,{edApproval:sel.value,edNote:nt.value.trim()}));
+  toast('Saved.');render();
+}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-act="ednote"]');if(b) edSave(b.dataset.id)});
+document.addEventListener('change',e=>{const t=e.target;if(t&&t.id==='ed_sel'){const d=$('#dlg'),b=d&&d.querySelector('[data-act="ednote"]');if(b) edSave(b.dataset.id)}});
+const _vPipeline39=vPipeline;
+vPipeline=function(){
+  const f=S.fe||'All',keep=S.pipe;
+  if(f!=='All') S.pipe=keep.filter(p=>edVal(p)===f);
+  let h;try{h=_vPipeline39()}finally{S.pipe=keep}
+  h=h.replace('<button class="btn pri" data-act="new" data-col="pipe">Add sponsor</button>',`<select id="fe" aria-label="Editor’s approval">${['All',...EDAP].map(o=>`<option ${o===f?'selected':''}>${esc(o)}</option>`).join('')}</select><button class="btn pri" data-act="new" data-col="pipe">Add sponsor</button>`);
+  return h;
+};
+document.addEventListener('change',e=>{const t=e.target;if(t&&t.id==='fe'){S.fe=t.value;render()}});
+
+
+/* ---------- v40: Fatimah's list notes (4 Nov 2026) ---------- */
+async function ensureV40(){
+  if(!db||!OWNER()||lsGet('tllj_seed_v40')||!S.pipe.length) return;
+  try{
+    const byG=g=>S.pipe.find(p=>p.group===g);
+    const N=()=>Math.max(0,...S.pipe.map(p=>p.n||0))+1;
+    // 1. Big dream is now Aspirational
+    for(const p of S.pipe.filter(p=>p.chance==='Big dream')) await patch('pipe',p.id,{chance:'Aspirational'});
+    // 2. Fatimah's notes on existing sponsors
+    const fx=async(g,patchObj)=>{const p=byG(g);if(p) await patch('pipe',p.id,patchObj)};
+    await fx('Atedo Peterside and AnapJets',{when:'Second wave',score:4,edNote:'Fatimah, 4 Nov: not sure about this one and wants to know why we chose it. Reason on the desk: its chairman, Atedo Peterside, already supports ART X. VistaJet, ExecuJet and Air France are being researched as alternatives in the same category.'});
+    await fx('Ikoyi Club 1938',{when:'Long-term target',score:3,edNote:'Fatimah, 4 Nov: Ikoyi Club has dropped in quality. Moved down the list.'});
+    await fx('Mìlíkì Private Club',{status:'Declined',outcome:'Mìlíkì has said it does not want to partner (Fatimah, 4 Nov 2026).',next:'',nextDate:'',edNote:'Fatimah, 4 Nov: Mìlíkì has said they do not want to partner.'});
+    await fx('Coca-Cola HBC',{status:'On hold',when:'Long-term target',score:1,edApproval:'Not approved',edNote:'Fatimah, 4 Nov: Coca-Cola does not share our values. We say we want people to live a higher quality life, and high-sugar soft drinks do not support that.',next:'',nextDate:''});
+    await fx('Robert Taylor Media clients',{edNote:'Fatimah, 4 Nov: we have Banke Kuku. Prove to her that we can deliver one piece, then expand from there.'});
+    await fx('Mercedes-Benz',{when:'Second wave',score:6,why:'Mercedes-Benz was the VIP Experience partner of Lagos Gallery Weekend in March 2026, supplying luxury shuttle cars and hosting a programme at its showroom. A car brand already backing the Lagos gallery calendar is a real prospect, not a dream.'});
+    // 3. New sponsors
+    const add=async o=>{if(byG(o.group)) return;const id=uid('p');await save('pipe',id,{id,n:N(),tab:'Nigeria',size:'Bigger',owner:'Sade',status:'Not started',when:'Second wave',nextDate:'',notes:'Added from Fatimah’s list, 4 Nov 2026.',outcome:'',...o})}
+    await add({group:'Polanco',category:'Cars',score:4,chance:'Possible',first:'Fatimah to confirm the exact name and the dealer.',next:'Ask Fatimah for the full name of the brand or dealer, then research it.',propose:'Confirm the brand first.',why:'Added at Fatimah’s request as another car brand. A first search found no Nigerian car brand under this name, so the spelling or full name needs checking.'});
+    await add({group:'Porsche (Nigeria)',category:'Cars',score:5,chance:'Possible',first:'Porsche in Nigeria, route to find. Ask who ran the Luxe Eko project.',next:'Find who markets Porsche in Nigeria, then propose a feature on Nigerian creatives.',propose:'A sponsored feature or short series on Nigerian creatives, priced from the rate card.',why:'Porsche has backed Nigerian creatives before: the Luxe Eko Porsche Assisted Lifestyle Project with Chisom Njoku, and a BoF x Porsche project with Omoyemi Akerele (2023). Ask when Luxe Eko ran.'});
+    await add({group:'Air France Nigeria',category:'Travel and aviation',score:6,chance:'Feasible',first:'Jean-Luc Mevellec, General Manager, Air France Nigeria (named at the January 2026 exhibition).',next:'Write to the Air France Nigeria office with a proposal for a Paris-Lagos travel and culture feature.',propose:'A sponsored travel and culture feature tied to the Lagos and Paris creative calendar (template A, scaled to one piece).',why:'Air France marked 80 years in Nigeria with an exhibition at Alliance Française Lagos (16 Jan to 7 Feb 2026), and describes itself as an ambassador of French culture. Daily Lagos to Paris flights. Ask what it pays for in Nigeria.'});
+    await add({group:'VistaJet',category:'Travel and aviation',score:4,chance:'Possible',first:'VistaJet West Africa team, route to find.',next:'Find the VistaJet contact for West Africa, then ask who decides on editorial partnerships.',propose:'A sponsored feature for high-net-worth readers. First ask whether VistaJet sponsors publications.',why:'VistaJet held its first West Africa roadshow with a static display in Lagos, Accra, Abidjan and Abuja, and places aircraft in the region. Its customers are corporations, businesses and governments. No sponsorship of a publication has been found. Ask.'});
+    await add({group:'ExecuJet Africa',category:'Travel and aviation',score:4,chance:'Possible',first:'ExecuJet Lagos, route to find. Fatimah wrote "executive jet": confirm this is the one she means.',next:'Confirm with Fatimah that this is the right company, then find the contact.',propose:'A sponsored feature on private aviation for high-net-worth readers.',why:'ExecuJet Africa runs a private aviation base at Lagos airport with a hangar, VIP customs and handling, serving corporate clients and high-net-worth individuals. No sponsorship or partnership has been found. Ask.'});
+    await add({group:'Legend Hotel Lagos Airport',category:'Hotels',score:5,chance:'Possible',first:'The hotel’s marketing team, route to find.',next:'Find the hotel’s marketing contact and ask about sponsored features or a hosted stay.',propose:'A hosted stay for a contributor, or a sponsored feature (template A).',why:'Curio Collection by Hilton, with 54 rooms, art and sculpture in the interiors, a sky lounge and a board room. It sits at the airport and targets business travellers. No arts programme or sponsorship has been found. Ask.'});
+    await add({group:'Mbari Kola',category:'Clubs',tab:'Nigeria',score:6,chance:'Feasible',first:'Ugoma Ebilah, founder (curator and founder of BLOOM Art).',next:'Write to Ugoma Ebilah about covering the society’s programme, and ask how members and partners are chosen.',propose:'A commissioned feature or members’ edition on the society’s programme (template C).',why:'A private arts society in Ikoyi with a gallery, library, residencies and a members’ lounge, launched in 2026. It matches TLLJ’s readers. No partners are named in the launch coverage and membership fees are not published. Ask.'});
+    await add({group:'Stanbic IBTC Pension Managers',category:'Banking and finance',score:6,chance:'Feasible',first:'Stanbic IBTC Pension Managers marketing team, route to find.',next:'Research in full tomorrow (sponsor of the day).',propose:'A sponsored series tied to ART X week.',why:'Stanbic IBTC Pension Managers has sponsored ART X Lagos year after year, and backs creative programmes for young people.'});
+    await add({group:'South African Tourism (Visit South Africa)',tab:'Africa',category:'Government and tourism',score:5,chance:'Possible',first:'South African Tourism office in Lagos, route to find.',next:'Find the South African Tourism contact in Lagos and ask about media partnerships.',propose:'A sponsored travel and culture feature for Nigerian readers.',why:'South Africa is working to win back Nigerian travellers: a South Africa Tourism Connect event in Ikoyi agreed joint marketing, with South African Airways and Nigerian travel associations involved. Nigeria is one of its major source markets.'});
+    await add({group:'Ghana Tourism Authority (Visit Ghana)',tab:'Africa',category:'Government and tourism',score:5,chance:'Possible',first:'Ghana Tourism Authority, route to find.',next:'Find the Ghana Tourism Authority contact for the Nigerian market.',propose:'A sponsored travel and culture feature on Accra for Nigerian readers.',why:'About 176,000 Nigerians visited Ghana in 2025, making Nigeria its second-largest source of visitors (Radio Nigeria, 22 July 2026). Ghana’s deputy tourism minister called Nigeria one of its most important markets.'});
+    await add({group:'Visit Rwanda (Rwanda Development Board)',tab:'Africa',category:'Government and tourism',score:3,chance:'Aspirational',size:'Biggest',first:'Rwanda Development Board, route to find.',next:'Find out whether Rwanda Development Board works with African media or only with sports partners.',propose:'Start with a travel feature. First ask whether it backs African publications.',why:'Visit Rwanda spends heavily, but its deals found so far are with sports teams (Aston Villa, PSG, Atletico Madrid, LA Clippers). No arts or media sponsorship in Nigeria has been found. Ask.'});
+    await add({group:'Ecobank Nigeria',category:'Banking and finance',score:4,chance:'Possible',first:'Ecobank Nigeria marketing team, route to find.',next:'Check what Ecobank backs in the arts, then find the contact.',propose:'A sponsored feature tied to the +234 Art Fair, which is held at the Ecobank Pan African Centre.',why:'The +234 Art Fair is held at the Ecobank Pan African Centre in Lagos, and a headline links Ecobank to its second edition. Ask what Ecobank pays for.'});
+    // 4. Partner ideas
+    const addP=async o=>{if(S.kit.some(k=>k.type==='partner'&&k.name===o.name)) return;const id=uid('pt');await save('kit',id,{id,type:'partner',stage:'idea',pkgs:[],eventId:'',accred:'Not needed',attendees:'',contact:'',nextDate:'',ask:'',wrap:{},outcomes:[],created:TODAY,...o})}
+    await addP({name:'Lagos Gallery Weekend',kind:'Media partner',next:'Ask Art Report Africa about media partnership for the March 2027 edition.',notes:'Presented by Art Report Africa, with +234 Art Fair and the Lagos State Commissioner for Tourism, Arts and Culture as special support. Mercedes-Benz was VIP Experience partner in 2026. The 2026 edition ran 4 to 8 March. 2027 dates: ask.'});
+    await addP({name:'Alliance Française Lagos',kind:'Collaboration',next:'Ask Marc Brebant, Director, about a collaboration on the French-Nigerian cultural calendar.',notes:'Hosted the Air France 80 years exhibition (Jan 2026) and is the Lagos Gallery Weekend hub. Marc Brebant is named as Director.'});
+    // 5. CANEX comes off the plan
+    const cx=/canex|creative africa nexus/i;
+    for(const t of S.tasks.filter(t=>cx.test(t.action||'')||cx.test(String(t.target||'')))) await remove('tasks',t.id);
+    for(const e of S.events.filter(e=>cx.test(e.name||''))) await remove('events',e.id);
+    for(const e of (S.evsug||[]).filter(e=>cx.test(e.name||''))) await remove('evsug',e.id);
+    for(const k of S.kit.filter(k=>(k.type==='followup'&&cx.test(k.text||''))||(k.type==='partner'&&cx.test(k.name||'')))) await remove('kit',k.id);
+    // 6. Afreximbank is stored for 2027
+    const af=S.pipe.find(p=>/^Afreximbank$/i.test(p.group));
+    if(af&&!af.hideUntil) await patch('pipe',af.id,{hideUntil:'2027-01-04',hideNote:'2027 media-partnership relationship. Start with Emmy Kasbit. Research is saved.',hideAck:false});
+    lsSet('tllj_seed_v40','1');
+    toast('List updated with Fatimah’s notes.');
+  }catch(e){}
+}
+
 /* ---------- v32: templates, inline events, de-duplication ---------- */
 const PTPLS=[['media','Media-partner offer'],['collab','Collaboration proposal'],['press','Press access and coverage request'],['thanks','Coverage follow-up']];
 const ptpls=()=>S.kit.filter(k=>k.type==='ptpl');
@@ -2291,7 +2376,7 @@ const REGIONS=['Nigeria','Africa','Global'];
 const optsOf=(k,base)=>[...new Set([...base,...S.pipe.map(p=>p[k]).filter(Boolean)])];
 function fieldsFor(col){return fieldsFor0(col).map(f=>typeof f[2]==='string'&&f[2]==='sel:Sade,Fatimah,Both'?[f[0],f[1],'sel:'+OWNERS().join(',')]:f)}
 function fieldsFor0(col){
-  if(col==='pipe') return [['group','Sponsor group','text'],['tab','Region','sel:'+REGIONS.join(',')],['category','Category','text'],['score','Score (higher comes first)','text'],['chance','Chance of a yes','sel:'+optsOf('chance',['Likely','Feasible','Possible','Big dream']).join(',')],['size','Size','sel:'+optsOf('size',['Big','Bigger','Biggest']).join(',')],['when','When to approach','sel:'+optsOf('when',['Start now','Second wave','Long-term target']).join(',')],['owner','Owner','sel:Sade,Fatimah,Both'],['first','Write to first','area'],['propose','Propose first','area'],['why','Why they should care','area']];
+  if(col==='pipe') return [['group','Sponsor group','text'],['tab','Region','sel:'+REGIONS.join(',')],['category','Category','text'],['score','Score (higher comes first)','text'],['chance','Chance of a yes','sel:'+optsOf('chance',['Likely','Feasible','Possible','Aspirational']).join(',')],['size','Size','sel:'+optsOf('size',['Big','Bigger','Biggest']).join(',')],['when','When to approach','sel:'+optsOf('when',['Start now','Second wave','Long-term target']).join(',')],['owner','Owner','sel:Sade,Fatimah,Both'],['first','Write to first','area'],['propose','Propose first','area'],['why','Why they should care','area']];
   if(col==='contacts') return [['name','Name','text'],['role','Role','text'],['email','Email','text'],['phone','Phone','text'],['route','Route in','area']];
   if(col==='decisions') return [['n','Number','text'],['decision','Decision','text'],['proposed','Proposed answer','area'],['why','Why it matters','area']];
   return FIELDS[col];
@@ -2410,15 +2495,16 @@ function vBalance(){
 }
 function vSponsors0(){
   const sel=(o,v)=>o.map(x=>`<option ${x===v?'selected':''}>${esc(x)}</option>`).join('');
-  const ch=optsOf('chance',['Likely','Feasible','Possible','Big dream']);
+  const ch=optsOf('chance',['Likely','Feasible','Possible','Aspirational']);
   return `<p class="meta" style="margin-bottom:12px">${S.pipe.length} sponsor groups. Change any cell and it saves. A change that affects something else warns you first.</p>`+REGIONS.map(r=>{
     const a=S.pipe.filter(p=>p.tab===r).sort((x,y)=>y.score-x.score);
     return `<section class="box"><h2>${r} <small>${a.length} group${a.length===1?'':'s'} · ${a.filter(p=>ACTIVE.includes(p.status)).length} active</small></h2>
     <div class="row" style="margin-bottom:8px"><button class="btn pri sm" data-act="newsp" data-id="${r}">Add to ${r}</button></div>
-    <div class="tbl"><table><tr><th>Sponsor</th><th>Category</th><th>Score</th><th>Chance</th><th>Owner</th><th>Status</th><th></th></tr>
+    <div class="tbl"><table><tr><th>Sponsor</th><th>Category</th><th>Score</th><th>Chance</th><th>Owner</th><th>Status</th><th>Editor’s approval</th><th>Editor’s note</th><th></th></tr>
     ${a.map(p=>`<tr><td><input type="text" data-cell="pipe" data-id="${p.id}" data-k="group" value="${esc(p.group)}" aria-label="Sponsor"></td><td><input type="text" data-cell="pipe" data-id="${p.id}" data-k="category" value="${esc(p.category)}" aria-label="Category"></td><td><input type="text" style="width:56px" data-cell="pipe" data-id="${p.id}" data-k="score" value="${esc(p.score)}" aria-label="Score"></td>
     <td><select data-cell="pipe" data-id="${p.id}" data-k="chance" aria-label="Chance">${sel(ch,p.chance)}</select></td><td><select data-cell="pipe" data-id="${p.id}" data-k="owner" aria-label="Owner">${sel(OWNERS(),p.owner)}</select></td><td><select data-cell="pipe" data-id="${p.id}" data-k="status" aria-label="Status">${sel(STATUSES,p.status)}</select></td>
-    <td style="white-space:nowrap"><button class="btn sm" data-act="edit" data-col="pipe" data-id="${p.id}">Open</button> <button class="btn sm" data-act="editfull" data-id="${p.id}">All fields</button> ${EDIT?`<button class="btn sm del" data-act="rmsp" data-id="${p.id}">Remove</button>`:''}</td></tr>`).join('')||'<tr><td colspan="7" class="empty">No sponsors here yet.</td></tr>'}
+    <td><select data-cell="pipe" data-id="${p.id}" data-k="edApproval" aria-label="Editor’s approval" ${edCan()?'':'disabled'}>${sel(EDAP,edVal(p))}</select></td><td><input type="text" style="min-width:160px" data-cell="pipe" data-id="${p.id}" data-k="edNote" value="${esc(p.edNote||'')}" aria-label="Editor’s note" ${edCan()?'':'disabled'}></td>
+    <td style="white-space:nowrap"><button class="btn sm" data-act="edit" data-col="pipe" data-id="${p.id}">Open</button> <button class="btn sm" data-act="editfull" data-id="${p.id}">All fields</button> ${EDIT?`<button class="btn sm del" data-act="rmsp" data-id="${p.id}">Remove</button>`:''}</td></tr>`).join('')||'<tr><td colspan="9" class="empty">No sponsors here yet.</td></tr>'}
     </table></div></section>`}).join('');
 }
 
@@ -2799,7 +2885,7 @@ async function startApp(env){
   $('#signout').hidden=!env.auth;
   render();hashGo();setTimeout(welcome,700);
   if(!db) return;
-  for(const c of COLS){db.collection(c).onSnapshot(s=>{S[c]=s.docs.map(d=>({...d.data(),id:d.id}));S.loaded[c]=true;softRender();if(EDIT&&!ASSIST&&!S.fixed&&['tasks','pipe','decisions','kit','evsug','activity'].every(k=>S.loaded[k])&&S.pipe.length){S.fixed=true;fixWording().then(()=>ensureRecords()).then(()=>ensureFocus()).then(()=>ensureFiles()).then(()=>ensureGov()).then(()=>ensureNoAlcohol()).then(()=>ensureAudience()).then(()=>ensureRates()).then(()=>ensureV25()).then(()=>ensureV26()).then(()=>ensureV27()).then(()=>ensureV28()).then(()=>ensureV29()).then(()=>ensureV30()).then(()=>ensureV35()).then(()=>ensureV36()).then(()=>{pruneActivity();return dailyEvents()})}},e=>toast('Could not load '+c+': '+(e.code||e.message||'')))}
+  for(const c of COLS){db.collection(c).onSnapshot(s=>{S[c]=s.docs.map(d=>({...d.data(),id:d.id}));S.loaded[c]=true;softRender();if(EDIT&&!ASSIST&&!S.fixed&&['tasks','pipe','decisions','kit','evsug','activity'].every(k=>S.loaded[k])&&S.pipe.length){S.fixed=true;fixWording().then(()=>ensureRecords()).then(()=>ensureFocus()).then(()=>ensureFiles()).then(()=>ensureGov()).then(()=>ensureNoAlcohol()).then(()=>ensureAudience()).then(()=>ensureRates()).then(()=>ensureV25()).then(()=>ensureV26()).then(()=>ensureV27()).then(()=>ensureV28()).then(()=>ensureV29()).then(()=>ensureV30()).then(()=>ensureV35()).then(()=>ensureV36()).then(()=>ensureV40()).then(()=>{pruneActivity();return dailyEvents()})}},e=>toast('Could not load '+c+': '+(e.code||e.message||'')))}
 }
 function lsGet(k){try{return localStorage.getItem(k)||''}catch(e){return ''}}
 function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
