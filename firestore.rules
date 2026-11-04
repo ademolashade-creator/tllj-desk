@@ -1,16 +1,56 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // Everyone must sign in with a Google account whose email is verified.
     function signedIn() { return request.auth != null && request.auth.token.email_verified == true; }
-    function editor() { return signedIn() && request.auth.token.email in ['ademolashade@gmail.com']; }
-    function contributor() { return signedIn() && request.auth.token.email in ['sagirfatimah@gmail.com']; }
+
+    // Sade: full access, including deleting.
+    function editor() { return signedIn() && request.auth.token.email in [
+      'ademolashade@gmail.com',
+      'folashade@theleisurelylifejournal.com'
+    ]; }
+
+    // Fatimah: sees everything, changes sponsors, contacts, events and the outreach log, and answers approvals.
+    function contributor() { return signedIn() && request.auth.token.email in [
+      'fatimah@theleisurelylifejournal.com',
+      'sagirfatimah@gmail.com'
+    ]; }
+
+    // Praise: adds and updates everything except the locked settings. Cannot delete.
+    function assistant() { return signedIn() && request.auth.token.email in [
+      'praise@theleisurelylifejournal.com',
+      'praise.olowookere13@gmail.com'
+    ]; }
+
+    // Read only: Today, Scoreboard, Decisions and Review.
     function viewer() { return signedIn() && request.auth.token.email in ['folashade.tllj@gmail.com']; }
-    function reader() { return editor() || contributor() || viewer(); }
+
+    function reader() { return editor() || contributor() || assistant() || viewer(); }
+
+    // Documents in the kit collection that Praise cannot change.
+    function locked(col, id) { return col == 'kit' && id in ['team', 'target', 'rates', 'terms', 'audience']; }
+
+    // Fatimah may change exactly four fields on a draft that is waiting for her, and nothing else.
+    function approvalOnly() {
+      return resource.data.type == 'draft'
+        && resource.data.status == 'pending'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'note', 'decidedAt', 'decidedBy'])
+        && request.resource.data.status in ['approved', 'changes', 'declined'];
+    }
+
     match /decisions/{id} { allow read, write: if reader(); }
     match /notes/{id} { allow read, write: if reader(); }
+
     match /{col}/{id} {
       allow read: if reader();
-      allow create, update: if editor() || (contributor() && col in ['pipe', 'contacts', 'events', 'log']);
+      allow create: if editor()
+        || (assistant() && !locked(col, id))
+        || (contributor() && col in ['pipe', 'contacts', 'events', 'log']);
+      allow update: if editor()
+        || (assistant() && !locked(col, id))
+        || (contributor() && col in ['pipe', 'contacts', 'events', 'log'])
+        || (contributor() && col == 'kit' && approvalOnly());
       allow delete: if editor();
     }
   }
