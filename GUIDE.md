@@ -236,3 +236,19 @@ The first time Sade opens the desk after this update, it applies Fatimah's notes
 - Tell Tilly what happened lives in one place, the Tilly button at the top. The Ask page keeps check-in, brief and questions.
 - Tilly's automatic daily event search now runs on Mondays only and asks first. Notes that already mention a sponsor or event skip the AI check.
 - Sponsors: a "Research saved" strip lists every sponsor with saved answers. Answers save as you type, so you can switch sponsors without generating a proposal and resume later.
+
+## v49
+
+- Today's next moves now wrap in full instead of cutting off.
+- Click anywhere in a date or time box to open the picker.
+- Research saved sits at the bottom of Sponsors, above Hidden for now. Each sponsor has Send summary to Fatimah, which works whether or not every question is answered.
+- Research this sponsor and Tilly: fill the blanks now ask first. Tilly only fills empty fields.
+- Push to approvals appears on research summaries, generated proposals, the check-out report and assignments. It creates the item in Approvals and sends Fatimah the reminder.
+- Contacts: wider name, email and phone boxes. Find with Tilly is now the sparkle icon with a hover label.
+- Assignments: Type has Add a new type. Contributor lets you pick a person or add a new name.
+- Documents gathers saved proposals, research, approvals and assignment links automatically.
+- Partnerships and Contributors no longer show the sponsor activity report. The period choice stays.
+- Contributors Today: People to contact is gone. Latest changes folds in instead.
+- Every card can be folded with its chevron. The desk remembers it per browser.
+- Balance no longer flags workload. The label Statuses a person can have is now Status.
+- Calendar empty text now says when nothing has synced from Zoho yet.

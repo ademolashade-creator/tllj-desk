@@ -136,6 +136,20 @@ nav button,nav button:hover{padding:8px 12px;font-size:14.5px}
 .aiask{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:60;max-width:min(440px,calc(100vw - 32px));background:var(--card,#fff);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:0 10px 30px rgba(0,0,0,.18)}
 .aiask p{margin:6px 0 10px}
 .rschip[aria-pressed="true"]{border-color:var(--accent);background:var(--gold-soft)}
+
+.nmr>b{overflow-wrap:anywhere}
+.nmr>.meta{white-space:normal;overflow-wrap:anywhere}
+.csum{white-space:normal;overflow:visible;text-overflow:clip}
+.pcard .pn b{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}
+.g2[data-pid]{grid-template-columns:minmax(150px,1.2fr) minmax(220px,1.8fr) minmax(130px,1fr) auto auto;align-items:center}
+@media(max-width:700px){.g2[data-pid]{grid-template-columns:1fr 1fr}.g2[data-pid]>input:nth-child(2){grid-column:1/-1}}
+.fch{margin-left:auto;background:none;border:0;cursor:pointer;color:var(--mute);width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.fch:hover{background:var(--gold-soft)}
+.fch svg{transition:transform .15s}
+section.box.fold-c>.fbody{display:none}
+section.box.fold-c>h2{margin-bottom:0}
+section.box.fold-c .fch svg{transform:rotate(-90deg)}
+section.box[data-fold]>h2{cursor:pointer}
 </style></head><body>
 <div class="wrap">
 <header>
@@ -445,7 +459,7 @@ function vContacts(){
   <section class="box">${list.map(p=>{const cs=contactsOf(p.id);return `<div class="sec" style="margin-top:0;border-top:1px solid var(--line)"><div class="row" style="justify-content:space-between"><b data-act="edit" data-col="pipe" data-id="${p.id}" style="cursor:pointer">${esc(p.group)}</b><span class="pill ${hasContact(p.id)?'ok':'warn'}">${hasContact(p.id)?'Contact entered':'Contact needed'}</span></div>
   <div class="meta">${cs.map(c=>`<span ${EDIT||CONTRIB?`data-act="edit" data-col="contacts" data-id="${c.id}" style="cursor:pointer" title="Click to edit"`:''}>${esc([c.name,c.email,c.phone].filter(Boolean).join(' · '))}</span>`).join(' | ')||'No contact entered'}</div>
   <div class="meta">${EDIT||CONTRIB?`<input type="text" class="ghost" data-cell="pipe" data-id="${p.id}" data-k="first" value="${esc((cs[0]&&cs[0].route)||p.first||'')}" placeholder="Who to write to first, and how" aria-label="Write to first">`:esc((cs[0]&&cs[0].route)||p.first||'')}</div>
-  ${EDIT||CONTRIB?`<div class="g2" style="margin-top:6px" data-pid="${p.id}"><input type="text" placeholder="Name" data-f="n" aria-label="Name"><input type="text" placeholder="Email" data-f="e" aria-label="Email"><input type="text" placeholder="Phone" data-f="p" aria-label="Phone"><button class="btn pri ibs" data-act="quickc" data-id="${p.id}" aria-label="Add contact" title="Add contact"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>${EDIT?`<button class="btn" data-act="findc2" data-id="${p.id}">Find with Tilly</button>`:''}</div>`:''}</div>`}).join('')||'<div class="empty">Every sponsor has a contact entered.</div>'}</section>`;
+  ${EDIT||CONTRIB?`<div class="g2" style="margin-top:6px" data-pid="${p.id}"><input type="text" placeholder="Name" data-f="n" aria-label="Name"><input type="text" placeholder="Email" data-f="e" aria-label="Email"><input type="text" placeholder="Phone" data-f="p" aria-label="Phone"><button class="btn pri ibs" data-act="quickc" data-id="${p.id}" aria-label="Add contact" title="Add contact"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>${EDIT?`<button class="btn ib" data-act="findc2" data-id="${p.id}" title="Find with Tilly" aria-label="Find contact details with Tilly"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg></button>`:''}</div>`:''}</div>`}).join('')||'<div class="empty">Every sponsor has a contact entered.</div>'}</section>`;
 }
 
 function vEvents0(){
@@ -787,7 +801,7 @@ function openSponsor(id,keep){
   <div class="fld"><label for="s_notes">Notes</label><textarea id="s_notes" style="min-height:60px">${esc(p.notes)}</textarea></div><div class="fld"><label for="s_out">Outcome or what was agreed</label><textarea id="s_out" style="min-height:60px">${esc(p.outcome)}</textarea></div>
   <div class="row"><button class="btn pri" type="submit">Save</button><button class="btn" type="button" data-act="close">Close</button><button class="btn" type="button" data-act="editfull" data-id="${id}">Edit all details</button>${EDIT?`<button class="btn" type="button" data-act="mvpt" data-id="${id}">Move to Partnerships</button>`:''}${EDIT?`<button class="btn del" type="button" data-act="rmsp" data-id="${id}">Remove sponsor</button>`:''}</div></form>
   ${fuSponsorHtml(id)}
-  <div class="sec"><h3>Contacts</h3>${EDIT?`<div class="row" style="margin-bottom:6px"><button class="btn sm" type="button" data-act="findc" data-id="${id}">Find contact details with Tilly</button></div><div id="cfind"></div>`:''}${cs.map(c=>`<div class="item"><span></span><div><b>${esc(c.name||'No name')}</b> ${esc(c.role)}<div class="meta">${esc([c.email,c.phone].filter(Boolean).join(' · ')||'No email or phone')}</div><div class="meta"><button class="btn sm" data-act="edit" data-col="contacts" data-id="${c.id}">Edit</button> ${EDIT?`<button class="btn sm del" data-act="delc" data-id="${c.id}" data-p="${id}">Remove</button>`:''}</div></div></div>`).join('')||'<div class="empty">No contact entered.</div>'}
+  <div class="sec"><h3>Contacts</h3>${EDIT?`<div class="row" style="margin-bottom:6px"><button class="btn ib" type="button" data-act="findc" data-id="${id}" title="Find contact details with Tilly" aria-label="Find contact details with Tilly"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg></button></div><div id="cfind"></div>`:''}${cs.map(c=>`<div class="item"><span></span><div><b>${esc(c.name||'No name')}</b> ${esc(c.role)}<div class="meta">${esc([c.email,c.phone].filter(Boolean).join(' · ')||'No email or phone')}</div><div class="meta"><button class="btn sm" data-act="edit" data-col="contacts" data-id="${c.id}">Edit</button> ${EDIT?`<button class="btn sm del" data-act="delc" data-id="${c.id}" data-p="${id}">Remove</button>`:''}</div></div></div>`).join('')||'<div class="empty">No contact entered.</div>'}
    <div class="g2" id="cform"><input type="text" id="cn" placeholder="Name" aria-label="Name"><input type="text" id="cr" placeholder="Role" aria-label="Role"><input type="text" id="ce" placeholder="Email" aria-label="Email"><input type="text" id="cp" placeholder="Phone" aria-label="Phone"></div><div class="row" style="margin-top:6px"><button class="btn" data-act="addcontact" data-id="${id}">Add contact</button></div></div>
   <div class="sec"><h3>Outreach log</h3>${ls.map(l=>`<div class="item"><span></span><div><span class="pill">${esc(l.type)}</span> <b>${esc(fmt(l.date))}</b><div class="meta">${esc(l.summary)}</div><div class="meta">${EDIT?`<button class="btn sm del" data-act="dell" data-id="${l.id}" data-p="${id}">Remove</button>`:''}</div></div></div>`).join('')||'<div class="empty">Nothing logged yet.</div>'}
    <div class="g2"><select id="lt" aria-label="Type">${['Email sent','Email received','Call','Meeting','Note'].map(o=>`<option>${o}</option>`).join('')}</select><input type="date" id="ld" value="${TODAY}" aria-label="Date"></div><input type="text" id="lsum" placeholder="What was said or sent" aria-label="Summary" style="margin-top:6px"><div class="row" style="margin-top:6px"><button class="btn" data-act="addlog" data-id="${id}">Add to log</button></div></div>
@@ -1026,7 +1040,7 @@ function outDue(){
 function vOutcomes(){
   if(!EDIT) return '';const R=outDue().filter(r=>!(S._nm||[]).includes(r.id));if(!R.length) return '';
   const lab={event:'Event',partner:'Partner',pipe:'Sponsor'};
-  return `<section class="box"><h2>What happened? <small>${R.length} waiting</small></h2><p class="meta">These have passed their date. Log the result and the next step so nothing goes quiet.</p>${R.map(r=>`<div class="ptrow"><span class="pill">${lab[r.k]}</span><b>${esc(r.name)}</b><span class="meta" style="flex:1">${esc(r.why)}</span><button class="btn sm pri" data-act="outopen" data-k="${r.k}" data-id="${r.id}">Log outcome</button></div>`).join('')}</section>`;
+  return `<section class="box"><h2>What happened? <small>${R.length} waiting</small></h2><p class="meta">These have passed their date. Log the result and the next step so nothing stalls.</p>${R.map(r=>`<div class="ptrow"><span class="pill">${lab[r.k]}</span><b>${esc(r.name)}</b><span class="meta" style="flex:1">${esc(r.why)}</span><button class="btn sm pri" data-act="outopen" data-k="${r.k}" data-id="${r.id}">Log outcome</button></div>`).join('')}</section>`;
 }
 function vEvOut(){
   const E=S.events.filter(e=>e.outcome&&e.outcome.result).sort((a,b)=>(b.outcome.at||'')<(a.outcome.at||'')?-1:1);if(!E.length) return '';
@@ -1562,7 +1576,7 @@ async function asgSave(){
   if(MONEY()){v.fee=$('#as_f').value.trim();v.paid=$('#as_pd').checked;v.paidOn=v.paid?($('#as_po').value||TODAY):''}
   if(stage==='Published'&&!pub){toast('Add the published link first');return}
   await act((old?'Edit':'New')+' assignment: '+t.slice(0,30),async()=>{
-    await save('kit',id,{...(old||{}),id,type:'assignment',rounds:old?old.rounds:[],cid:old?old.cid:'',...v});
+    await save('kit',id,{...(old||{}),id,type:'assignment',rounds:old?old.rounds:[],cid:($('#as_cn')?$('#as_cn').value:(old?old.cid:'')),...v});
     if(stage==='Published'&&pub&&!covs().some(c=>c.url===pub)){const cv=uid('cv');await save('kit',cv,{id:cv,type:'coverage',title:t,url:pub,where:'Article',date:TODAY,pipeId:v.linkId,pkgId:'',reach:'',notes:(v.credit||((old||{}).cid?'By '+cname(old.cid):''))||''});toast('Logged in Coverage.')}
   });
   $('#dlg').close();render();
@@ -2060,7 +2074,7 @@ vPeople=function(){
   return `<section class="box"><h2>People <small>${P.length}</small></h2><p class="meta">Everyone who works with The Leisurely Life Journal, grouped by where they are with us. Those who need action come first.</p>
   ${EDIT?`<div class="row" style="margin:8px 0"><button class="btn pri" data-act="pe_new">Add a person</button><button class="btn" data-act="pe_imp">Import a list</button><button class="btn" data-act="pe_match">Who for this brief?</button></div>`:''}
   <div class="chips">${['All',...statusList()].map(s=>`<button class="chip" data-act="pe_f" data-id="${esc(s)}" aria-pressed="${f===s}">${esc(s)}${s==='All'?'':' ('+n(s)+')'}</button>`).join('')}</div>
-  <div class="g2" style="margin-top:8px"><input type="text" id="pe_q" value="${esc(S.pq||'')}" placeholder="Search by name, email, type or strength" aria-label="Search people"><select id="pe_r" aria-label="Type"><option>All</option>${RL.map(x=>`<option ${r===x?'selected':''}>${esc(x)}</option>`).join('')}</select></div>${types}${clEditor('statuses','Statuses a person can have',statusList(),CST,x=>P.some(p=>p.status===x),'Add a status, for example Looking for photographers')}</section>
+  <div class="g2" style="margin-top:8px"><input type="text" id="pe_q" value="${esc(S.pq||'')}" placeholder="Search by name, email, type or strength" aria-label="Search people"><select id="pe_r" aria-label="Type"><option>All</option>${RL.map(x=>`<option ${r===x?'selected':''}>${esc(x)}</option>`).join('')}</select></div>${types}${clEditor('statuses','Status',statusList(),CST,x=>P.some(p=>p.status===x),'Add a status, for example Looking for photographers')}</section>
   ${groups||'<section class="box"><div class="empty">Nobody matches. Change the filter or add a person.</div></section>'}`;
 };
 const _pt7v41=ptExtra7;
@@ -2266,7 +2280,7 @@ vNextMoves=function(){
   const R=nextMoves();S._nm=R.slice(0,5).filter(r=>r.b[0]==='outopen').map(r=>r.b[1]);
   const n=R.filter(r=>r.d<=TODAY).length,hr=new Date().getHours(),g=hr<12?'Good morning':hr<17?'Good afternoon':'Good evening';
   const line=n?`${g}, Sade. ${n===1?'1 thing needs':n+' things need'} you today.`:R.length?`${g}, Sade. Nothing is due today; ${R.length===1?'one thing is':R.length+' things are'} coming up.`:`${g}, Sade. Nothing is due. A good time to move something forward.`;
-  return `<section class="box nm"><h2>${esc(line)}</h2>${R.length?`<p class="meta" style="margin:0 0 6px">Your next moves, most urgent first. The full lists are below.</p>`+R.slice(0,5).map(r=>`<div class="ptrow nmr ${r.d<TODAY?'late':''}"><span class="pill">${r.kind}</span><b>${esc(shortV(r.t))}</b><span class="meta" style="flex:1">${r.sub?esc(shortV(r.sub))+' · ':''}<span class="${r.tag.c==='warn'?'late-t':''}">${esc(r.tag.t+(tm(r.tm)?', '+tm(r.tm):''))}</span></span><div class="nmact">${nmBtns(r)}</div></div>`).join('')+(R.length>5?`<p class="meta" style="margin:6px 0 0">+${R.length-5} more below.</p>`:''):''}<p class="meta" style="margin:10px 0 0">Met someone, or want to send Fatimah the week? <button class="btn sm" data-act="met_open">Met someone</button> <button class="btn sm" data-act="wk_open">Week in review</button></p></section>`;
+  return `<section class="box nm"><h2>${esc(line)}</h2>${R.length?`<p class="meta" style="margin:0 0 6px">Your next moves, most urgent first. The full lists are below.</p>`+R.slice(0,5).map(r=>`<div class="ptrow nmr ${r.d<TODAY?'late':''}"><span class="pill">${r.kind}</span><b>${esc(r.t)}</b><span class="meta" style="flex:1">${r.sub?esc(r.sub)+' · ':''}<span class="${r.tag.c==='warn'?'late-t':''}">${esc(r.tag.t+(tm(r.tm)?', '+tm(r.tm):''))}</span></span><div class="nmact">${nmBtns(r)}</div></div>`).join('')+(R.length>5?`<p class="meta" style="margin:6px 0 0">+${R.length-5} more below.</p>`:''):''}<p class="meta" style="margin:10px 0 0">Met someone, or want to send Fatimah the week? <button class="btn sm" data-act="met_open">Met someone</button> <button class="btn sm" data-act="wk_open">Week in review</button></p></section>`;
 };
 const _vToday44=vToday;
 vToday=function(){
@@ -2427,7 +2441,7 @@ function vRQ(p){
   <div class="prog"><i style="width:${st.n?100*done/st.n:0}%"></i></div>
   ${full?`<div class="banner ready" role="status">Every question is answered. ${EDIT?'<button class="btn pri" data-act="rqgen" data-id="'+esc(p.id)+'">Generate proposal</button> ':''}<button class="btn" data-act="rqcopy" data-id="${esc(p.id)}">Copy research pack</button></div>`:`<p class="meta">${EDIT?'Answer every question to unlock Generate proposal. Tilly can draft answers; check each one and its source.':'Read-only here.'} Write Ask where you still need to find something out.</p>`}
   ${!EDIT&&CONTRIB?`<div class="row" style="gap:6px;margin:8px 0"><button class="btn sm" data-act="rsdraft" data-id="${esc(p.id)}" ${S.rsBusy?'disabled':''}>Research this sponsor (draft for Sade)</button></div><p class="meta">Tilly drafts the answers and sends them to Sade as a suggestion. Nothing changes on the desk until Sade approves. Needs your own key in Settings.</p>`:''}
-  ${EDIT?`<div class="row" style="gap:6px;margin:8px 0"><button class="btn sm" data-act="rsfull" data-id="${esc(p.id)}" ${S.rsBusy?'disabled':''}>Research this sponsor</button><button class="btn sm" data-act="rqfillall" data-id="${esc(p.id)}" ${S.rqBusy?'disabled':''}>${S.rqBusy?'Tilly is working…':'Tilly: fill the blanks'}</button><button class="btn sm" data-act="rqcopy" data-id="${esc(p.id)}">Copy research pack</button></div>`:''}
+  ${EDIT?`<div class="row" style="gap:6px;margin:8px 0"><button class="btn sm" data-act="rsfull" data-id="${esc(p.id)}" ${S.rsBusy?'disabled':''}>Research this sponsor</button><button class="btn sm" data-act="rqfillall" data-id="${esc(p.id)}" ${S.rqBusy?'disabled':''}>${S.rqBusy?'Tilly is working…':'Tilly: fill the blanks'}</button><button class="btn sm" data-act="rqcopy" data-id="${esc(p.id)}">Copy research pack</button><button class="btn sm pri" data-act="rqpush" data-id="${esc(p.id)}">Send summary to Fatimah</button></div>`:''}
   ${body||'<div class="empty">No questions on this list.</div>'}${ownH}
   ${EDIT?`<div class="row" style="gap:6px;margin-top:10px"><input type="text" id="rq_new" placeholder="Add a question. {sponsor} becomes the sponsor’s name" style="flex:1" aria-label="New question"><button class="btn" data-act="rqadd">Add question</button></div>`:''}
   ${EDIT&&hid.length?`<details class="more" style="margin-top:8px"><summary>Hidden questions <small>${hid.length}</small></summary>${hid.map(x=>`<div class="row" style="gap:6px;margin:4px 0"><span class="meta" style="flex:1">${esc(rqSub(x.q,p))}</span><button class="btn sm" data-act="rqshow" data-id="${x.id}">Bring back</button></div>`).join('')}</details>`:''}</div>`;
@@ -2689,7 +2703,7 @@ function vCal(){
   const L=calEvs().filter(x=>x.start.slice(0,10)>=TODAY),names=[...new Set(calEvs().map(x=>x.cal))],f=S.calf&&names.includes(S.calf)?S.calf:'All',rows=L.filter(x=>f==='All'||x.cal===f).filter(x=>x.start.slice(0,10)<=addDays(TODAY,45));
   const days=[...new Set(rows.map(x=>x.start.slice(0,10)))];
   const chips=names.length>1?`<div class="seg" role="group" aria-label="Calendar" style="margin-bottom:12px">${['All',...names].map(n=>`<button data-act="calf" data-id="${esc(n)}" aria-pressed="${f===n}">${esc(n)}</button>`).join('')}</div>`:'';
-  return `<section class="box"><h2>Calendar <small>next 45 days, from Sade’s and Fatimah’s calendars. Read only</small></h2>${chips}${days.map(d=>`<h3 class="rqg">${d===TODAY?'Today':esc(fmt(d))}</h3>${rows.filter(x=>x.start.slice(0,10)===d).map(calRow).join('')}`).join('')||'<div class="empty">Nothing on the calendar in the next 45 days.</div>'}</section>`;
+  return `<section class="box"><h2>Calendar <small>next 45 days, from Sade’s and Fatimah’s calendars. Read only</small></h2>${chips}${days.map(d=>`<h3 class="rqg">${d===TODAY?'Today':esc(fmt(d))}</h3>${rows.filter(x=>x.start.slice(0,10)===d).map(calRow).join('')}`).join('')||'<div class="empty">'+(calEvs().length?'Nothing on the calendar in the next 45 days.':'No calendar events have been copied into the desk yet. This page shows only what the Zoho calendar sync brings in. Dates you added under Events are separate, and they appear on the Events tab.')+'</div>'}</section>`;
 }
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-act="calf"]');if(b){S.calf=b.dataset.id;render()}},true);
 const vT45c=vToday;
@@ -2788,6 +2802,7 @@ vAsk=function(){
   return `<div class="askpg"><p class="meta askintro">Ask Tilly for a daily check-in, a briefing or an answer. To tell Tilly what happened, use the Tilly button at the top.</p>${h}</div>`;
 };
 /* Contributors: Today */
+function latest46(){try{return activityIn(addDays(TODAY,-7)).flatMap(a=>a.changes.filter(c=>c.col==='kit').map(c=>{const [k,n]=phrase(c);return `<div class="crow"><span class="cb"><b>${esc(k)}</b><span class="meta">${esc(n)} · ${esc(fmt(fromAt(a.at)))}</span></span></div>`})).slice(0,6)}catch(e){return []}}
 vTodayC=function(){
   const P=people(),A=asgs(),open=A.filter(a=>a.stage!=='Published'),wk=addDays(TODAY,7);
   const over=open.filter(a=>a.due&&a.due<TODAY).sort(byDue),week=open.filter(a=>a.due&&a.due>=TODAY&&a.due<=wk).sort(byDue);
@@ -2804,8 +2819,8 @@ vTodayC=function(){
    +fold('tcWeek','Due this week',week.map(a=>row(a,sub(a))),true)
    +fold('tcWait','Waiting for pitches',wait.map(a=>row(a,(a.rounds||[]).filter(r=>r.status==='Invited').map(r=>cname(r.cid)).join(', ')+' invited')),false)
    +fold('tcPaid','Published and not yet paid',unpaid.map(a=>row(a,cname(a.cid)+(a.fee?', '+a.fee:''))),true)
-   +(newP.length?`<section class="box"><h2>People to contact <small>${newP.length}</small></h2><p class="meta">${newP.slice(0,6).map(p=>esc(p.name)).join(', ')}${newP.length>6?' and '+(newP.length-6)+' more':''}.</p><div class="row"><button class="btn sm" data-act="tab" data-id="people">Open People</button></div></section>`:'');
-  const empty=!over.length&&!week.length&&!pit.length&&!wait.length&&!unpaid.length&&!newP.length;
+   +fold('tcAct','Latest changes',latest46(),false);
+  const empty=!over.length&&!week.length&&!pit.length&&!wait.length&&!unpaid.length;
   return stats+(body||'')+(empty?`<section class="box"><div class="empty">${P.length||A.length?'Nothing needs you today. Open People to start a new assignment.':'No contributors yet. Add a person or import a list.'}</div>${EDIT?'<div class="row"><button class="btn" data-act="tab" data-id="people">Open People</button></div>':''}</section>`:'');
 };
 /* contact import from an email client (vCard or CSV) */
@@ -2905,6 +2920,151 @@ vSponsors=function(){
   const strip=`<section class="box fxs"><h2>Research saved <small>answers save as you type</small></h2><p class="meta">Nothing is lost when you move to another sponsor, and you do not need to generate a proposal first. Choose Pick the sponsor to work on in the box below, or resume one here.</p>${chips?`<div class="row" style="gap:8px;margin-top:8px">${chips}</div>`:'<p class="meta">No research answers saved yet.</p>'}</section>`;
   return h.replace('<section class="box fxs">',strip+'<section class="box fxs">');
 };
+
+/* ---------- v49 ---------- */
+/* a date or time box opens its picker wherever it is clicked */
+document.addEventListener('click',e=>{const t=e.target;if(t&&t.matches&&t.matches('input[type=date],input[type=time]')&&!t.disabled&&!t.readOnly){try{t.showPicker()}catch(x){}}},true);
+
+/* ask before Tilly runs research */
+function askGo47(title,text,go,run){
+  let o=document.getElementById('aiask');if(o) o.remove();
+  o=document.createElement('div');o.id='aiask';o.className='aiask';o.setAttribute('role','dialog');o.setAttribute('aria-label',title);
+  o.innerHTML=`<b>${esc(title)}</b><p class="meta">${esc(text)}</p><div class="row"><button class="btn pri" data-ai="go">${esc(go)}</button><button class="btn" data-ai="no">Not now</button></div>`;
+  document.body.appendChild(o);
+  o.addEventListener('click',async e=>{const b=e.target.closest('[data-ai]');if(!b) return;o.remove();if(b.dataset.ai==='go') await run()});
+}
+window.addEventListener('click',e=>{
+  const b=e.target.closest&&e.target.closest('[data-act="rsfull"],[data-act="rqfillall"]');
+  if(!b||!EDIT||S._ok47) return;
+  e.stopImmediatePropagation();e.preventDefault();
+  const p=get('pipe',b.dataset.id),nm=p?p.group:'this sponsor',full=b.dataset.act==='rsfull';
+  askGo47(full?'Research '+nm+'?':'Fill the blanks for '+nm+'?',(full?'Tilly will search the web and fill only the empty fields and answers.':'Tilly will draft answers for the questions still blank.')+' Anything you have written stays as it is. This uses part of your Gemini quota.',full?'Research now':'Fill the blanks',()=>{S._ok47=true;try{b.click()}finally{S._ok47=false}});
+},true);
+
+/* push to approvals: one path for anything Fatimah should see */
+async function pushAppr47(o){
+  if(!EDIT) return;
+  if(!String(o.body||'').trim()){toast('Nothing to send yet.');return}
+  const id=await newDraft({kind:o.kind||'Proposal',title:o.title,forId:o.forId||'',body:o.body,subject:o.subject||''});
+  try{await drToFatimah(id)}catch(x){console.warn(x)}
+  const d=get('kit',id);
+  if(d&&d.status==='pending') toast('With Fatimah for approval.');
+  else{S.tab='approvals';render();toast('Saved in Approvals. Press Send to Fatimah there.')}
+}
+function rsSummary47(p){
+  const L=[['Why them',p.why],['What we would propose',p.propose],['First contact',p.first],['Next step',p.next]].filter(x=>String(x[1]||'').trim()).map(x=>x[0]+': '+String(x[1]).trim());
+  return 'Sponsor idea: '+p.group+'\n\n'+(L.length?L.join('\n')+'\n\n':'')+rqPack(p);
+}
+document.addEventListener('click',async e=>{
+  const b=e.target.closest&&e.target.closest('[data-act="rqpush"],[data-act="genpush"],[data-act="repush"],[data-act="asgpush"]');
+  if(!b||!EDIT) return;
+  e.stopImmediatePropagation();e.preventDefault();
+  const a=b.dataset.act,id=b.dataset.id;
+  if(a==='rqpush'){const p=get('pipe',id);if(!p) return;await pushAppr47({kind:'Proposal',title:'Sponsor idea: '+p.group,forId:p.id,body:rsSummary47(p)})}
+  if(a==='genpush'){const g=genState(),p=get('pipe',g.pid);await pushAppr47({kind:'Proposal',title:'Proposal draft'+(p?': '+p.group:''),forId:g.pid,body:($('#g_out')||{}).value||g.out})}
+  if(a==='repush'){await pushAppr47({kind:'Brief',title:'Check-out report, '+fmt(TODAY),body:($('#rep')||{}).value})}
+  if(a==='asgpush'){const x=get('kit',id);if(!x) return;await pushAppr47({kind:'Brief',title:'Assignment: '+x.title,forId:x.linkId||'',body:['Assignment: '+x.title,'Type: '+x.kind,'Stage: '+x.stage,x.cid?'Contributor: '+cname(x.cid):'',x.linkId?'For: '+linkLabel(x.linkId):'',x.due?'Due: '+fmt(x.due):'',x.brief?'Brief: '+x.brief:'',x.notes?'Notes: '+x.notes:''].filter(Boolean).join('\n')})}
+},true);
+
+/* Sponsors: research saved sits at the bottom, above Hidden for now */
+const vS47=vSponsors;
+vSponsors=function(){
+  let h=vS47();if(!EDIT) return h;
+  h=h.replace(/<section class="box fxs"><h2>Research saved[\s\S]*?<\/section>/,'');
+  const f=get('kit','focus')||{},items=S.pipe.map(p=>({p,s:rqStat(p)})).filter(x=>x.s.d>0).sort((a,b)=>String(a.p.group).localeCompare(String(b.p.group)));
+  const rows=items.map(({p,s})=>`<div class="ptrow doc"><span class="pn"><b>${esc(p.group)}</b><span class="meta">${s.d} of ${s.n} answered${s.d>=s.n?' · complete':''}</span></span><span class="docact"><button class="btn sm" data-act="fxset" data-id="${esc(p.id)}" aria-pressed="${f.pipeId===p.id}">Resume</button><button class="btn sm pri" data-act="rqpush" data-id="${esc(p.id)}">Send summary to Fatimah</button></span></div>`).join('');
+  const strip=`<section class="box"><h2>Research saved <small>answers save as you type</small></h2><p class="meta">Come back to any sponsor later. When you are ready, send Fatimah a summary of the idea for approval, whether or not every question is answered.</p>${rows||'<p class="meta">No research answers saved yet.</p>'}</section>`;
+  const k='<section class="box"><h2>Hidden for now';
+  return h.indexOf(k)>=0?h.replace(k,strip+k):h+strip;
+};
+
+/* Partnerships and Contributors do not show the sponsor activity report */
+const vAc47=vActivity;
+vActivity=function(){
+  let h=vAc47();
+  if(MODE!=='s'){const per=S.ap||'Last 7 days';
+    h=h.replace(/<section class="box"><h2>Sponsor activity[\s\S]*?<\/section>/,`<section class="box"><h2>Period <small>for the report and the list below</small></h2><div class="filters"><select id="ap" aria-label="Period">${['Today','Last 7 days','Last 30 days','All'].map(o=>`<option ${o===per?'selected':''}>${o}</option>`).join('')}</select></div></section>`)}
+  return h;
+};
+
+/* Documents gathers everything saved elsewhere on the desk */
+const vD47=vDocs;
+vDocs=function(){
+  let h=vD47();const rows=[],sp=id=>get('pipe',id);
+  const btn=(act,id,t)=>`<button class="btn sm pri" data-act="${act}" data-id="${esc(id)}">${t||'Open'}</button>`;
+  S.kit.filter(k=>k.type==='proposal').forEach(k=>{const p=sp(k.pipeId);if(p) rows.push({n:'Proposal for '+p.group,m:'Saved proposal · '+fmt(k.at||TODAY),at:k.at||'',b:btn('opensp',p.id)})});
+  S.kit.filter(k=>k.type==='rqa').forEach(k=>{const p=sp(k.pipeId),n=Object.values(k.a||{}).filter(v=>String(v||'').trim()).length;if(p&&n) rows.push({n:'Research: '+p.group,m:n+' answer'+(n===1?'':'s')+' saved',at:'',b:btn('fxset',p.id)})});
+  drafts().forEach(d=>rows.push({n:d.title||d.kind,m:d.kind+' · '+(DST[d.status]||d.status)+' · '+fmt(d.at||TODAY),at:d.at||'',b:btn('tab','approvals')}));
+  asgs().forEach(a=>[['brief','Brief'],['draft','Draft'],['pub','Published']].forEach(([k,l])=>{if(a[k]) rows.push({n:l+': '+a.title,m:'Assignment link',at:'',b:`<a class="btn sm pri" data-act="none" href="${esc(a[k])}" target="_blank" rel="noopener noreferrer">Open</a>`})}));
+  if(!rows.length) return h;
+  rows.sort((a,b)=>String(b.at).localeCompare(String(a.at)));
+  return h+`<section class="box"><h2>Gathered from the desk <small>${rows.length}</small></h2><p class="meta">Proposals, research, approvals and assignment links appear here on their own as you work. Nothing to upload.</p>${rows.map(r=>`<div class="ptrow doc"><span class="pn"><b style="overflow-wrap:anywhere">${esc(r.n)}</b><span class="meta">${esc(r.m)}</span></span><span class="docact">${r.b}</span></div>`).join('')}</section>`;
+};
+
+/* assignments: add a type, pick or add a contributor */
+const oa47=openAsg;
+openAsg=function(id,draft){
+  oa47(id,draft);if(!EDIT) return;
+  const a=draft||(id?get('kit',id):null)||{},k=$('#as_k'),l=$('#as_l'),row=l&&l.closest('.g2');
+  if(k){k.insertAdjacentHTML('beforeend','<option value="__new">Add a new type…</option>');k.insertAdjacentHTML('afterend','<input type="text" id="as_knew" placeholder="Name the new type" hidden style="margin-top:6px" aria-label="New type">')}
+  if(row) row.insertAdjacentHTML('afterend',`<div class="fld"><label for="as_cn">Contributor</label><select id="as_cn"><option value="">Not assigned yet</option>${people().filter(p=>p.status!=='Declined'||p.id===a.cid).sort((x,y)=>String(x.name).localeCompare(String(y.name))).map(p=>`<option value="${esc(p.id)}" ${a.cid===p.id?'selected':''}>${esc(p.name)}</option>`).join('')}<option value="__new">Add a new name…</option></select><input type="text" id="as_cnew" placeholder="Full name" hidden style="margin-top:6px" aria-label="New contributor name"></div>`);
+  const sv=document.querySelector('#dlg [data-act="as_save"]');
+  if(sv&&id) sv.insertAdjacentHTML('afterend',`<button class="btn" data-act="asgpush" data-id="${esc(id)}">Push to approvals</button>`);
+};
+document.addEventListener('change',e=>{const t=e.target;if(!t||!t.id) return;
+  if(t.id==='as_k'){const n=$('#as_knew');if(n){n.hidden=t.value!=='__new';if(!n.hidden) n.focus()}}
+  if(t.id==='as_cn'){const n=$('#as_cnew');if(n){n.hidden=t.value!=='__new';if(!n.hidden) n.focus()}}
+});
+const as47=asgSave;
+asgSave=async function(){
+  const k=$('#as_k'),cn=$('#as_cn'),st=$('#as_s');
+  if(k&&k.value==='__new'){
+    const v=crTidy(($('#as_knew')||{}).value);if(!v){toast('Name the new type first.');return}
+    const ex=kindList().find(x=>x.toLowerCase()===v.toLowerCase());
+    if(!ex) await act('Add type: '+v,()=>save('kit','clists',{...(get('kit','clists')||{}),id:'clists',type:'meta',kinds:[...clGet('kinds'),v]}));
+    const o=document.createElement('option');o.textContent=ex||v;k.appendChild(o);k.value=ex||v;
+  }
+  if(cn&&cn.value==='__new'){
+    const n=crTidy(($('#as_cnew')||{}).value);if(!n){toast('Type the new name first.');return}
+    let p=people().find(x=>String(x.name).toLowerCase()===n.toLowerCase()),cid=p?p.id:uid('pe');
+    if(!p) await act('Add person: '+n,()=>save('kit',cid,{id:cid,type:'contributor',name:n,email:'',phone:'',roles:['Writer'],strengths:'',years:'',status:'Active',source:'Added from an assignment',portfolio:'',notes:'',added:TODAY}));
+    const o=document.createElement('option');o.value=cid;o.textContent=n;cn.appendChild(o);cn.value=cid;
+  }
+  if(cn&&cn.value&&st&&st.value==='Pitched'&&[...st.options].some(o=>o.value==='Commissioned')) st.value='Commissioned';
+  return as47();
+};
+
+/* cards fold everywhere */
+const FOLDS47=(()=>{try{return JSON.parse(localStorage.getItem('tllj_fold')||'{}')}catch(e){return {}}})();
+const saveFolds47=()=>{try{localStorage.setItem('tllj_fold',JSON.stringify(FOLDS47))}catch(e){}};
+function fold47(){
+  document.querySelectorAll('#main section.box').forEach(sec=>{
+    if(sec.dataset.fold||sec.classList.contains('cardx')||sec.querySelector(':scope>details.cdt')) return;
+    const h=sec.firstElementChild;if(!h||h.tagName!=='H2') return;
+    sec.dataset.fold='1';
+    const key=(S.tab||'')+'|'+((h.firstChild&&h.firstChild.textContent)||h.textContent).trim().slice(0,40);
+    sec.dataset.fk=key;
+    const body=document.createElement('div');body.className='fbody';
+    while(h.nextSibling) body.appendChild(h.nextSibling);
+    sec.appendChild(body);
+    h.insertAdjacentHTML('beforeend','<button type="button" class="fch" data-fold="1" aria-label="Fold or unfold this card" title="Fold or unfold"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>');
+    const c=!!FOLDS47[key];sec.classList.toggle('fold-c',c);h.querySelector('.fch').setAttribute('aria-expanded',String(!c));
+  });
+  const g=document.querySelector('#main [data-act="gensave"]');
+  if(g&&!document.querySelector('#main [data-act="genpush"]')) g.insertAdjacentHTML('afterend','<button class="btn" data-act="genpush">Push to approvals</button>');
+  const r=document.querySelector('#main [data-act="copy"][data-t="rep"]');
+  if(r&&EDIT&&!document.querySelector('#main [data-act="repush"]')) r.insertAdjacentHTML('afterend','<button class="btn" data-act="repush">Push to approvals</button>');
+}
+document.addEventListener('click',e=>{
+  const h=e.target.closest&&e.target.closest('#main section.box[data-fold]>h2');if(!h) return;
+  if(e.target.closest('button:not(.fch),a,input,select,textarea,label')) return;
+  const sec=h.parentElement,k=sec.dataset.fk,c=!sec.classList.contains('fold-c');
+  sec.classList.toggle('fold-c',c);FOLDS47[k]=c;if(!c) delete FOLDS47[k];saveFolds47();
+  const b=h.querySelector('.fch');if(b) b.setAttribute('aria-expanded',String(!c));
+  e.stopImmediatePropagation();
+},true);
+const _r47=render;
+render=function(){_r47();try{fold47()}catch(x){console.warn('fold',x)}};
 
 /* ---------- v32: templates, inline events, de-duplication ---------- */
 const PTPLS=[['media','Media-partner offer'],['collab','Collaboration proposal'],['press','Press access and coverage request'],['thanks','Coverage follow-up']];
@@ -3061,7 +3221,7 @@ function nextMoves(){
 function vNextMoves(){
   if(!EDIT) return '';const R=nextMoves();S._nm=R.slice(0,5).filter(r=>r.b[0]==='outopen').map(r=>r.b[1]);const n=R.filter(r=>r.d<=TODAY).length,hr=new Date().getHours(),g=hr<12?'Good morning':hr<17?'Good afternoon':'Good evening';
   const line=n?`${g}, Sade. ${n===1?'1 thing needs':n+' things need'} you today.`:R.length?`${g}, Sade. Nothing is due today; ${R.length===1?'one thing is':R.length+' things are'} coming up.`:`${g}, Sade. Nothing is due. A good time to move something forward.`;
-  return `<section class="box nm"><h2>${esc(line)}</h2>${R.length?`<p class="meta" style="margin:0 0 6px">Your next moves, most urgent first. The full lists are below.</p>`+R.slice(0,5).map(r=>`<div class="ptrow ${r.d<TODAY?'late':''}"><span class="pill">${r.kind}</span><b>${esc(shortV(r.t))}</b><span class="meta" style="flex:1">${r.sub?esc(shortV(r.sub))+' · ':''}<span class="${r.tag.c==='warn'?'late-t':''}">${esc(r.tag.t+(tm(r.tm)?', '+tm(r.tm):''))}</span></span><button class="btn sm pri" data-act="${r.b[0]}" data-id="${r.b[1]}" ${r.b[3]?`data-${r.b[0]==='outopen'?'k':'col'}="${r.b[3]}"`:''}>${r.b[2]}</button></div>`).join('')+(R.length>5?`<p class="meta" style="margin:6px 0 0">+${R.length-5} more below.</p>`:''):''}</section>`;
+  return `<section class="box nm"><h2>${esc(line)}</h2>${R.length?`<p class="meta" style="margin:0 0 6px">Your next moves, most urgent first. The full lists are below.</p>`+R.slice(0,5).map(r=>`<div class="ptrow ${r.d<TODAY?'late':''}"><span class="pill">${r.kind}</span><b>${esc(r.t)}</b><span class="meta" style="flex:1">${r.sub?esc(r.sub)+' · ':''}<span class="${r.tag.c==='warn'?'late-t':''}">${esc(r.tag.t+(tm(r.tm)?', '+tm(r.tm):''))}</span></span><button class="btn sm pri" data-act="${r.b[0]}" data-id="${r.b[1]}" ${r.b[3]?`data-${r.b[0]==='outopen'?'k':'col'}="${r.b[3]}"`:''}>${r.b[2]}</button></div>`).join('')+(R.length>5?`<p class="meta" style="margin:6px 0 0">+${R.length-5} more below.</p>`:''):''}</section>`;
 }
 /* one-tap logging */
 async function fuLog(id,kind){
@@ -3485,7 +3645,6 @@ async function removeSponsor(id){
 function balanceChecks(){
   const out=[],add=(level,title,detail,col,id)=>out.push({level,title,detail,col,id});
   const L=ownerLoad(),tot=L.Sade+L.Fatimah;
-  if(tot>=6&&Math.max(L.Sade,L.Fatimah)/tot>.7){const top=L.Sade>=L.Fatimah?'Sade':'Fatimah';add('warn','Workload is uneven',`${top} holds ${Math.round(L[top])} of ${Math.round(tot)} open items. Reassign a few to the other person or to Both.`)}
   const days={};S.tasks.filter(t=>!t.done&&t.due).forEach(t=>(days[t.due]=days[t.due]||[]).push(t));S.pipe.filter(p=>p.nextDate&&!['Agreed','Declined'].includes(p.status)).forEach(p=>(days[p.nextDate]=days[p.nextDate]||[]).push(p));
   Object.entries(days).filter(([d,a])=>a.length>=4&&d>=TODAY).sort().slice(0,3).forEach(([d,a])=>{const it=a.slice().sort((x,y)=>(x.score||0)-(y.score||0))[0];add('warn',`${a.length} things are due on ${fmt(d)}`,`Move the lowest-priority one to a lighter day.`,it.group?'pipe':'tasks',it.id)});
   const od=S.tasks.filter(t=>!t.done&&t.due&&t.due<TODAY);if(od.length) add('bad',`${od.length} overdue plan step${od.length===1?'':'s'}`,String(od[0].action).slice(0,90),'tasks',od[0].id);
@@ -3496,7 +3655,7 @@ function balanceChecks(){
   if(!live&&days_<=30){const nb=S.pipe.filter(p=>p.status==='Not started').sort((a,b)=>b.score-a.score).slice(0,3);add('warn','No live conversation yet',`${days_} days remain. Start with ${nb.map(p=>p.group).join(', ')}.`,'pipe',nb[0]&&nb[0].id)}
   S.pipe.filter(p=>ACTIVE.includes(p.status)&&!p.nextDate&&p.status!=='Agreed').slice(0,3).forEach(p=>add('warn',`${p.group} has no next-step date`,'An active sponsor needs a date for the next move.','pipe',p.id));
   S.pipe.filter(p=>!['Not started','Finding the contact','Declined'].includes(p.status)&&!hasContact(p.id)).slice(0,3).forEach(p=>add('warn',`${p.group} has no contact`,`Status is ${p.status}, but no email or phone is entered.`,'pipe',p.id));
-  S.pipe.filter(p=>ACTIVE.includes(p.status)&&p.status!=='Agreed'&&(()=>{const l=logsOf(p.id)[0];return !l||dd(l.date,TODAY)>7})()).slice(0,3).forEach(p=>add('warn',`${p.group} has been quiet for a week`,'Send a follow-up or log what happened.','pipe',p.id));
+  S.pipe.filter(p=>ACTIVE.includes(p.status)&&p.status!=='Agreed'&&(()=>{const l=logsOf(p.id)[0];return !l||dd(l.date,TODAY)>7})()).slice(0,3).forEach(p=>add('warn',`${p.group} has had no contact for a week`,'Send a follow-up or log what happened.','pipe',p.id));
   const evs=S.events.slice().sort((a,b)=>a.start<b.start?-1:1);for(let i=0;i<evs.length;i++)for(let j=i+1;j<evs.length;j++){const a=evs[i],b=evs[j];if(a.start<=b.end&&a.end>=b.start&&a.end>=TODAY&&a.who===b.who&&a.who&&a.who!=='To decide'&&a.who!=='Both') add('warn',`${a.name} overlaps ${b.name}`,`${a.who} is down for both.`,'events',a.id)}
   const late=S.tasks.filter(t=>!t.done&&t.due>END);if(late.length) add('warn',`${late.length} plan step${late.length===1?'':'s'} after ${DL()}`,String(late[0].action).slice(0,90),'tasks',late[0].id);
   REGIONS.forEach(r=>{const a=S.pipe.filter(p=>p.tab===r);if(a.length&&!a.some(p=>p.status!=='Not started')&&r!=='Global') add('info',`Nothing has started in ${r}`,`${a.length} sponsor groups wait there. Highest score: ${a.slice().sort((x,y)=>y.score-x.score)[0].group}.`,'pipe',a.slice().sort((x,y)=>y.score-x.score)[0].id)});
