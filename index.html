@@ -179,7 +179,7 @@ const open=()=>S.tasks.filter(t=>!t.done);
 const byDue=(a,b)=>(a.due||'9')<(b.due||'9')?-1:1;
 const logsOf=id=>S.log.filter(l=>l.pipeId===id).sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:0);
 const contactsOf=id=>S.contacts.filter(c=>c.pipeId===id);
-const hasContact=id=>contactsOf(id).some(c=>c.email||c.phone);
+const hasContact=id=>contactsOf(id).some(c=>c.email||c.phone||(c.name&&/linkedin/i.test(c.route||'')));
 function lastOf(id,types){const l=logsOf(id).find(x=>types.includes(x.type));return l?l.date:null}
 const conflictFor=p=>p.category?S.pipe.filter(q=>q.id!==p.id&&q.category===p.category&&ACTIVE.includes(q.status)):[];
 function conflicts(){const m={};S.pipe.filter(p=>p.category&&ACTIVE.includes(p.status)).forEach(p=>(m[p.category]=m[p.category]||[]).push(p));return Object.entries(m).filter(([,a])=>a.length>1)}
