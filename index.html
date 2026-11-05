@@ -117,6 +117,25 @@ nav button,nav button:hover{padding:8px 12px;font-size:14.5px}
 .pmw{margin-left:auto}
 .pms{margin-top:3px;font-size:14.5px}
 .pmx{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin:2px 0}
+
+.crow{display:grid;grid-template-columns:36px 1fr auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line);cursor:pointer}
+.agenda .crow:first-child{border-top:0}
+.crow:hover .cb b{text-decoration:underline}
+.crow .av{width:34px;height:34px;border-radius:50%;background:var(--gold-soft);color:var(--accent);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:600}
+.cb{display:flex;flex-direction:column;min-width:0}
+.cb b{font-size:14.5px}
+.dchip{font-size:12px;padding:3px 9px;border-radius:99px;background:var(--gold-soft);color:var(--ink);white-space:nowrap}
+.dchip.soon{background:#f6e6c8}.dchip.late{background:#f6d9d3;color:#8a2a1a}
+.alertc{border-color:#e4b9b0}
+.ciit{padding:10px 0;border-top:1px solid var(--line);display:grid;gap:6px}
+.ciit select{max-width:100%}
+.askpg .askintro{margin:0 0 12px}
+.askpg section.box{padding:18px 20px}
+.askpg section.box h2{font-size:17px;margin-bottom:6px}
+.askpg textarea{min-height:90px}
+.aiask{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:60;max-width:min(440px,calc(100vw - 32px));background:var(--card,#fff);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+.aiask p{margin:6px 0 10px}
+.rschip[aria-pressed="true"]{border-color:var(--accent);background:var(--gold-soft)}
 </style></head><body>
 <div class="wrap">
 <header>
@@ -223,7 +242,7 @@ function taskItem(t){
 }
 function pipeItem(p){
   const late=p.nextDate&&p.nextDate<TODAY;
-  return `<div class="item"><span></span><div><div class="t" data-act="edit" data-col="pipe" data-id="${p.id}"><b>${esc(p.group)}</b>: ${esc(p.next)}</div><div class="meta"><span class="pill ${late?'warn':'gold'}">${esc(dtx(p.nextDate,p.nextTime))}${p.nextDate?' · '+rel(p.nextDate):''}</span><span>${esc(p.owner)}</span><span>${esc(p.status)}</span></div></div></div>`;
+  return `<div class="item"><input type="checkbox" data-act="pipetick" data-id="${p.id}" ${EDIT?'':'disabled'} aria-label="Done"><div><div class="t" data-act="edit" data-col="pipe" data-id="${p.id}"><b>${esc(p.group)}</b>: ${esc(p.next)}</div><div class="meta"><span class="pill ${late?'warn':'gold'}">${esc(dtx(p.nextDate,p.nextTime))}${p.nextDate?' · '+rel(p.nextDate):''}</span><span>${esc(p.owner)}</span><span>${esc(p.status)}</span></div></div></div>`;
 }
 function evRow(e){
   const live=e.start<=TODAY&&e.end>=TODAY,pr=S.prep.filter(x=>x.eventId===e.id),dn=pr.filter(x=>x.done).length;
@@ -235,7 +254,7 @@ function sugItem(s,i,k){
 }
 
 /* ---------- Follow-ups ---------- */
-const FUS=()=>S.kit.filter(k=>k.type==='followup'&&(k.mode==='Both'||(k.mode==='P')===(MODE==='p')));
+const FUS=()=>dedupFU(S.kit.filter(k=>k.type==='followup'&&(k.mode==='Both'||(k.mode==='P')===(MODE==='p'))));
 const MON=['january','february','march','april','may','june','july','august','september','october','november','december'];
 const MON3=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
 const WKD=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
@@ -358,7 +377,7 @@ function vToday0(){
   const overdue=t.filter(x=>x.due&&x.due<TODAY),todayT=t.filter(x=>x.due===TODAY);
   const week=t.filter(x=>x.due&&x.due>TODAY&&dd(TODAY,x.due)<=7);
   const pOpen=S.pipe.filter(p=>p.nextDate&&!['Agreed','Declined','On hold'].includes(p.status)).sort((a,b)=>a.nextDate<b.nextDate?-1:1);
-  const pDue=pOpen.filter(p=>p.nextDate<=TODAY),pWeek=pOpen.filter(p=>p.nextDate>TODAY&&dd(TODAY,p.nextDate)<=7);
+  const pDue=pOpen.filter(p=>p.nextDate<=TODAY&&!dupStep(p)),pWeek=pOpen.filter(p=>p.nextDate>TODAY&&dd(TODAY,p.nextDate)<=7&&!dupStep(p));
   const evs=S.events.filter(e=>e.end>=TODAY&&dd(TODAY,e.start)<=21).sort((a,b)=>a.start<b.start?-1:1);
   const opp=S.pipe.filter(p=>p.status==='Not started'&&p.when==='Start now').sort((a,b)=>b.score-a.score).slice(0,5);
   const late=overdue.length+pDue.filter(p=>p.nextDate<TODAY).length;
@@ -638,7 +657,7 @@ async function relevantNote(text){
   const kw=/sponsor|partner|proposal|pitch|brand|email|call|meeting|met |event|fair|show|accredit|press|contact|introduc|follow|invoice|deal|rate card|media|advert|campaign|interview|repl|speak|spoke|conversation|lead/i;
   const first=g=>String(g).split(/[ ,:(']/)[0];
   const named=S.pipe.some(p=>first(p.group).length>3&&text.toLowerCase().includes(first(p.group).toLowerCase()));
-  if(gem()){try{const r=await aiJson(STY()+'\nDecide whether NOTE is about sponsorship or partnership work for TLLJ: a sponsor or prospect, outreach, a proposal, an event attended or planned for partnerships, a contact, a deal, or a follow-up. General daily activity is not relevant. Return JSON only: {"relevant":true,"reason":"one short sentence"}.\nNOTE: '+text+'\nSPONSORS: '+S.pipe.map(p=>p.group).join('; '));if(r&&r.relevant===false){toast('Not added: '+(r.reason||'this does not look related to sponsors or partnerships.'));return false}return true}catch(e){}}
+  if(!(named||kw.test(text))&&gem()){try{const r=await aiJson(STY()+'\nDecide whether NOTE is about sponsorship or partnership work for TLLJ: a sponsor or prospect, outreach, a proposal, an event attended or planned for partnerships, a contact, a deal, or a follow-up. General daily activity is not relevant. Return JSON only: {"relevant":true,"reason":"one short sentence"}.\nNOTE: '+text+'\nSPONSORS: '+S.pipe.map(p=>p.group).join('; '));if(r&&r.relevant===false){toast('Not added: '+(r.reason||'this does not look related to sponsors or partnerships.'));return false}return true}catch(e){}}
   if(named||kw.test(text)) return true;
   toast('Not added: this does not mention a sponsor, an event or partnership work.');return false;
 }
@@ -2670,7 +2689,7 @@ function vCal(){
   const L=calEvs().filter(x=>x.start.slice(0,10)>=TODAY),names=[...new Set(calEvs().map(x=>x.cal))],f=S.calf&&names.includes(S.calf)?S.calf:'All',rows=L.filter(x=>f==='All'||x.cal===f).filter(x=>x.start.slice(0,10)<=addDays(TODAY,45));
   const days=[...new Set(rows.map(x=>x.start.slice(0,10)))];
   const chips=names.length>1?`<div class="seg" role="group" aria-label="Calendar" style="margin-bottom:12px">${['All',...names].map(n=>`<button data-act="calf" data-id="${esc(n)}" aria-pressed="${f===n}">${esc(n)}</button>`).join('')}</div>`:'';
-  return `<section class="box"><h2>Calendar <small>next 45 days, from your Zoho calendars. Read only</small></h2>${chips}${days.map(d=>`<h3 class="rqg">${d===TODAY?'Today':esc(fmt(d))}</h3>${rows.filter(x=>x.start.slice(0,10)===d).map(calRow).join('')}`).join('')||'<div class="empty">No calendar events yet. The Google script copies them in once an hour after you add the Zoho calendar links. Steps: SETUP-server.md, Part C.</div>'}</section>`;
+  return `<section class="box"><h2>Calendar <small>next 45 days, from Sade’s and Fatimah’s calendars. Read only</small></h2>${chips}${days.map(d=>`<h3 class="rqg">${d===TODAY?'Today':esc(fmt(d))}</h3>${rows.filter(x=>x.start.slice(0,10)===d).map(calRow).join('')}`).join('')||'<div class="empty">Nothing on the calendar in the next 45 days.</div>'}</section>`;
 }
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-act="calf"]');if(b){S.calf=b.dataset.id;render()}},true);
 const vT45c=vToday;
@@ -2720,6 +2739,172 @@ document.addEventListener('click',e=>{
     if(innerWidth<=700){const r=b.getBoundingClientRect();m.style.position='fixed';m.style.top=(r.bottom+6)+'px';m.style.right='12px';m.style.left='auto';m.style.zIndex='1000';m.style.minWidth='220px'}
     else{m.style.position='';m.style.top='';m.style.right='';m.style.left='';m.style.zIndex=''}},0);
 },true);
+
+/* ---------- v46: duplicates, ticks, folding, one Tilly page, contributors Today, contact import, ask before AI ---------- */
+const nz46=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+function dupStep(p){const n=nz46(p.next).slice(0,60);if(!n) return false;return S.tasks.some(t=>!t.done&&nz46(t.action).slice(0,60)===n)}
+function dedupFU(list){
+  const m=new Map(),sc=k=>(k.pipeId?1:0)+(k.who?1:0);
+  list.forEach(k=>{const key=nz46(k.text)+'|'+k.due+'|'+(k.mode||'');const o=m.get(key);if(!o||sc(k)>sc(o)) m.set(key,k)});
+  return list.filter(k=>m.get(nz46(k.text)+'|'+k.due+'|'+(k.mode||''))===k);
+}
+async function ensureV46(){
+  if(!db||!OWNER()||lsGet('tllj_seed_v46')||!S.kit.length) return;
+  const all=S.kit.filter(k=>k.type==='followup'&&!k.done),keep=new Set(dedupFU(all).map(k=>k.id));
+  let n=0;for(const k of all){if(!keep.has(k.id)){await remove('kit',k.id);n++}}
+  lsSet('tllj_seed_v46','1');if(n){toast(n+' duplicate follow-up'+(n===1?'':'s')+' removed.');render()}
+}
+/* a tick box on sponsor next steps: clears only that step */
+document.addEventListener('change',async e=>{
+  const t=e.target;if(!t||!t.matches||!t.matches('[data-act="pipetick"]')) return;
+  e.stopPropagation();if(!EDIT){t.checked=false;return}
+  const p=get('pipe',t.dataset.id);if(!p) return;
+  await act('Step done: '+p.group.slice(0,24),()=>patch('pipe',p.id,{next:'',nextDate:'',nextTime:''}));render();
+},true);
+/* removing a sponsor says what else goes with it */
+const rs46=removeSponsor;
+removeSponsor=async function(id){
+  const p=get('pipe',id);if(!p) return false;
+  const nc=contactsOf(id).length,nl=logsOf(id).length,nd=S.deals.filter(d=>d.pipeId===id).length;
+  if(!confirm('Remove '+p.group+' for good?\n\nThis also deletes its '+nc+' contact'+(nc===1?'':'s')+', '+nl+' log entr'+(nl===1?'y':'ies')+' and '+nd+' deal'+(nd===1?'':'s')+'.\n\nTo clear only a next step, use the tick box on Today.')) return false;
+  return rs46(id);
+};
+/* Today: suggested next steps can fold */
+const vT46=vToday;
+vToday=function(){
+  let h=vT46();
+  h=h.replace(/<section class="box"><h2>Suggested next steps <small>([^<]*)<\/small><\/h2>([\s\S]*?)<\/section>/,(m,s,body)=>{
+    const n=(sug()||[]).length+((S.ai&&S.ai.sugg)||[]).length;
+    return `<section class="box cardx"><details class="cdt" data-k="sgOpen" ${S.sgOpen===false?'':'open'}><summary><span class="cic">${I45('<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>',18)}</span><span class="cmain"><b>Suggested next steps</b><span class="csum">${esc(s)}</span></span>${n?`<span class="cn">${n}</span>`:''}</summary><div class="agenda">${body}</div></details></section>`});
+  return h;
+};
+/* one place to tell Tilly what happened: the Tilly button in the header. The Ask page keeps check-in, brief and questions. */
+const vAsk46=vAsk;
+vAsk=function(){
+  let h=vAsk46();if(!EDIT) return h;
+  h=h.replace(/<section class="box"><h2>Tell Tilly what happened<\/h2>[\s\S]*?<\/section>/,'');
+  h=h.replace('<section class="box guide"><h2>How this works</h2>','<section class="box guide"><details class="more" data-k="askGuide" '+(S.askGuide?'open':'')+'><summary><b>How this desk works</b></summary>');
+  h=h.replace('<div class="meta" id="tt"></div></section>','<div class="meta" id="tt"></div></details></section>');
+  return `<div class="askpg"><p class="meta askintro">Ask Tilly for a daily check-in, a briefing or an answer. To tell Tilly what happened, use the Tilly button at the top.</p>${h}</div>`;
+};
+/* Contributors: Today */
+vTodayC=function(){
+  const P=people(),A=asgs(),open=A.filter(a=>a.stage!=='Published'),wk=addDays(TODAY,7);
+  const over=open.filter(a=>a.due&&a.due<TODAY).sort(byDue),week=open.filter(a=>a.due&&a.due>=TODAY&&a.due<=wk).sort(byDue);
+  const wait=open.filter(a=>(a.rounds||[]).some(r=>r.status==='Invited')&&!a.cid),pit=open.filter(a=>(a.rounds||[]).some(r=>r.status==='Pitched')&&!a.cid);
+  const unpaid=MONEY()?A.filter(a=>a.stage==='Published'&&a.fee&&!a.paid):[],newP=P.filter(p=>p.status==='New');
+  const chip=a=>{if(!a.due) return '';const late=a.due<TODAY,n=dd(TODAY,a.due);return `<span class="dchip ${late?'late':n<=2?'soon':''}">${late?'Overdue, ':''}${esc(fmt(a.due))}</span>`};
+  const row=(a,sub)=>{const nm=a.cid?cname(a.cid):'';return `<div class="crow" data-act="openasg" data-id="${a.id}" tabindex="0" role="button"><span class="av">${esc(initials(nm||a.title))}</span><span class="cb"><b>${esc(a.title)}</b><span class="meta">${esc(sub)}</span></span>${chip(a)}</div>`};
+  const sub=a=>[a.stage,a.cid?cname(a.cid):''].filter(Boolean).join(' · ');
+  const fold=(k,h,list,dflt,cls)=>list.length?`<section class="box cardx ${cls||''}"><details class="cdt" data-k="${k}" ${(S[k]===undefined?dflt:S[k])?'open':''}><summary><span class="cmain"><b>${h}</b></span><span class="cn">${list.length}</span></summary><div class="agenda">${list.join('')}</div></details></section>`:'';
+  const cnt=n=>`<div class="stat ${n.c||''}"><b>${n.n}</b><span>${n.l}</span></div>`;
+  const stats=`<div class="stats">${[{n:over.length,l:'overdue',c:over.length?'bad':''},{n:week.length,l:'due this week'},{n:pit.length,l:'pitches to choose'},{n:wait.length,l:'waiting for pitches'},{n:open.length,l:'open assignments'}].map(cnt).join('')}</div>`;
+  const body=fold('tcOver','Overdue',over.map(a=>row(a,sub(a))),true,'alertc')
+   +fold('tcPit','Pitches to choose from',pit.map(a=>{const n=(a.rounds||[]).filter(r=>r.status==='Pitched').length;return row(a,n+' pitch'+(n===1?'':'es')+' in')}),true)
+   +fold('tcWeek','Due this week',week.map(a=>row(a,sub(a))),true)
+   +fold('tcWait','Waiting for pitches',wait.map(a=>row(a,(a.rounds||[]).filter(r=>r.status==='Invited').map(r=>cname(r.cid)).join(', ')+' invited')),false)
+   +fold('tcPaid','Published and not yet paid',unpaid.map(a=>row(a,cname(a.cid)+(a.fee?', '+a.fee:''))),true)
+   +(newP.length?`<section class="box"><h2>People to contact <small>${newP.length}</small></h2><p class="meta">${newP.slice(0,6).map(p=>esc(p.name)).join(', ')}${newP.length>6?' and '+(newP.length-6)+' more':''}.</p><div class="row"><button class="btn sm" data-act="tab" data-id="people">Open People</button></div></section>`:'');
+  const empty=!over.length&&!week.length&&!pit.length&&!wait.length&&!unpaid.length&&!newP.length;
+  return stats+(body||'')+(empty?`<section class="box"><div class="empty">${P.length||A.length?'Nothing needs you today. Open People to start a new assignment.':'No contributors yet. Add a person or import a list.'}</div>${EDIT?'<div class="row"><button class="btn" data-act="tab" data-id="people">Open People</button></div>':''}</section>`:'');
+};
+/* contact import from an email client (vCard or CSV) */
+const GEN46=/^(gmail|yahoo|hotmail|outlook|icloud|live|msn|me|aol|proton|protonmail|zoho|zohomail|mail)$/;
+function csv46(t){const rows=[];let r=[],c='',q=false;t=t.replace(/^﻿/,'');
+  for(let i=0;i<t.length;i++){const ch=t[i];
+    if(q){if(ch==='"'){if(t[i+1]==='"'){c+='"';i++}else q=false}else c+=ch}
+    else if(ch==='"') q=true;else if(ch===','){r.push(c);c=''}else if(ch==='\n'||ch==='\r'){if(ch==='\r'&&t[i+1]==='\n') i++;r.push(c);c='';if(r.some(x=>x.trim())) rows.push(r);r=[]}else c+=ch}
+  r.push(c);if(r.some(x=>x.trim())) rows.push(r);
+  if(rows.length<2) return [];
+  const h=rows[0].map(x=>x.trim().toLowerCase()),ix=re=>h.findIndex(x=>re.test(x));
+  const iF=ix(/^(first name|given name)/),iL=ix(/^(last name|family name|surname)/),iN=ix(/^(name|full name|display name|contact name)$/),iE=ix(/e-?mail/),iP=ix(/(mobile|phone|tel)/),iO=ix(/(company|organi[sz]ation|account name)/),iT=ix(/(job title|^title$|designation)/);
+  const g=(r,i)=>i>=0?String(r[i]||'').trim():'';
+  return rows.slice(1).map(r=>({name:g(r,iN)||[g(r,iF),g(r,iL)].filter(Boolean).join(' '),email:g(r,iE).split(/[;,\s]/)[0].toLowerCase(),phone:g(r,iP),org:g(r,iO),role:g(r,iT)})).filter(x=>x.name||x.email);
+}
+function vcf46(t){const out=[];t=t.replace(/\r\n[ \t]/g,'').replace(/\n[ \t]/g,'').replace(/\r/g,'');
+  t.split(/BEGIN:VCARD/i).slice(1).forEach(b=>{const g=re=>{const m=b.match(re);return m?m[1].trim():''};
+    let name=g(/^FN[^:\n]*:(.+)$/im);if(!name){const n=g(/^N[^:\n]*:(.+)$/im).split(';');name=((n[1]||'')+' '+(n[0]||'')).trim()}
+    const em=[...b.matchAll(/^(?:item\d+\.)?EMAIL[^:\n]*:(.+)$/gim)].map(m=>m[1].trim().toLowerCase());
+    const o={name,email:em[0]||'',phone:g(/^TEL[^:\n]*:(.+)$/im),org:g(/^ORG[^:\n]*:(.+)$/im).replace(/;/g,' ').trim(),role:g(/^TITLE[^:\n]*:(.+)$/im)};
+    if(o.name||o.email) out.push(o)});return out}
+const dom46=e=>{const m=String(e||'').match(/@([^@\s]+)$/);return m?m[1].toLowerCase():''};
+const sld46=d=>{const p=d.split('.');return p.length>1?p[p.length-2]:''};
+function match46(x){
+  const em=(x.email||'').toLowerCase();
+  if(em&&S.contacts.some(c=>String(c.email||'').toLowerCase()===em)) return {dup:true};
+  const d=dom46(em),pdm=d&&!GEN46.test(sld46(d));
+  if(pdm){const c=S.contacts.find(c=>c.pipeId&&dom46(String(c.email||'').toLowerCase())===d);if(c) return {pid:c.pipeId,why:'same email domain as '+(c.name||'a saved contact')}}
+  const o=nz46(x.org);
+  if(o.length>=4){const p=S.pipe.find(p=>{const g=nz46(p.group);return g===o||g.includes(o)||(o.includes(g)&&g.length>=4)});if(p) return {pid:p.id,why:'company matches'}}
+  if(pdm){const s=sld46(d);if(s.length>=4){const p=S.pipe.find(p=>nz46(p.group).split(' ').includes(s)||nz46(p.group).replace(/ /g,'').startsWith(s));if(p) return {pid:p.id,why:'email domain matches '+p.group}}}
+  const nm=nz46(x.name);
+  if(nm.split(' ').length>=2){const c=S.contacts.find(c=>c.pipeId&&nz46(c.name)===nm);if(c) return {pid:c.pipeId,why:'same name as a saved contact'}}
+  return {};
+}
+function openImport46(){
+  const d=$('#dlg');d.innerHTML=`<h2 style="margin-bottom:6px">Import contacts</h2><p class="meta">Export your contacts from your email client as a vCard (.vcf) or CSV file, then choose it here. In Zoho Mail: Contacts, then Export. Matched contacts go to their sponsor. The rest are saved in the Address book at the bottom of Contacts. Nothing is saved until you press Add.</p><input type="file" id="ci_file" accept=".vcf,.csv,text/vcard,text/csv" aria-label="Contacts file"><div id="ci_out" style="margin-top:12px"></div><div class="row" style="margin-top:10px"><button class="btn" data-act="close">Close</button></div>`;
+  d.dataset.col='';d.dataset.id='';d.showModal();
+}
+let CI46=[];
+function showImport46(list){
+  CI46=list.map(x=>({...x,m:match46(x)}));
+  const opts=sel=>`<option value="">Not linked</option>`+S.pipe.slice().sort((a,b)=>a.group<b.group?-1:1).map(p=>`<option value="${esc(p.id)}" ${sel===p.id?'selected':''}>${esc(p.group)}</option>`).join('');
+  const fresh=CI46.filter(x=>!x.m.dup),dup=CI46.length-fresh.length;
+  $('#ci_out').innerHTML=`<p class="meta"><b>${CI46.length}</b> found. ${fresh.filter(x=>x.m.pid).length} matched to a sponsor, ${fresh.filter(x=>!x.m.pid).length} not linked${dup?`, ${dup} already saved and skipped`:''}.</p><div style="max-height:46vh;overflow:auto">${fresh.map(x=>{const i=CI46.indexOf(x);return `<div class="ciit"><label class="ck"><input type="checkbox" data-ci="${i}" checked> <b>${esc(x.name||x.email)}</b></label><div class="meta">${esc([x.role,x.org,x.email,x.phone].filter(Boolean).join(' · '))}${x.m.why?' · '+esc(x.m.why):''}</div><select data-cipid="${i}" aria-label="Sponsor">${opts(x.m.pid||'')}</select></div>`}).join('')||'<div class="empty">Nothing new to add.</div>'}</div>${fresh.length?`<div class="row" style="margin-top:10px"><button class="btn pri" data-act="ciapply">Add selected</button></div>`:''}`;
+}
+document.addEventListener('change',async e=>{
+  const t=e.target;if(!t||!t.matches||!EDIT) return;
+  if(t.id==='ci_file'){const f=t.files&&t.files[0];if(!f) return;const txt=await f.text();let list=/\.vcf$/i.test(f.name)||/BEGIN:VCARD/i.test(txt.slice(0,400))?vcf46(txt):csv46(txt);
+    if(!list.length){$('#ci_out').innerHTML='<div class="empty">No contacts found in that file. Use a .vcf or a .csv with a header row.</div>';return}
+    showImport46(list);return}
+  if(t.matches('[data-cipid]')){const x=CI46[+t.dataset.cipid];if(x) x.m={...x.m,pid:t.value}}
+  if(t.matches('[data-cilink]')){const c=get('contacts',t.dataset.cilink);if(c&&t.value) await act('Link contact',()=>patch('contacts',c.id,{pipeId:t.value}));render()}
+},true);
+document.addEventListener('click',async e=>{
+  const b=e.target.closest&&e.target.closest('[data-act="cimp"],[data-act="ciapply"]');if(!b||!EDIT) return;
+  if(b.dataset.act==='cimp'){openImport46();return}
+  const rows=[...document.querySelectorAll('#ci_out [data-ci]')].filter(x=>x.checked).map(x=>CI46[+x.dataset.ci]).filter(Boolean);
+  if(!rows.length){toast('Tick at least one contact');return}
+  b.disabled=true;let n=0,l=0;
+  await act('Import '+rows.length+' contacts',async()=>{for(const x of rows){const o={id:uid('c'),pipeId:x.m.pid||'',name:x.name||'',role:x.role||'',email:x.email||'',phone:x.phone||'',route:x.m.pid?'Imported from your email client':'Imported: address book'};await save('contacts',o.id,o);n++;if(o.pipeId) l++}});
+  const d=$('#dlg');if(d.open) d.close();render();toast(n+' added: '+l+' linked to sponsors, '+(n-l)+' in the Address book.');
+},true);
+function addrBook46(){
+  const ids=new Set(S.pipe.map(p=>p.id)),L=S.contacts.filter(c=>!c.pipeId||!ids.has(c.pipeId)),q=(S.abq||'').toLowerCase();
+  if(!L.length) return '';
+  const list=L.filter(c=>!q||(c.name+' '+c.email+' '+c.role+' '+c.phone).toLowerCase().includes(q)).sort((a,b)=>String(a.name).localeCompare(String(b.name)));
+  const opts=`<option value="">Link to a sponsor</option>`+S.pipe.slice().sort((a,b)=>a.group<b.group?-1:1).map(p=>`<option value="${esc(p.id)}">${esc(p.group)}</option>`).join('');
+  return `<section class="box"><h2>Address book <small>${L.length} not linked to a sponsor</small></h2><input type="text" id="ab_q" value="${esc(S.abq||'')}" placeholder="Search name, email or role" aria-label="Search the address book">${list.slice(0,80).map(c=>`<div class="ciit"><div><b data-act="edit" data-col="contacts" data-id="${c.id}" style="cursor:pointer" title="Click to edit">${esc(c.name||c.email||'No name')}</b><div class="meta">${esc([c.role,c.email,c.phone].filter(Boolean).join(' · '))}</div></div>${EDIT?`<select data-cilink="${c.id}" aria-label="Link to a sponsor">${opts}</select>`:''}</div>`).join('')||'<div class="empty">Nobody matches.</div>'}${list.length>80?`<div class="meta">${list.length-80} more. Search to narrow.</div>`:''}</section>`;
+}
+document.addEventListener('input',e=>{if(e.target&&e.target.id==='ab_q'){S.abq=e.target.value;const p=e.target.selectionStart;render();const n=$('#ab_q');if(n){n.focus();try{n.setSelectionRange(p,p)}catch(x){}}}},true);
+const vC46=vContacts;
+vContacts=function(){return (EDIT?'<div class="row" style="margin-bottom:10px"><button class="btn" data-act="cimp">Import contacts</button></div>':'')+vC46()+addrBook46()};
+/* Monday events search: asks first */
+function askAI46(title,text,go,run,skipKey){
+  let o=document.getElementById('aiask');if(o) o.remove();
+  o=document.createElement('div');o.id='aiask';o.className='aiask';o.setAttribute('role','dialog');o.setAttribute('aria-label',title);
+  o.innerHTML=`<b>${esc(title)}</b><p class="meta">${esc(text)}</p><div class="row"><button class="btn pri" data-ai="go">${esc(go)}</button><button class="btn" data-ai="no">Not now</button></div>`;
+  document.body.appendChild(o);
+  o.addEventListener('click',async e=>{const b=e.target.closest('[data-ai]');if(!b) return;o.remove();try{localStorage.setItem(skipKey,'1')}catch(x){}if(b.dataset.ai==='go') await run()});
+}
+const fe46=findEvents;
+findEvents=async function(manual){
+  if(manual) return fe46(true);
+  if(!EDIT||!OWNER()||!gem()||pd(TODAY).getDay()!==1) return 0;
+  const k='tllj_evq_'+TODAY;let seen='';try{seen=localStorage.getItem(k)||''}catch(e){}
+  if(seen) return 0;
+  askAI46('Monday events search','Tilly will search the web for events that suit TLLJ over the next 75 days. This uses part of your Gemini quota. Press Not now to skip it this week.','Search now',async()=>{toast('Searching…');const n=await fe46(true);softRender();toast(n?'Found '+n+' to look at':'Nothing new found')},k);
+  return 0;
+};
+/* research is saved as you type: show it, and let you resume or switch without generating a proposal */
+const vS46=vSponsors;
+vSponsors=function(){
+  let h=vS46();if(!EDIT) return h;
+  const f=get('kit','focus')||{},items=S.pipe.map(p=>({p,s:rqStat(p)})).filter(x=>x.s.d>0).sort((a,b)=>String(a.p.group).localeCompare(String(b.p.group)));
+  const chips=items.map(({p,s})=>`<button class="btn sm rschip" data-act="fxset" data-id="${esc(p.id)}" aria-pressed="${f.pipeId===p.id}" title="Open ${esc(p.group)} in Sponsoring focus">${esc(p.group)} <span class="meta">${s.d} of ${s.n}${s.d>=s.n?' · complete':''}</span></button>`).join('');
+  const strip=`<section class="box fxs"><h2>Research saved <small>answers save as you type</small></h2><p class="meta">Nothing is lost when you move to another sponsor, and you do not need to generate a proposal first. Choose Pick the sponsor to work on in the box below, or resume one here.</p>${chips?`<div class="row" style="gap:8px;margin-top:8px">${chips}</div>`:'<p class="meta">No research answers saved yet.</p>'}</section>`;
+  return h.replace('<section class="box fxs">',strip+'<section class="box fxs">');
+};
 
 /* ---------- v32: templates, inline events, de-duplication ---------- */
 const PTPLS=[['media','Media-partner offer'],['collab','Collaboration proposal'],['press','Press access and coverage request'],['thanks','Coverage follow-up']];
@@ -3714,7 +3899,7 @@ async function startApp(env){
   $('#signout').hidden=!env.auth;
   render();hashGo();setTimeout(welcome,700);
   if(!db) return;
-  for(const c of COLS){db.collection(c).onSnapshot(s=>{S[c]=s.docs.map(d=>({...d.data(),id:d.id}));S.loaded[c]=true;softRender();if(EDIT&&!ASSIST&&!S.fixed&&['tasks','pipe','decisions','kit','evsug','activity'].every(k=>S.loaded[k])&&S.pipe.length){S.fixed=true;fixWording().then(()=>ensureRecords()).then(()=>ensureFocus()).then(()=>ensureFiles()).then(()=>ensureGov()).then(()=>ensureNoAlcohol()).then(()=>ensureAudience()).then(()=>ensureRates()).then(()=>ensureV25()).then(()=>ensureV26()).then(()=>ensureV27()).then(()=>ensureV28()).then(()=>ensureV29()).then(()=>ensureV30()).then(()=>ensureV35()).then(()=>ensureV36()).then(()=>ensureV40()).then(()=>ensureV43()).then(()=>ensureV45()).then(()=>ensureV45b()).then(()=>{pruneActivity();return dailyEvents()})}},e=>toast('Could not load '+c+': '+(e.code||e.message||'')))}
+  for(const c of COLS){db.collection(c).onSnapshot(s=>{S[c]=s.docs.map(d=>({...d.data(),id:d.id}));S.loaded[c]=true;softRender();if(EDIT&&!ASSIST&&!S.fixed&&['tasks','pipe','decisions','kit','evsug','activity'].every(k=>S.loaded[k])&&S.pipe.length){S.fixed=true;fixWording().then(()=>ensureRecords()).then(()=>ensureFocus()).then(()=>ensureFiles()).then(()=>ensureGov()).then(()=>ensureNoAlcohol()).then(()=>ensureAudience()).then(()=>ensureRates()).then(()=>ensureV25()).then(()=>ensureV26()).then(()=>ensureV27()).then(()=>ensureV28()).then(()=>ensureV29()).then(()=>ensureV30()).then(()=>ensureV35()).then(()=>ensureV36()).then(()=>ensureV40()).then(()=>ensureV43()).then(()=>ensureV45()).then(()=>ensureV45b()).then(()=>ensureV46()).then(()=>{pruneActivity();return dailyEvents()})}},e=>toast('Could not load '+c+': '+(e.code||e.message||'')))}
 }
 function lsGet(k){try{return localStorage.getItem(k)||''}catch(e){return ''}}
 function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}

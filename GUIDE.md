@@ -227,3 +227,12 @@ The first time Sade opens the desk after this update, it applies Fatimah's notes
 - **Today** shows "New in pitches@" and a tidier Calendar card. Both open and close with one press.
 - Only the sender, subject, date and a short preview are copied, never the whole email. Open pitches@ in Zoho to read and reply.
 - Sorting and dates are by keyword, so check the original before acting on a date.
+
+## v47: fixes
+- Today no longer shows a sponsor's next step twice when the plan already has the same step. Sponsor next steps now have a tick box that clears only that step.
+- Duplicate follow-ups are merged. Removing a sponsor now says exactly what goes with it.
+- Suggested next steps can be folded. Contributors Today has overdue, due this week and pitches in collapsible cards.
+- Contacts: Import contacts reads a .vcf or .csv from your email client, links matches to sponsors and keeps the rest in an Address book.
+- Tell Tilly what happened lives in one place, the Tilly button at the top. The Ask page keeps check-in, brief and questions.
+- Tilly's automatic daily event search now runs on Mondays only and asks first. Notes that already mention a sponsor or event skip the AI check.
+- Sponsors: a "Research saved" strip lists every sponsor with saved answers. Answers save as you type, so you can switch sponsors without generating a proposal and resume later.
