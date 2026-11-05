@@ -38,10 +38,10 @@ You will do four things: set up Firebase (database and sign-in), edit two small 
 - **Blank page**: a quote or comma was removed in `firebase-config.js`.
 - **AI buttons do nothing**: the Gemini key or model name (steps 18 and 19).
 
-Fatimah signs in with her own Google account. She sees Today, Scoreboard and Decisions, and can update Decisions only.
+Fatimah signs in with her own Google account. She sees Today, Sponsors, Pipeline, Contacts, Events, Activity (Scoreboard and Decisions) and Review, and can update Decisions only.
 
 ## Added later: Tilly, searching and suggestions
-- **Tilly** is the assistant. Use the **Tilly** button at the top on any tab, or the Ask Tilly tab. It needs the Gemini key in Settings.
+- **Tilly** is the assistant. Use the sparkle icon at the top right on any tab, or the speech-bubble icon for the Ask Tilly page. It needs the Gemini key in Settings.
 - **Morning event search.** The first time you open the app each day, Tilly searches the web for events and lists them under Events as suggestions. Nothing is added until you press Add to events. It only runs when someone with edit access opens the app.
 - **Finding contacts and new sponsors.** Use Find contact details with Tilly inside a sponsor, and Find new sponsors on the Sponsors tab. Always check the source link before using anything.
 - **Suggestions tab.** Fatimah can write suggestions there. For this to work she must be on the rules list, and you must republish the updated `firestore.rules` (Firestore Database, Rules tab, paste, Publish).
@@ -50,7 +50,7 @@ Fatimah signs in with her own Google account. She sees Today, Scoreboard and Dec
 Open `firebase-config.js`. Three lists decide what each person can do:
 - `editors`: everything (you).
 - `contributors`: add and change sponsors, contacts and events, answer decisions and write suggestions. They cannot delete, and they do not see Tilly, the plan, the Proposal Kit, Deals, Balance or Activity.
-- `viewers`: Today, Scoreboard, Decisions and Suggestions only.
+- `viewers`: Today, Activity (Scoreboard and Decisions), Review and Suggestions only.
 
 Put Fatimah's Google email in `contributors`. Then open `firestore.rules` and replace `PASTE_FATIMAH_EMAIL@gmail.com` with the same email, copy the whole file into Firestore Database, Rules tab, and click Publish. If you use `viewers`, replace `PASTE_VIEWER_EMAIL@gmail.com` the same way.
 
@@ -198,3 +198,21 @@ The first time Sade opens the desk after this update, it applies Fatimah's notes
 - **Week in review.** On Today, press Week in review (it is also a banner on Fridays). It writes a short message for Fatimah from what you logged and what is coming. Edit it, then press Email Fatimah or Copy.
 - **Bigger buttons on Today.** Each next move has its own buttons: Done, Sent, Replied, No reply and Snooze for follow-ups; Open, Log a call and Snooze for sponsors. They are large on a phone.
 - Upload `index.html`, `styles.css`, `sw.js` and `GUIDE.md`. Nothing changes in Firebase, Apps Script or the config.
+
+
+## v45: what changed
+
+- **Top right:** Approvals (highlighted), then icons for Search, Tilly, Ask Tilly and Documents. The three dots hold Suggestions, Export, Settings and Sign out. The moon or sun beside the title switches dark and light. Hover over anything to see what it is.
+- **Tabs:** Documents and Ask Tilly left the tab bar. Scoreboard and Deals now sit inside Activity. Decisions is back in the tab bar and turns red for Fatimah when a decision waits for her.
+- **Sponsors:** the list is compact. Status, Editor's approval and Editor's note come first. The coloured dot is the chance (press it to change). The small box is the score. The pencil opens all fields, the crossed eye hides a sponsor for a while, and the cross removes it. The Owner column is gone.
+- **Sponsoring focus** moved from Today to the top of Sponsors. Under it sit 30 research questions. Add, edit, hide or delete any of them. Use the Short list for a quick pass. Tilly can draft an answer (check it and its source). When every question is answered, Generate proposal opens the Proposal Kit on that sponsor.
+- **Roadmap:** week one starts Monday 2 November. Week labels follow the start date.
+- **People:** Keep on file is open; Declined stays closed.
+- **New sponsors:** Polo Avenue and L'Occitane were added once, with first-pass notes to check at the source.
+- **Research a sponsor:** at the top of Sponsors, type a name and press Research and add. Tilly searches the web and fills the category, why it fits, who to approach, the proposal idea, next step, notes with sources, a score and chance guess, and the web-answerable research questions. Inside Sponsoring focus, Research this sponsor fills only the blank fields and answers of an existing sponsor. Check every source. Needs the Tilly key in Settings.
+- **Friday summary:** on Fridays the desk opens it by itself when you open the app. Read it, edit it, then press Email Fatimah, or press Not this week. Nothing is sent automatically, because the desk cannot send while it is closed.
+- **People (Contributors):** grouped by type. The first group is open. Keep on file and Declined are no longer default statuses; delete a person you will not use. A short list of questions for new contributors sits under the people.
+- **Research questions:** 32 by default. Old sponsor-only research items now sit in the same list under "About this sponsor only".
+- **Research a partner** (Partnerships mode) works like Research a sponsor.
+- **Fatimah and Tilly:** with her own Gemini or Groq key in Settings, she can use Ask Tilly for questions and Research this sponsor (draft for Sade). Drafts reach you under Suggestions as "Research drafts to approve". Nothing changes until you press Apply.
+- Plan steps and sponsor next steps dated before Monday 2 November moved to 2 November.
