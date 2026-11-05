@@ -221,3 +221,9 @@ The first time Sade opens the desk after this update, it applies Fatimah's notes
 - **Hidden sponsors:** listed once, at the bottom of Sponsors. They are not in Pipeline, Moved or Stuck.
 - **Pipeline:** labelled Owner, When to approach and Stage, with a count and a + Sponsor button.
 - **Today:** Next 7 days is closed until you open it.
+
+## v46: Pitches inbox and calendar card
+- **Pitches** (envelope icon, top right): everything that arrives at pitches@, sorted as writer pitch, press release or invitation, with any dates mentioned. Everyone with desk access can read it. Editors mark items Seen or Done.
+- **Today** shows "New in pitches@" and a tidier Calendar card. Both open and close with one press.
+- Only the sender, subject, date and a short preview are copied, never the whole email. Open pitches@ in Zoho to read and reply.
+- Sorting and dates are by keyword, so check the original before acting on a date.
