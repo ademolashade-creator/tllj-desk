@@ -216,3 +216,8 @@ The first time Sade opens the desk after this update, it applies Fatimah's notes
 - **Research a partner** (Partnerships mode) works like Research a sponsor.
 - **Fatimah and Tilly:** with her own Gemini or Groq key in Settings, she can use Ask Tilly for questions and Research this sponsor (draft for Sade). Drafts reach you under Suggestions as "Research drafts to approve". Nothing changes until you press Apply.
 - Plan steps and sponsor next steps dated before Monday 2 November moved to 2 November.
+- **Calendar:** the calendar icon next to the search icon opens your Zoho calendars (read only). They also show on Today (today and tomorrow) and Events (next 14 days). Setup is Part C of SETUP-server.md.
+- **Events:** past events leave the list and sit in a closed "Past events" block at the bottom.
+- **Hidden sponsors:** listed once, at the bottom of Sponsors. They are not in Pipeline, Moved or Stuck.
+- **Pipeline:** labelled Owner, When to approach and Stage, with a count and a + Sponsor button.
+- **Today:** Next 7 days is closed until you open it.
