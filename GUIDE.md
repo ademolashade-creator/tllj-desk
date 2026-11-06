@@ -315,3 +315,12 @@ The "Add a sponsor yourself" button is removed; use the "Add to ..." button at t
 
 ## v58
 "Add a sponsor yourself" and the version label are gone. The "Add to Nigeria / Global / ..." button at the top of each group now has an optional First contact (name, role, email, phone) that links to the new sponsor.
+
+## v59: tidier menus, record pages, drop-downs
+- Menus: Today and Sponsors stay on the bar. **Work** holds Roadmap, Proposal Kit, Decisions. **Check** holds Balance, Review, Coverage, Activity. **More** holds Contacts, Events and How this works. A dot shows when something inside needs a look.
+- Pipeline now sits inside Sponsors (Table / Pipeline switch).
+- Chance and Score are hidden in the Sponsors table; tap "Show Chance and Score" to bring them back.
+- Contact role and Next step type are drop-downs. Choose "+ Add a new option…" to add your own.
+- Every sponsor, partner and writer opens as a full page with chips at the top to jump to each section.
+- Cards have more colour and a soft lift so they stand out.
+- The weekly update lives in Review, and Today offers it on Fridays.
