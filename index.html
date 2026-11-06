@@ -150,6 +150,15 @@ section.box.fold-c>.fbody{display:none}
 section.box.fold-c>h2{margin-bottom:0}
 section.box.fold-c .fch svg{transform:rotate(-90deg)}
 section.box[data-fold]>h2{cursor:pointer}
+
+#undo.ib{display:inline-flex;align-items:center;justify-content:center}
+.flash48{animation:fl48 2.4s ease}
+@keyframes fl48{0%,60%{box-shadow:0 0 0 3px var(--gold)}100%{box-shadow:0 0 0 3px transparent}}
+#pv48,#sum48,#su48,#ps48{width:min(680px,calc(100vw - 32px))}
+
+#hold49{position:fixed;left:50%;transform:translateX(-50%);bottom:76px;z-index:60;display:none;flex-direction:column;gap:6px;max-width:calc(100vw - 32px)}
+#hold49 .h49{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--card,#fff);border:1px solid var(--line,#ddd);border-radius:12px;padding:8px 12px;box-shadow:0 6px 24px rgba(0,0,0,.14);font-size:.9rem}
+#hold49 .h49 span{flex:1;min-width:160px}
 </style></head><body>
 <div class="wrap">
 <header>
@@ -446,7 +455,7 @@ function vPipeline(){
   const whens=['All',...new Set(S.pipe.map(x=>x.when))];
   const lanes=STATUSES.filter(s=>S.fs==='All'||s===S.fs).map(s=>{
     const c=p.filter(x=>x.status===s).sort((a,b)=>b.score-a.score);
-    return `<div class="lane"><h3>${esc(s)} <span class="pill">${c.length}</span></h3>${c.map(x=>{const cf=conflictFor(x).length&&ACTIVE.includes(x.status);return `<div class="card" data-act="edit" data-col="pipe" data-id="${x.id}"><b>${esc(x.group)}</b><div class="meta"><span>Score ${esc(x.score)}</span><span>${esc(x.owner)}</span><span>${esc(x.category||x.tab)}</span>${cf?'<span class="pill warn">Same category active</span>':''}${edPill(x)}</div>${x.next?`<div class="meta">${x.nextDate?esc(fmt(x.nextDate))+': ':''}${esc(x.next.slice(0,110))}${x.next.length>110?'…':''}</div>`:''}</div>`}).join('')||'<div class="empty">None</div>'}</div>`}).join('');
+    return `<div class="lane"><h3>${esc(s)} <span class="pill">${c.length}</span></h3>${c.map(x=>{const cf=conflictFor(x).length&&ACTIVE.includes(x.status);return `<div class="card" data-act="edit" data-col="pipe" data-id="${x.id}"><b>${esc(x.group)}</b><div class="meta"><span>Score ${esc(x.score)}</span><span>${esc(x.owner)}</span><span>${esc(x.category||x.tab)}</span>${cf?'<span class="pill warn">Same category active</span>':''}${edPill(x)}</div>${x.next?`<div class="meta">${x.nextDate?esc(fmt(x.nextDate))+': ':''}${esc(x.next)}</div>`:''}</div>`}).join('')||'<div class="empty">None</div>'}</div>`}).join('');
   const opt=(a,v)=>a.map(o=>`<option ${o===v?'selected':''}>${esc(o)}</option>`).join('');
   return pbar45(owners,whens,opt,p.length,S.pipe.length)+`<div class="board">${lanes}</div>`;
 }
@@ -846,8 +855,8 @@ function openPrep(eid){
 function render(){
   applyTarget();
   const all=[['today','Today'],['roadmap','Roadmap'],['sponsors','Sponsors'],['pipeline','Pipeline'],['contacts','Contacts'],['events','Events'],['coverage','Coverage'],['kit','Proposal Kit'],['balance','Balance'],['decisions','Decisions'],['review','Review'],['activity','Activity']];
-  const allP=[['today','Today'],['partners','Partners'],['events','Events'],['coverage','Coverage'],['templates','Templates'],['wrap','Wrap-ups'],['review','Review'],['activity','Activity']];
-  const allC=[['today','Today'],['people','People'],['assign','Assignments'],['coverage','Coverage'],['activity','Activity']];const tabs=MODE==='c'?(EDIT?allC:allC.filter(([k])=>k!=='activity')):MODE==='p'?(EDIT?allP:allP.filter(([k])=>['today','partners','events','coverage','wrap','review'].includes(k))):EDIT?all:all.filter(([k])=>(CONTRIB?['today','sponsors','pipeline','contacts','events','decisions','activity','review']:['today','decisions','activity','review']).includes(k));
+  const allP=[['today','Today'],['roadmap','Roadmap'],['partners','Partners'],['events','Events'],['coverage','Coverage'],['templates','Templates'],['wrap','Wrap-ups'],['review','Review'],['activity','Activity']];
+  const allC=[['today','Today'],['people','People'],['assign','Assignments'],['coverage','Coverage'],['activity','Activity']];const tabs=MODE==='c'?(EDIT?allC:allC.filter(([k])=>k!=='activity')):MODE==='p'?(EDIT?allP:allP.filter(([k])=>['today','roadmap','partners','events','coverage','wrap','review'].includes(k))):EDIT?all:all.filter(([k])=>(CONTRIB?['today','sponsors','pipeline','contacts','events','decisions','activity','review']:['today','decisions','activity','review']).includes(k));
   if(S.tab!=='notes'&&S.tab!=='approvals'&&S.tab!=='docs'&&S.tab!=='cal'&&S.tab!=='pitches'&&S.tab!=='ask'&&!tabs.some(([k])=>k===S.tab)) S.tab=tabs[0][0];
   const bc=EDIT?balanceChecks().filter(x=>x.level!=='info').length:0,nc=EDIT?S.notes.filter(x=>x.status==='New').length:0;
   document.body.dataset.mode=MODE;$('#modesw').innerHTML=modeSw();$('#nav').innerHTML=tabs.map(([k,l])=>`<button data-act="tab" data-id="${k}" ${S.tab===k?'aria-current="true"':''}>${S.tab===k?tabIc(k):''}${l}${k==='balance'&&bc?' ('+bc+')':''}</button>`).join('');const ab=$('#apprbtn'),an=CONTRIB?drafts().filter(d=>d.status==='pending').length:EDIT?drafts().filter(d=>['approved','changes'].includes(d.status)).length:0;ab.textContent='Approvals'+(an?' ('+an+')':'');ab.setAttribute('aria-current',S.tab==='approvals'?'true':'false');ab.hidden=!(EDIT||CONTRIB);const nb=$('#notesbtn');nb.textContent='Suggestions'+(nc?' ('+nc+')':'');nb.setAttribute('aria-current',S.tab==='notes'?'true':'false');$('#tools').hidden=!(EDIT||CONTRIB);$('#tillybtn').hidden=!EDIT;
@@ -2065,7 +2074,7 @@ vPeople=function(){
       <div class="pch"><span class="av">${esc(initials(p.name))}</span><span class="pn"><b>${esc(p.name)}</b><span class="meta">${esc([p.strengths,p.years].filter(Boolean).join(' · ')||'Strengths not added yet')}</span></span><span class="pill ${pillSt(p.status)}">${esc(p.status)}</span></div>
       <div class="rl">${(p.roles||[]).map(x=>`<span>${esc(x)}</span>`).join('')}</div>
       ${p.email||p.phone?`<div class="pcm">${[p.email,p.phone].filter(Boolean).map(esc).join('<br>')}</div>`:'<div class="pcm meta">No email or phone yet</div>'}
-      ${note?`<div class="pnote meta">${esc(note.slice(0,120))}${note.length>120?'…':''}</div>`:''}
+      ${note?`<div class="pnote meta">${esc(note)}</div>`:''}
       ${foot||(EDIT&&p.email)?`<div class="pft"><span class="meta">${esc(foot)}</span>${EDIT&&p.email?`<button class="btn sm" data-act="pe_mail" data-id="${p.id}">Email</button>`:''}</div>`:''}</div>`};
   const filtered=f!=='All'||r!=='All'||!!q;
   const byRole=r=>L.filter(p=>((p.roles||[])[0]||'No type yet')===r),gk=[...RL,'No type yet'].filter(r=>byRole(r).length);
@@ -2427,10 +2436,10 @@ const rqSub=(q,p)=>String(q).replace(/\{sponsor\}/g,p.group);
 const rqAns=pid=>(get('kit','rqa_'+pid)||{}).a||{};
 async function rqSaveBank(items){await act('Research questions',()=>save('kit','rqbank',{id:'rqbank',type:'rqbank',items}));render()}
 function rqFocusP(){const f=get('kit','focus')||{},ps=S.pipe.slice().sort((a,b)=>String(a.group).localeCompare(String(b.group)));return S.pipe.find(x=>x.id===f.pipeId)||ps[0]}
-function rqVis(){const sh=!!S.rqShort;return rqItems().filter(x=>!x.hide&&(!sh||x.s))}
-function rqStat(p){const vis=rqVis(),a=rqAns(p.id),own=RS(p.id);return {n:vis.length+own.length,d:vis.filter(x=>String(a[x.id]||'').trim()).length+own.filter(x=>String(x.answer||'').trim()).length}}
+function rqVis(p){const sh=!!S.rqShort;if(p&&p.id&&rqSkip49(p.id)) return [];return rqItems().filter(x=>!x.hide&&(!sh||x.s))}
+function rqStat(p){const vis=rqVis(p),a=rqAns(p.id),own=RS(p.id);return {n:vis.length+own.length,d:vis.filter(x=>String(a[x.id]||'').trim()).length+own.filter(x=>String(x.answer||'').trim()).length}}
 function vRQ(p){
-  const vis=rqVis(),a=rqAns(p.id),own=RS(p.id),st=rqStat(p),done=st.d,all=rqItems(),hid=all.filter(x=>x.hide),ro=EDIT?'':'disabled';
+  const vis=rqVis(p),a=rqAns(p.id),own=RS(p.id),st=rqStat(p),done=st.d,all=rqItems(),hid=all.filter(x=>x.hide),ro=EDIT?'':'disabled';
   const gs=[...new Set(vis.map(x=>x.g||'Other'))];
   const body=gs.map(g=>`<h3 class="rqg">${esc(g)}</h3>`+vis.filter(x=>(x.g||'Other')===g).map(x=>{const ed=EDIT&&S.rqEdit===x.id,has=String(a[x.id]||'').trim();
     return `<div class="rq ${has?'ok':''}"><div class="rqh">${ed?`<input type="text" class="ghost" data-rqq="${x.id}" value="${esc(x.q)}" aria-label="Question wording. {sponsor} becomes the sponsor’s name" style="flex:1">`:`<label for="rq_${x.id}">${esc(rqSub(x.q,p))}</label>`}${EDIT?`<span class="rqb"><button class="btn ibs" data-act="rqfill" data-id="${x.id}" aria-label="Tilly drafts an answer">${I45(ICP45.spark,13)}</button><button class="btn ibs" data-act="rqedit" data-id="${x.id}" aria-label="Edit the question">${I45(ICP45.pen,13)}</button><button class="btn ibs" data-act="rqhide" data-id="${x.id}" aria-label="Hide the question">${I45(ICP45.hide,13)}</button><button class="btn ibs del" data-act="rqdel" data-id="${x.id}" aria-label="Delete the question">${I45(ICP45.x,13)}</button></span>`:''}</div>
@@ -2455,7 +2464,7 @@ function vFocus45(){
 const vSp45=vSponsors;
 const vRsBox=()=>EDIT?`<section class="box"><h2>Research a sponsor <small>type a name; Tilly searches and fills the sponsor’s fields and its research answers</small></h2><div class="row" style="gap:6px"><input type="text" id="rs_name" placeholder="For example: L’Occitane" aria-label="Sponsor name to research" style="flex:1;min-width:180px"><select id="rs_reg" aria-label="Region">${REGIONS.map(x=>`<option>${esc(x)}</option>`).join('')}</select><button class="btn pri" data-act="rsnew" ${S.rsBusy?'disabled':''}>${S.rsBusy?'Researching…':'Research and add'}</button></div><div class="meta" style="margin-top:6px">Needs the Tilly key in Settings. Tilly writes Ask where it cannot confirm something. Check each source before it goes in a proposal. Alcohol, tobacco and gambling brands are refused.</div></section>`:'';
 vSponsors=function(){return vRsBox()+vFocus45()+vSp45()};
-function rqPack(p){const a=rqAns(p.id);return 'Research pack: '+p.group+'\n'+rqVis().map(x=>'\n'+rqSub(x.q,p)+'\n'+(String(a[x.id]||'').trim()||'(no answer yet)')).join('\n')}
+function rqPack(p){const a=rqAns(p.id);return 'Research pack: '+p.group+'\n'+rqVis(p).map(x=>'\n'+rqSub(x.q,p)+'\n'+(String(a[x.id]||'').trim()||'(no answer yet)')).join('\n')}
 async function rqDraft(p,q){
   const web=!!q.w;
   const ctxp=`Sponsor: ${p.group}. Category: ${p.category||''}. Why it scored ${p.score}: ${p.why||''}. What we would propose: ${p.propose||''}. Notes: ${p.notes||''}.`;
@@ -2488,7 +2497,7 @@ document.addEventListener('click',async e=>{
   if(a==='rqfill'||a==='rqfillall'){
     if(!gem()){needKey();return}
     const p=a==='rqfill'?rqFocusP():get('pipe',id);if(!p||S.rqBusy) return;
-    const todo=a==='rqfill'?rqItems().filter(x=>x.id===id):rqVis().filter(x=>!String(rqAns(p.id)[x.id]||'').trim());
+    const todo=a==='rqfill'?rqItems().filter(x=>x.id===id):rqVis(p).filter(x=>!String(rqAns(p.id)[x.id]||'').trim());
     if(!todo.length){toast('Nothing blank to fill.');return}
     S.rqBusy=true;render();let n=0;
     try{for(const q of todo){toast('Tilly: '+(n+1)+' of '+todo.length+'…');await rqDraft(p,q);n++}toast('Tilly drafted '+n+' answer'+(n===1?'':'s')+'. Check each one and its source.')}
@@ -2717,8 +2726,8 @@ function calCard(){
 vToday=function(){return calCard()+pitchCard()+vT45c()};
 
 /* ---------- pitches inbox (copied from the pitches@ mailbox by the Google script) ---------- */
-const pitchAll=()=>S.kit.filter(k=>k.type==='pitch').sort((a,b)=>String(b.received).localeCompare(String(a.received)));
-const pitchNew=()=>pitchAll().filter(k=>(k.state||'new')==='new');
+const pitchAll=()=>S.kit.filter(k=>k.type==='pitch'&&(k.box||'pitches')===((OWNER()&&S.pbox)||'pitches')).map(k=>({...k,kind:reKind49(k)})).sort((a,b)=>String(b.received).localeCompare(String(a.received)));
+const pitchNew=()=>S.kit.filter(k=>k.type==='pitch'&&(k.box||'pitches')==='pitches'&&(k.state||'new')==='new');
 const PKIND={pitch:'Writer pitch',press:'Press release',invite:'Invitation',other:'Other'};
 function pitchWhen(iso){const d=String(iso||'').slice(0,10);if(!d) return '';return d===TODAY?'Today '+String(iso).slice(11,16):d===addDays(TODAY,-1)?'Yesterday':fmt(d)}
 function pitchRow(x){const st=x.state||'new',ds=(x.dates||[]).filter(Boolean);
@@ -2730,7 +2739,7 @@ function pitchCard(){
 function vPitches(){
   const all=pitchAll(),f=S.pkf||'All',sf=S.psf||'new',kinds=['All',...Object.keys(PKIND)].filter(k=>k==='All'||all.some(x=>(x.kind||'other')===k));
   const rows=all.filter(x=>(f==='All'||(x.kind||'other')===f)&&(sf==='all'||(x.state||'new')==='new'));
-  return `<section class="box"><h2>Pitches inbox <small>copied from pitches@ every hour. ${pitchNew().length} new</small></h2><div class="row" style="gap:10px;margin-bottom:10px"><div class="seg" role="group" aria-label="Kind">${kinds.map(k=>`<button data-act="pkf" data-id="${k}" aria-pressed="${f===k}">${k==='All'?'All':PKIND[k]}</button>`).join('')}</div><div class="seg" role="group" aria-label="Show"><button data-act="psf" data-id="new" aria-pressed="${sf==='new'}">New</button><button data-act="psf" data-id="all" aria-pressed="${sf==='all'}">Everything</button></div></div>${rows.map(pitchRow).join('')||`<div class="empty">${all.length?'Nothing new. Choose Everything to see the rest.':'Nothing here yet. The Google script copies mail in after you finish Part D of SETUP-server.md.'}</div>`}<p class="meta">Only the sender, subject, date and a short preview are copied, never the whole email. Open pitches@ in Zoho to read and reply.</p></section>`;
+  return `<section class="box"><h2>${(OWNER()&&S.pbox==='me')?'My inbox':'Pitches inbox'} <small>${(OWNER()&&S.pbox==='me')?'copied from your Zoho inbox every hour. Only you see this tab':'copied from pitches@ every hour. '+pitchNew().length+' new'}</small></h2>${OWNER()?`<div class="seg" role="group" aria-label="Inbox" style="margin-bottom:10px"><button data-act="pbox" data-id="pitches" aria-pressed="${S.pbox!=='me'}">Pitches</button><button data-act="pbox" data-id="me" aria-pressed="${S.pbox==='me'}">My inbox</button></div>`:''}<div class="row" style="gap:10px;margin-bottom:10px"><div class="seg" role="group" aria-label="Kind">${kinds.map(k=>`<button data-act="pkf" data-id="${k}" aria-pressed="${f===k}">${k==='All'?'All':PKIND[k]}</button>`).join('')}</div><div class="seg" role="group" aria-label="Show"><button data-act="psf" data-id="new" aria-pressed="${sf==='new'}">New</button><button data-act="psf" data-id="all" aria-pressed="${sf==='all'}">Everything</button></div></div>${rows.map(pitchRow).join('')||`<div class="empty">${all.length?'Nothing new. Choose Everything to see the rest.':'Nothing here yet. The Google script copies mail in after you finish Part D of SETUP-server.md.'}</div>`}<p class="meta">Only the sender, subject, date and a short preview are copied, never the whole email. Open pitches@ in Zoho to read and reply.</p></section>`;
 }
 document.addEventListener('click',async e=>{
   const b=e.target.closest&&e.target.closest('[data-act="pkf"],[data-act="psf"],[data-act="pstate"]');if(!b) return;
@@ -2956,7 +2965,7 @@ function rsSummary47(p){
   return 'Sponsor idea: '+p.group+'\n\n'+(L.length?L.join('\n')+'\n\n':'')+rqPack(p);
 }
 document.addEventListener('click',async e=>{
-  const b=e.target.closest&&e.target.closest('[data-act="rqpush"],[data-act="genpush"],[data-act="repush"],[data-act="asgpush"]');
+  const b=e.target.closest&&e.target.closest('[data-act="genpush"],[data-act="repush"],[data-act="asgpush"]');
   if(!b||!EDIT) return;
   e.stopImmediatePropagation();e.preventDefault();
   const a=b.dataset.act,id=b.dataset.id;
@@ -3065,6 +3074,568 @@ document.addEventListener('click',e=>{
 },true);
 const _r47=render;
 render=function(){_r47();try{fold47()}catch(x){console.warn('fold',x)}};
+
+/* ---------- v50 ---------- */
+const lsOk48=k=>{try{return !!localStorage.getItem(k)}catch(e){return false}};
+const lsPut48=k=>{try{localStorage.setItem(k,'1')}catch(e){}};
+const nlg48=s=>String(s||'').replace(/\s+/g,' ').trim();
+
+/* Friday banner goes away once it is sent or set aside */
+const friKey48=()=>'tllj_frido_'+TODAY;
+const vFri48=vToday;
+vToday=function(){let h=vFri48();if(lsOk48(friKey48())) h=h.replace(/<div class="banner" role="status">It is Friday\.[\s\S]*?<\/div>/,'');return h};
+document.addEventListener('click',e=>{
+  const b=e.target.closest&&e.target.closest('[data-act="ptclose"]');
+  if(b&&document.getElementById('wk_t')){lsPut48(friKey48());setTimeout(render,50)}
+  if(e.target.closest&&e.target.closest('[data-act="wk_send"]')) S._wk48=true;
+},true);
+
+/* undo is an icon; the hover text names what it undoes */
+renderUndo=function(){
+  const b=$('#undo');if(!b) return;const h=hist[hist.length-1],t=h?'Undo: '+h.label:'Nothing to undo';
+  b.hidden=!EDIT;b.disabled=!h;b.classList.add('ib');
+  b.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>';
+  b.title=t;b.setAttribute('aria-label',t);
+};
+try{renderUndo()}catch(e){}
+
+/* review before anything goes out */
+function pv48(m,title){
+  return new Promise(res=>{
+    let d=document.getElementById('pv48');if(d) d.remove();
+    d=document.createElement('dialog');d.id='pv48';
+    d.innerHTML=`<h2 style="margin-bottom:4px">${esc(title)}</h2><p class="meta">Read it, change anything, then send. Nothing goes until you press Send.</p><div class="fld"><label>To</label><input type="text" value="${esc(m.to||'')}" readonly aria-label="To"></div><div class="fld"><label for="pv_s">Subject</label><input type="text" id="pv_s" value="${esc(m.subject||'')}"></div><div class="fld"><label for="pv_t">Message</label><textarea id="pv_t" style="min-height:300px">${esc(m.text||'')}</textarea></div><div class="row"><button class="btn pri" data-v="1">Send</button><button class="btn" data-v="0">Cancel</button></div>`;
+    document.body.appendChild(d);
+    let done=false;const fin=v=>{if(done) return;done=true;const r=v?{...m,subject:$('#pv_s').value.trim()||m.subject,text:$('#pv_t').value,html:$('#pv_t').value===m.text?m.html:''}:null;d.close();d.remove();res(r)};
+    d.addEventListener('click',e=>{const b=e.target.closest('[data-v]');if(b) fin(b.dataset.v==='1')});
+    d.addEventListener('cancel',()=>fin(false));
+    d.showModal();
+  });
+}
+const mailLive48=()=>{const c=MC();return (c.route==='script'&&c.url&&c.sec)||(c.route==='zoho'&&c.zoho)};
+const sm48=sendMail;
+sendMail=async function(m){
+  if(S._pvm48){const x=S._pvm48;S._pvm48=null;return sm48(x)}
+  if(S._skipPv48||!mailLive48()){const ok=await sm48(m);if(S._wk48){S._wk48=false;if(ok) lsPut48(friKey48())}return ok}
+  const r=await pv48(m,'Send this email?');
+  if(!r){S._wk48=false;toast('Not sent.');return false}
+  const ok=await sm48(r);if(S._wk48){S._wk48=false;if(ok){lsPut48(friKey48());render()}}return ok;
+};
+const dF48=drToFatimah;
+drToFatimah=async function(id){
+  if(S._skipPv48||!mailLive48()) return dF48(id);
+  const d=get('kit',id);if(!d) return;
+  if(!EML.Fatimah()){toast('Fatimah’s email is not in the config yet.');return}
+  const r=await pv48(await apprMail({...d}),'Send to Fatimah for approval?');
+  if(!r){toast('Not sent. It stays in Approvals as a draft.');return}
+  S._pvm48=r;try{await dF48(id)}finally{S._pvm48=null}
+};
+
+/* restoring saved answers asks first */
+window.addEventListener('click',e=>{
+  const b=e.target.closest&&e.target.closest('[data-act="fxset"]');
+  if(!b||!EDIT||S._ok48) return;
+  const p=get('pipe',b.dataset.id);if(!p) return;
+  e.stopImmediatePropagation();e.preventDefault();
+  askGo47('Restore '+p.group+'?','This puts '+p.group+' and its saved research answers back in Sponsoring focus. The sponsor now in focus is swapped out. Nothing is deleted.','Restore answers',()=>{S._ok48=true;try{b.click()}finally{S._ok48=false}});
+},true);
+
+/* the summary for Fatimah: written from everything on the desk, shown before it goes */
+function facts48(kind,id){
+  const cut=(s,n)=>nlg48(s).slice(0,n);
+  if(kind==='pipe'){
+    const p=get('pipe',id);if(!p) return null;
+    const a=rqAns(id),qa=rqVis(p).map(x=>[rqSub(x.q,p),nlg48(a[x.id])]).filter(x=>x[1]&&x[1]!=='Ask').map(x=>x[0]+' '+cut(x[1],380));
+    return {name:p.group,text:[
+      'Sponsor: '+p.group,p.category&&'Category: '+p.category,'Status: '+p.status,p.why&&'Why we scored them: '+cut(p.why,300),p.propose&&'What we would propose: '+cut(p.propose,300),p.notes&&'Notes: '+cut(p.notes,300),p.next&&'Next step: '+cut(p.next,200)+(p.nextDate?' ('+fmt(p.nextDate)+')':''),
+      contactsOf(id).length&&'Contacts: '+contactsOf(id).slice(0,8).map(c=>[c.name,c.role].filter(Boolean).join(', ')).join('; '),
+      logsOf(id).length&&'Recent log: '+logsOf(id).slice(0,5).map(l=>fmt(l.date)+' '+l.type+': '+cut(l.summary,160)).join(' | '),
+      qa.length&&'Research answers: '+qa.join(' | ')].filter(Boolean).join('\n')};
+  }
+  const x=get('kit',id);if(!x) return null;
+  const pk=s=>(x.pkgs||[]).filter(k=>k.side===s).map(k=>k.item).join('; ');
+  return {name:x.name,text:['Partner: '+x.name,x.kind&&'Kind: '+x.kind,x.stage&&'Stage: '+x.stage,x.notes&&'Notes: '+cut(x.notes,400),pk('give')&&'What we give: '+pk('give'),pk('get')&&'What we get: '+pk('get'),x.next&&'Next step: '+cut(x.next,200)+(x.nextDate?' ('+fmt(x.nextDate)+')':''),(x.outcomes||[]).length&&'Outcomes: '+x.outcomes.slice(0,3).map(o=>cut(o.result,160)).join(' | ')].filter(Boolean).join('\n')};
+}
+function fallbackSummary48(kind,id){
+  const first=(s,n)=>{const t=nlg48(s);const m=t.match(/^(.+?[.!?])(\s|$)/);return (m?m[1]:t).slice(0,n)};
+  if(kind==='pipe'){const p=get('pipe',id);return 'Who they are\n'+(p.category?p.group+' ('+p.category+').':p.group+'.')+'\n\nWhy it fits TLLJ\n'+(first(p.why,260)||'To be confirmed.')+'\n\nWhat we propose\n'+(first(p.propose,260)||'To be confirmed.')+'\n\nWhat I need from you\nYour yes or no on pursuing '+p.group+', and any introduction you can make.'}
+  const x=get('kit',id);return 'Who they are\n'+x.name+(x.kind?' ('+x.kind+').':'.')+'\n\nWhy it fits TLLJ\n'+(first(x.notes,260)||'To be confirmed.')+'\n\nWhat we propose\n'+((x.pkgs||[]).filter(k=>k.side==='give').map(k=>k.item).join('; ')||'To be confirmed.')+'\n\nWhat I need from you\nYour yes or no on going ahead with '+x.name+'.';
+}
+async function summary48(kind,id){
+  const f=facts48(kind,id);if(!f||!EDIT) return;
+  let d=document.getElementById('sum48');if(d) d.remove();
+  d=document.createElement('dialog');d.id='sum48';
+  d.innerHTML=`<h2 style="margin-bottom:4px">Summary for Fatimah: ${esc(f.name)}</h2><p class="meta">Written from everything the desk holds on ${esc(f.name)}. Read it, edit it, then send. Nothing goes until you press Send to Fatimah.</p><div class="fld"><textarea id="sum_t" style="min-height:300px" aria-label="Summary">Writing the summary…</textarea></div><div class="row"><button class="btn pri" data-v="send" disabled>Send to Fatimah</button><button class="btn" data-v="save" disabled>Save in Approvals only</button><button class="btn" data-v="no">Cancel</button></div>`;
+  document.body.appendChild(d);d.showModal();
+  d.addEventListener('click',async e=>{
+    const b=e.target.closest('[data-v]');if(!b) return;
+    const v=b.dataset.v,t=$('#sum_t').value.trim();
+    if(v==='no'){d.close();d.remove();return}
+    if(!t) return;
+    d.close();d.remove();
+    const title=(kind==='pipe'?'Sponsor idea: ':'Partnership idea: ')+f.name;
+    const did=await newDraft({kind:'Proposal',title,forId:id,body:t});
+    if(v==='save'){S.tab='approvals';render();toast('Saved in Approvals. Press Send to Fatimah there when you are ready.');return}
+    S._skipPv48=true;try{await drToFatimah(did)}finally{S._skipPv48=false}
+    render();
+  });
+  const ta=$('#sum_t');let out='';
+  try{
+    if(!gem()) throw new Error('nokey');
+    out=await aiText('You write for Sade Ademola at The Leisurely Life Journal (TLLJ), a luxury publication for the discerning African reader. Write a summary asking the editor in chief, Fatimah, to approve this idea. Use only the FACTS below; if something is not in the FACTS, leave it out and never guess. Warm, professional, plain prose. At most 170 words. Four short paragraphs, each introduced by one of these labels on its own line: Who they are / Why it fits TLLJ / What we propose / What I need from you. In the last paragraph ask for specific things only she can give: a yes or no on the idea and any introduction or approval needed. Do not paste or list the research. Do not mention AI. Never use the words quiet, explore, journey, craft, landscape, vibrant, showcase.\nFACTS:\n'+f.text);
+    out=String(out||'').trim();if(out.length<60) throw new Error('short');
+  }catch(e){out=fallbackSummary48(kind,id);toast(e.message==='nokey'?'No Tilly key set, so this is a plain summary. Edit it before sending.':'Tilly could not write it, so this is a plain summary. Edit it before sending.')}
+  if(document.getElementById('sum48')){ta.value=out;d.querySelectorAll('[data-v][disabled]').forEach(b=>b.disabled=false);ta.focus()}
+}
+document.addEventListener('click',e=>{
+  const b=e.target.closest&&e.target.closest('[data-act="rqpush"],[data-act="ptpush"]');if(!b||!EDIT) return;
+  e.stopImmediatePropagation();e.preventDefault();
+  if(b.dataset.act==='rqpush') summary48('pipe',b.dataset.id);else{const dl=document.getElementById('dlg');if(dl&&dl.open) dl.close();summary48('partner',b.dataset.id)}
+},true);
+const op48=openPartner;
+openPartner=function(id){op48(id);if(!EDIT) return;const c=document.querySelector('#dlg [data-act="ptclose"]');if(c&&!document.querySelector('#dlg [data-act="ptpush"]')) c.insertAdjacentHTML('beforebegin',`<button class="btn" data-act="ptpush" data-id="${esc(id)}">Send summary to Fatimah</button>`)};
+
+/* after Fatimah approves: Tilly proposes the next steps and the decisions she needs to take */
+function setupList48(){return drafts().filter(d=>d.status==='approved'&&d.kind==='Proposal'&&d.forId&&!d.setup&&(get('pipe',d.forId)||get('kit',d.forId)))}
+const vT48=vToday;
+vToday=function(){
+  const h=vT48();if(!EDIT||MODE==='c') return h;
+  const L=setupList48().filter(d=>!!get('pipe',d.forId)===(MODE!=='p'));if(!L.length) return h;
+  return `<section class="box"><h2>Approved by Fatimah <small>Tilly can set up what happens next</small></h2>${L.map(d=>`<div class="ptrow"><span class="pn"><b style="overflow-wrap:anywhere">${esc(d.title||d.kind)}</b><span class="meta">Next steps go on your list. The decisions she needs to take go to her Decisions tab. You review both first.</span></span><span class="docact"><button class="btn sm pri" data-act="setup48" data-id="${esc(d.id)}">Set up next steps</button></span></div>`).join('')}</section>`+h;
+};
+document.addEventListener('click',async e=>{
+  const b=e.target.closest&&e.target.closest('[data-act="setup48"]');if(!b||!EDIT) return;
+  e.stopImmediatePropagation();e.preventDefault();
+  const dr=get('kit',b.dataset.id);if(!dr) return;
+  const kind=get('pipe',dr.forId)?'pipe':'partner',f=facts48(kind,dr.forId);if(!f) return;
+  if(!gem()){needKey();return}
+  toast('Tilly is working out the next steps…');
+  let r;
+  try{
+    const t=await aiText('You help Sade Ademola at The Leisurely Life Journal (TLLJ) move an approved idea forward. Today is '+TODAY+'. Use only the FACTS and the APPROVED SUMMARY; never invent names, dates or numbers. Return JSON only, no other text: {"steps":[{"text":"","due":"YYYY-MM-DD"}],"decisions":[{"decision":"","why":""}]}. steps: 3 to 5 concrete next steps for Sade, in order, each a full sentence, due dates from today onward and realistic. decisions: 1 to 3 specific decisions that only Fatimah can take (an approval, an introduction, a budget, who attends), each phrased so she can answer yes, no or choose, with one sentence of why. No alcohol, tobacco or gambling.\nFACTS:\n'+f.text+'\nAPPROVED SUMMARY:\n'+nlg48(dr.body).slice(0,1500));
+    const m=String(t).match(/\{[\s\S]*\}/);r=JSON.parse(m?m[0]:t);
+  }catch(x){toast('Tilly could not set this up. Try again in a moment.');return}
+  const steps=(r.steps||[]).filter(s=>s&&s.text).slice(0,5),decs=(r.decisions||[]).filter(s=>s&&s.decision).slice(0,3);
+  let d=document.getElementById('su48');if(d) d.remove();
+  d=document.createElement('dialog');d.id='su48';
+  d.innerHTML=`<h2 style="margin-bottom:4px">Next steps for ${esc(f.name)}</h2><p class="meta">Untick anything you do not want. Edit the words or dates. Nothing is added until you press Add.</p><h3 class="ptg">Your steps</h3>${steps.map((s,i)=>`<div class="fld"><label class="meta" style="display:flex;gap:8px;align-items:center"><input type="checkbox" checked data-st="${i}"> Add this step</label><textarea data-sx="${i}" style="min-height:56px">${esc(s.text)}</textarea><input type="date" data-sd="${i}" value="${/^\d{4}-\d\d-\d\d$/.test(s.due||'')&&s.due>=TODAY?s.due:addDays(TODAY,3)}" aria-label="Due date"></div>`).join('')||'<p class="meta">No steps suggested.</p>'}<h3 class="ptg">Decisions for Fatimah</h3>${decs.map((s,i)=>`<div class="fld"><label class="meta" style="display:flex;gap:8px;align-items:center"><input type="checkbox" checked data-dt="${i}"> Send to her Decisions tab</label><textarea data-dx="${i}" style="min-height:56px">${esc(s.decision)}</textarea><div class="meta">${esc(s.why||'')}</div></div>`).join('')||'<p class="meta">No decisions suggested.</p>'}<div class="row"><button class="btn pri" data-v="1">Add</button><button class="btn" data-v="0">Cancel</button></div>`;
+  document.body.appendChild(d);d.showModal();
+  d.addEventListener('click',async ev=>{
+    const x=ev.target.closest('[data-v]');if(!x) return;
+    if(x.dataset.v==='0'){d.close();d.remove();return}
+    const S1=steps.map((s,i)=>({on:d.querySelector(`[data-st="${i}"]`).checked,text:d.querySelector(`[data-sx="${i}"]`).value.trim(),due:d.querySelector(`[data-sd="${i}"]`).value||addDays(TODAY,3)})).filter(s=>s.on&&s.text);
+    const D1=decs.map((s,i)=>({on:d.querySelector(`[data-dt="${i}"]`).checked,decision:d.querySelector(`[data-dx="${i}"]`).value.trim(),why:s.why||''})).filter(s=>s.on&&s.decision);
+    d.close();d.remove();
+    await act('Set up '+f.name,async()=>{
+      for(const s of S1){const id=uid('fu');await save('kit',id,{id,type:'followup',text:(kind==='pipe'?'':f.name+': ')+s.text,due:s.due,repeat:0,pipeId:kind==='pipe'?dr.forId:'',who:'',done:false,created:TODAY,mode:kind==='pipe'?'S':'P'})}
+      let n=Math.max(0,...S.decisions.map(q=>q.n||0));
+      for(const q of D1){n++;const id=uid('d');await save('decisions',id,{id,n,decision:f.name+': '+q.decision,proposed:'',why:q.why,comment:'',answer:'',archived:false})}
+      await patch('kit',dr.id,{setup:true});
+    });
+    render();toast('Added '+S1.length+' step'+(S1.length===1?'':'s')+' and '+D1.length+' decision'+(D1.length===1?'':'s')+' for Fatimah.');
+  });
+},true);
+
+/* Push to Praise: only what moved, in full sentences */
+handoverText=function(){
+  const h=handoverData(),last=h.last||'',since=last?fmt(last.slice(0,10)):'the start';
+  const A=S.activity.filter(a=>a.at>last).sort((a,b)=>a.at<b.at?-1:1),lastD=last?last.slice(0,10):'';
+  const SP={},PT={},EV=[],CT=[],AS=[],DC=[];
+  const g=(M,k)=>M[k]||(M[k]={st:null,added:false,cons:[],notes:[]});
+  A.forEach(a=>(a.changes||[]).forEach(c=>{
+    if(['Approval','Follow-up'].includes(c.kind)||c.col==='tasks'||c.col==='note') return;
+    const w=c.what||'';
+    if(c.col==='pipe'){const x=g(SP,c.name),m=/status: (.*?) → ([^;]*)/.exec(w);if(m) x.st=[x.st?x.st[0]:m[1],m[2]];if(w==='added') x.added=true}
+    else if(c.kind==='Partner'){const x=g(PT,c.name),m=/stage: (.*?) → ([^;]*)/.exec(w);if(m) x.st=[x.st?x.st[0]:m[1],m[2]];if(w==='added') x.added=true}
+    else if(c.col==='contacts'&&w==='added'){const ct=S.contacts.find(q=>nameOfRec('contacts',q)===c.name);const p=ct&&get('pipe',ct.pipeId);if(p&&c.name) g(SP,nameOfRec('pipe',p)).cons.push(ct.name||ct.email)}
+    else if(c.col==='events'){const e=S.events.find(q=>nameOfRec('events',q)===c.name);if(e&&!EV.some(q=>q.id===e.id)) EV.push({id:e.id,name:e.name,added:w==='added',status:e.status})}
+    else if(c.kind==='Contributor'&&w==='added') CT.push(c.name);
+    else if(c.kind==='Assignment'&&w==='added') AS.push(c.name);
+    else if(c.col==='decisions'&&/answer:/.test(w)){const d=S.decisions.find(q=>nameOfRec('decisions',q)===c.name);if(d&&d.answer&&!DC.some(q=>q.id===d.id)) DC.push(d)}
+  }));
+  S.log.filter(l=>l.date>=lastD&&l.summary).forEach(l=>{const p=get('pipe',l.pipeId);if(p){const x=SP[nameOfRec('pipe',p)];if(x) x.notes.push(nlg48(l.summary))}});
+  const line=(n,x)=>{const o=[];if(x.added) o.push('new on the list');if(x.st) o.push('status '+x.st[0]+' → '+x.st[1]);if(x.cons.length) o.push(x.cons.length+' new contact'+(x.cons.length===1?'':'s')+' ('+[...new Set(x.cons)].join(', ')+')');[...new Set(x.notes)].slice(0,2).forEach(q=>o.push('note: '+q));return o.length?'- '+n+': '+o.join('; ')+'.':''};
+  const sec=(title,rows)=>rows.length?title+'\n'+rows.join('\n'):'';
+  const sp=Object.keys(SP).map(k=>{const p=S.pipe.find(q=>nameOfRec('pipe',q)===k);return line(p?p.group:k,SP[k])}).filter(Boolean);
+  const pt=Object.keys(PT).map(k=>{const q=PTS().find(z=>nameOfRec('kit',z)===k);return line(q?q.name:k,PT[k])}).filter(Boolean);
+  const ev=EV.map(e=>'- '+e.name+(e.added?' (added)':'')+(e.status?': '+nlg48(e.status):''));
+  const co=[...(CT.length?['- New contributors: '+[...new Set(CT)].join(', ')+'.']:[]),...(AS.length?['- New assignments: '+[...new Set(AS)].join(', ')+'.']:[])];
+  const dc=DC.map(d=>'- '+nlg48(d.decision)+' Answer: '+d.answer+(d.comment?' ('+nlg48(d.comment)+')':'')+'.');
+  const lim=addDays(TODAY,14),open=h.open.filter(o=>o[3]&&nlg48(o[3])&&o[0]<=lim),later=h.open.filter(o=>o[3]&&o[0]>lim).length;
+  const nx=open.map(o=>'- '+fmt(o[0])+' · '+o[2]+': '+nlg48(o[3]));
+  if(later) nx.push('- '+later+' later step'+(later===1?' is':'s are')+' in the desk.');
+  const ap=drafts().filter(d=>d.status==='approved').map(d=>'- '+(d.title||d.kind));
+  const parts=[sec('Sponsors',sp),sec('Partners',pt),sec('Events',ev),sec('Contributors',co),sec('Decisions answered',dc),sec('Next steps',nx),sec('Approved, ready to send',ap)].filter(Boolean);
+  const moved=sp.length+pt.length+ev.length+co.length+dc.length;
+  return 'Tracker updates since '+since+'\n\n'+(moved?'':'Nothing has changed since the last push.\n\n')+parts.join('\n\n');
+};
+
+/* search results take you to the page */
+function flash48(id){setTimeout(()=>{const el=id&&document.querySelector('#main [data-id="'+(window.CSS&&CSS.escape?CSS.escape(id):id)+'"]');if(el){const t=el.closest('.ptrow,.item,.pcard,section')||el;t.scrollIntoView({block:'center',behavior:'smooth'});t.classList.add('flash48');setTimeout(()=>t.classList.remove('flash48'),2400)}},200)}
+document.addEventListener('click',async e=>{
+  const r=e.target.closest&&e.target.closest('#dlg [data-act="gosearch"],#dlg [data-act="gopt"],#dlg [data-act="gox"]');
+  if(!r||!document.getElementById('gres')) return;
+  const a=r.dataset.act,col=r.dataset.col,id=r.dataset.id,setM=m=>{MODE=m;lsSet('tllj_mode',m)};
+  e.stopImmediatePropagation();e.preventDefault();
+  $('#dlg').close();
+  if(a==='gopt'){setM('p');S.tab='partners';render();flash48(id);return}
+  if(a==='gox'){setM('c');S.tab=col==='pe_open'?'people':'assign';render();flash48(id);return}
+  if(col==='pipe'){setM('s');S.tab='sponsors';await act('Sponsor in focus',()=>save('kit','focus',{...(get('kit','focus')||{}),id:'focus',type:'focus',pipeId:id}));S.fxOpen=true;render();scrollTo({top:0});return}
+  if(col==='tasks'){setM('s');S.tab='roadmap';render();flash48(id);return}
+  if(col==='events'){S.tab='events';render();flash48(id);return}
+  openEdit(col,id);
+},true);
+
+/* Roadmap by mode: partner steps stay with partnerships */
+function side48(t){
+  if(t.m) return t.m;
+  const test=txt=>{const x=nlg48(txt).toLowerCase(),hit=n=>{n=nlg48(n).toLowerCase();return n.length>=4&&x.includes(n)};return [PTS().some(q=>hit(q.name)),S.pipe.some(q=>hit(q.group))]};
+  let [p,s]=test(t.action||'');
+  if(!p&&!s) [p,s]=test(t.target||'');
+  return p&&!s?'p':'s';
+}
+function sideE48(e){
+  const n=nlg48(e.name).toLowerCase(),hit=m=>{m=nlg48(m).toLowerCase();return m.length>=4&&(n.includes(m)||m.includes(n))};
+  const p=PTS().some(q=>hit(q.name)),s=S.pipe.some(q=>hit(q.group));
+  return p&&!s?'p':'s';
+}
+const vR48=vRoadmap;
+vRoadmap=function(){
+  if(MODE==='p') return vRoadmapP48();
+  const t0=S.tasks,e0=S.events;S.tasks=t0.filter(t=>side48(t)!=='p');S.events=e0.filter(e=>sideE48(e)!=='p');
+  try{return vR48()}finally{S.tasks=t0;S.events=e0}
+};
+function vRoadmapP48(){
+  const steps=S.tasks.filter(t=>side48(t)==='p').sort((a,b)=>String(a.due||'9').localeCompare(String(b.due||'9')));
+  const nx=PTS().filter(p=>p.stage!=='wrapped'&&p.nextDate&&p.next).sort((a,b)=>a.nextDate<b.nextDate?-1:1);
+  const evs=S.events.filter(e=>sideE48(e)==='p'&&e.end>=TODAY).sort((a,b)=>a.start<b.start?-1:1);
+  const wk=d=>{const x=pd(d),dow=(x.getDay()+6)%7;return addDays(d,-dow)};
+  const items=[...steps.map(t=>({d:t.due||'',h:`<div class="ptrow"><span class="pill ${t.done?'ok':t.due&&t.due<TODAY?'bad':'gold'}">${t.done?'Done':'Step'}</span><span class="pn"><b style="overflow-wrap:anywhere">${esc(t.action)}</b><span class="meta">${S.pipe.some(q=>q.group===t.target)?'':esc(t.target||'')}${t.due?(S.pipe.some(q=>q.group===t.target)||!t.target?'':' · ')+esc(fmt(t.due)):''}</span></span><span class="docact">${EDIT?`<button class="btn sm" data-act="edit" data-col="tasks" data-id="${esc(t.id)}">Open</button>`:''}</span></div>`})),
+    ...nx.map(p=>({d:p.nextDate,h:`<div class="ptrow"><span class="pill">Partner</span><span class="pn"><b style="overflow-wrap:anywhere">${esc(p.name)}</b><span class="meta">${esc(p.next)} · ${esc(fmt(p.nextDate))}</span></span><span class="docact"><button class="btn sm" data-act="openpt" data-id="${esc(p.id)}">Open</button></span></div>`})),
+    ...evs.map(e=>({d:e.start,h:`<div class="ptrow"><span class="pill">Event</span><span class="pn"><b style="overflow-wrap:anywhere">${esc(e.name)}</b><span class="meta">${esc(evDates(e))}</span></span><span class="docact">${EDIT?`<button class="btn sm" data-act="edit" data-col="events" data-id="${esc(e.id)}">Open</button>`:''}</span></div>`}))].sort((a,b)=>String(a.d||'9').localeCompare(String(b.d||'9')));
+  const by={};items.forEach(i=>{const k=i.d?wk(i.d):'none';(by[k]=by[k]||[]).push(i)});
+  const keys=Object.keys(by).sort();
+  return `<section class="box"><h2>Partnerships roadmap <small>steps, partner next steps and events, week by week</small></h2>${EDIT?'<div class="row" style="margin-bottom:8px"><button class="btn pri" data-act="pstep48">Add a partnership step</button></div>':''}${keys.map(k=>`<h3 class="rqg">${k==='none'?'No date':'Week of '+esc(fmt(k))}</h3>${by[k].map(i=>i.h).join('')}`).join('')||'<p class="meta">Nothing planned yet.</p>'}</section>`;
+}
+document.addEventListener('click',e=>{
+  const b=e.target.closest&&e.target.closest('[data-act="pstep48"]');if(!b||!EDIT) return;
+  e.stopImmediatePropagation();e.preventDefault();
+  let d=document.getElementById('ps48');if(d) d.remove();
+  d=document.createElement('dialog');d.id='ps48';
+  d.innerHTML=`<h2 style="margin-bottom:6px">Add a partnership step</h2><div class="fld"><label for="ps_t">Step</label><textarea id="ps_t" style="min-height:70px" placeholder="For example: Email the press team to request an interview"></textarea></div><div class="fld"><label for="ps_p">Partner (optional)</label><select id="ps_p"><option value="">None</option>${PTS().map(p=>`<option>${esc(p.name)}</option>`).join('')}</select></div><div class="fld"><label for="ps_d">Date</label><input type="date" id="ps_d" value="${addDays(TODAY,1)}"></div><div class="row"><button class="btn pri" data-v="1">Add</button><button class="btn" data-v="0">Cancel</button></div>`;
+  document.body.appendChild(d);d.showModal();
+  d.addEventListener('click',async ev=>{const x=ev.target.closest('[data-v]');if(!x) return;
+    if(x.dataset.v==='1'){const t=$('#ps_t').value.trim();if(!t){toast('Write the step first.');return}
+      await act('Add partnership step',()=>save('tasks',uid('t'),{week:'Partnerships',dates:'',goal:'',action:t,target:$('#ps_p').value,owner:'Sade',done:false,due:$('#ps_d').value||addDays(TODAY,1),m:'p'}));render();toast('Added.')}
+    d.close();d.remove()});
+},true);
+async function ensureV50(){
+  if(!db||!OWNER()||lsGet('tllj_seed_v50')||!S.pipe.length||!S.loaded.tasks) return;
+  try{
+    if(!S.tasks.some(t=>/ART X Lagos press team/i.test(t.action||''))) await save('tasks',uid('t'),{week:'Partnerships',dates:'',goal:'',action:'Email the ART X Lagos press team to request interviews with Tokini Peterside-Schwebig and Dr Jareh Das, and a 2027 media partnership call.',target:'ART X Lagos',owner:'Sade',done:false,due:TODAY,m:'p'});
+    lsSet('tllj_seed_v50','1');
+  }catch(x){console.warn('v50',x)}
+}
+
+/* the inbox switch on the Pitches page */
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-act="pbox"]');if(!b) return;e.stopImmediatePropagation();S.pbox=b.dataset.id;render()},true);
+
+/* ---------- v51 ---------- */
+/* 1. pitch kind: read the words, never the addresses */
+function reKind49(k){
+  const t=String((k.subject||'')+' '+(k.summary||'')).replace(/[\w.+-]+@[\w-]+(\.[\w-]+)+/g,' ').replace(/https?:\/\/\S+|www\.\S+/gi,' ').toLowerCase();
+  if(/\b(you are invited|you're invited|invitation to|please join us|rsvp|save the date|launch event|press day|preview event|opening night|cocktail reception|private view|panel discussion)\b/.test(t)) return 'invite';
+  if(/\b(press release|for immediate release|embargo|announces|announcing|unveils|introducing|new collection|now available)\b/.test(t)) return 'press';
+  if(/\b(pitch|pitching|story idea|feature idea|article idea|op-ed|i would like to write|i'd like to write|i am a writer|freelance|freelancer|contributor|essay idea)\b/.test(t)) return 'pitch';
+  return 'other';
+}
+/* 2. hold before sending, with undo */
+const hs49=()=>{try{const v=localStorage.getItem('tllj_hold');return v===null?30:+v}catch(e){return 30}};
+const HOLD49={};
+function obPut49(){try{const o=Object.values(HOLD49).map(h=>({id:h.id,r:h.r,due:h.due}));if(o.length) localStorage.setItem('tllj_outbox',JSON.stringify(o));else localStorage.removeItem('tllj_outbox')}catch(e){}}
+function bar49(){let b=document.getElementById('hold49');if(!b){b=document.createElement('div');b.id='hold49';b.setAttribute('role','status');b.setAttribute('aria-live','polite');document.body.appendChild(b)}return b}
+function drawHold49(){
+  const b=bar49(),hs=Object.values(HOLD49),old=(window._ob49||[]);
+  b.style.display=hs.length||old.length?'flex':'none';
+  b.innerHTML=hs.map(h=>{const s=Math.max(0,Math.ceil((h.due-Date.now())/1000));return `<div class="h49"><span>Sending “${esc(String(h.r.subject||'').slice(0,40))}” in <b>${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}</b></span><button class="btn sm" data-h49="undo" data-id="${h.id}">Undo</button><button class="btn pri sm" data-h49="now" data-id="${h.id}">Send now</button></div>`}).join('')+
+   old.map((o,i)=>`<div class="h49"><span>Not sent: “${esc(String(o.r.subject||'').slice(0,40))}”. The page closed first.</span><button class="btn sm" data-h49="drop" data-id="${i}">Discard</button><button class="btn pri sm" data-h49="resend" data-id="${i}">Send now</button></div>`).join('');
+}
+function hold49(r,secs){return new Promise(res=>{
+  const id=uid('h'),h={id,r,due:Date.now()+secs*1000,res};HOLD49[id]=h;obPut49();drawHold49();
+  h.t=setInterval(()=>{if(Date.now()>=h.due) fin(r);else drawHold49()},500);
+  function fin(v){clearInterval(h.t);delete HOLD49[id];obPut49();drawHold49();res(v)}
+  h.fin=fin;
+})}
+window.addEventListener('beforeunload',e=>{if(Object.keys(HOLD49).length){e.preventDefault();e.returnValue=''}});
+document.addEventListener('click',async e=>{
+  const b=e.target.closest&&e.target.closest('[data-h49]');if(!b) return;e.stopImmediatePropagation();
+  const k=b.dataset.h49,id=b.dataset.id;
+  if(k==='undo'&&HOLD49[id]) HOLD49[id].fin(null);
+  if(k==='now'&&HOLD49[id]) HOLD49[id].fin(HOLD49[id].r);
+  const o=window._ob49||[];
+  if(k==='drop'){o.splice(+id,1);obPut49b();drawHold49()}
+  if(k==='resend'){const x=o.splice(+id,1)[0];obPut49b();drawHold49();if(x){S._pvm48=x.r;try{const ok=await sm49(x.r);toast(ok?'Sent. If its draft still shows as waiting, mark it sent yourself.':'Could not send.')}finally{S._pvm48=null}}}
+},true);
+function obPut49b(){try{const o=window._ob49||[];if(o.length) localStorage.setItem('tllj_outbox',JSON.stringify(o));else localStorage.removeItem('tllj_outbox')}catch(e){}}
+try{window._ob49=JSON.parse(localStorage.getItem('tllj_outbox')||'[]').filter(x=>x&&x.r);if(window._ob49.length) setTimeout(drawHold49,800)}catch(e){window._ob49=[]}
+const pv49=pv48;
+pv48=function(m,t){
+  const p=pv49(m,t);
+  try{const d=[...document.querySelectorAll('dialog')].pop(),b=d&&d.querySelector('[data-v="1"]');
+    if(b&&!d.querySelector('#hold_s')){const w=document.createElement('div');w.className='row';w.style.cssText='gap:8px;align-items:center;margin:8px 0';
+      w.innerHTML='<label for="hold_s" class="meta">After Send, hold it for</label><select id="hold_s" aria-label="Hold before sending">'+[['0','No hold'],['30','30 seconds'],['60','1 minute'],['300','5 minutes']].map(o=>`<option value="${o[0]}" ${+o[0]===hs49()?'selected':''}>${o[1]}</option>`).join('')+'</select><span class="meta">You can undo until it goes.</span>';
+      w.addEventListener('change',ev=>{try{localStorage.setItem('tllj_hold',ev.target.value)}catch(x){}});
+      b.parentNode.parentNode.insertBefore(w,b.parentNode)}}catch(x){}
+  return p;
+};
+const sm49=sendMail;
+sendMail=async function(m){
+  const pre=S._pvm48;S._pvm48=null;const hs=hs49();
+  if(!hs||(!pre&&(S._skipPv48||!mailLive48()))){S._pvm48=pre;return sm49(m)}
+  let r=pre||m;
+  if(!pre){r=await pv48(m,'Send this email?');if(!r){S._wk48=false;toast('Not sent.');return false}}
+  const go=await hold49(r,hs49());
+  if(!go){S._wk48=false;toast('Not sent. Undone.');return false}
+  S._pvm48=go;let ok=false;try{ok=await sm49(go)}finally{S._pvm48=null}
+  if(S._wk48){S._wk48=false;if(ok){lsPut48(friKey48());render()}}
+  return ok;
+};
+/* 3. contacts: import is on the Pitches page, and senders can be added as contacts */
+const vP49=vPitches;
+vPitches=function(){
+  const own=OWNER()&&S.pbox==='me';
+  return (EDIT?`<div class="row" style="gap:8px;margin-bottom:10px"><button class="btn sm" data-act="cimp">Import contacts from a file</button><button class="btn sm" data-act="sndr49">Add ${own?'my inbox':'these'} senders as contacts</button></div>`:'')+vP49();
+};
+document.addEventListener('click',e=>{
+  const b=e.target.closest&&e.target.closest('[data-act="sndr49"]');if(!b||!EDIT) return;e.stopImmediatePropagation();
+  const seen=new Set(),list=[];
+  for(const k of pitchAll()){const em=String(k.from||'').trim().toLowerCase();if(!em||seen.has(em)||/(^|[.@_-])(no-?reply|donotreply|mailer-daemon|notifications?|welcome|newsletter|info)@/.test(em)) continue;seen.add(em);list.push({name:k.name&&k.name!==k.from?k.name:'',email:em,org:''})}
+  if(!list.length){toast('No sender addresses to add.');return}
+  openImport46();showImport46(list);
+  const p=document.querySelector('#dlg p.meta');if(p) p.textContent='These are the people who wrote to this inbox. Matched ones go to their sponsor, the rest are saved in the Address book. Automatic and newsletter addresses are left out. Nothing is saved until you press Add.';
+},true);
+/* 4. research questions that fit the sponsor */
+const rqSkip49=pid=>!!(get('kit','rqa_'+pid)||{}).skipGen;
+function sType49(p){const g=(p.group+' '+(p.category||'')).toLowerCase();
+  if(/foundation|trust\b|philanthrop/.test(g)) return 'foundation';
+  if(/\bfund\b|investment|private equity|capital partners|finance corporation/.test(g)&&!/banking/.test(g)) return 'fund';
+  if(/airline|airways|air france|jet|travel and aviation/.test(g)) return 'airline';
+  if(/tourism|visit |government/.test(g)) return 'tourism';
+  if(/club|society/.test(g)) return 'club';
+  return 'brand'}
+const QS49={
+ foundation:['What does {sponsor} fund, and what has it funded in the last two years?','Does it give grants, sponsor events, or both? How do organisations apply or get introduced?','Who decides, and who is the programme or communications lead?','Does it support media coverage of the work it funds?','Which artists, galleries or institutions does it already back, and do they know TLLJ?','What would a first small step look like: coverage of one funded programme?'],
+ fund:['What does {sponsor} invest in, and how large are its funds?','Does it have a culture or creative-economy interest? Where has it said so in public?','Who runs communications or portfolio relations?','Does it sponsor or host events, media or conferences? Which ones?','Which of its portfolio companies could be a better route in?','What can TLLJ offer an investor: audience, access, or a series on the creative economy?'],
+ airline:['Which routes serve Lagos, and how often?','What does {sponsor} sponsor in Nigeria and Africa (culture, sport, festivals, media)?','Who handles marketing, communications or partnerships for Nigeria?','Does it offer lounge, ticket or content partnerships to media?','Which of its events have TLLJ readers attended?','What would a travel-and-culture feature offer them that their current partners do not?'],
+ tourism:['Which Nigerian visitors does {sponsor} want, and how many travel now?','Who runs its Nigeria or West Africa marketing, and is there a Lagos office or agency?','Does it sponsor media, festivals or creative events outside sport?','What did it do in Nigeria in the last year?','Which travel stories fit its stated priorities?','What do competing destinations already do here?'],
+ club:['What is {sponsor}, who runs it, and how do members join?','What does its programme include (talks, exhibitions, events)? What is coming up?','Does it have partners or sponsors? Who?','Who is the events or membership lead?','Which of our contributors, partners or sponsors are members or guests?','What would we offer: coverage, a members’ edition, a hosted evening?'],
+ brand:['What does {sponsor} sell, and to whom?','What does it sponsor in Nigeria or Africa, especially art, culture and lifestyle?','Who handles marketing, brand or partnerships in Nigeria?','Does it work with magazines or media on paid features?','What do TLLJ readers have in common with its customers?','What would it need to see before saying yes?']};
+const rqTools49=p=>{if(!EDIT||!p) return '';const sk=rqSkip49(p.id);return `<div class="row" style="gap:6px;margin:0 0 8px"><button class="btn sm" data-act="rqtailor" data-id="${esc(p.id)}">Add questions that fit this sponsor</button><button class="btn sm" data-act="rqskipgen" data-id="${esc(p.id)}">${sk?'Show the standard questions':'Hide the standard questions'}</button></div>`};
+const vRQ49=vRQ;vRQ=function(p){return rqTools49(p)+vRQ49(p)};
+document.addEventListener('click',async e=>{
+  const b=e.target.closest&&e.target.closest('[data-act="rqtailor"],[data-act="rqskipgen"]');if(!b||!EDIT) return;e.stopImmediatePropagation();
+  const p=get('pipe',b.dataset.id);if(!p) return;
+  if(b.dataset.act==='rqskipgen'){const d=get('kit','rqa_'+p.id)||{id:'rqa_'+p.id,type:'rqa',pipeId:p.id,a:{}};await act('Standard questions',()=>save('kit','rqa_'+p.id,{...d,id:'rqa_'+p.id,type:'rqa',pipeId:p.id,skipGen:!d.skipGen}));render();return}
+  const have=new Set(RS(p.id).map(x=>String(x.q).trim())),qs=QS49[sType49(p)].map(q=>rqSub(q,p)).filter(q=>!have.has(q));
+  if(!qs.length){toast('Those questions are already on this sponsor.');return}
+  askGo47('Add '+qs.length+' questions for '+p.group+'?',qs.map((q,i)=>(i+1)+') '+q).join('  '),'Add them',async()=>{
+    let i=0;for(const q of qs){const id='rs'+Date.now().toString(36)+(i++);await save('kit',id,{id,type:'research',pipeId:p.id,q,done:false,answer:''})}
+    toast(qs.length+' questions added');render()});
+},true);
+/* 5. researched sponsors: shown first, added only when you say so */
+const D51='6 Nov 2026';
+const NEW51=[
+{group:'The Osahon Okunbo Foundation (TOOF)',tab:'Nigeria',category:'Foundations and arts funders',score:6,chance:'Feasible',first:'Osahon Okunbo, founder. No contact route found: its pages only link to its social channels.',next:'Find the foundation’s contact through its channels, then ask how it chooses what to sponsor.',propose:'Not a paid feature. Offer coverage of one TOOF-supported programme or exhibition, and ask whether it backs media coverage.',why:'TOOF was official sponsor of the Nigeria Spotlight at Abu Dhabi Art, 19 to 23 November 2025, which took eight Nigerian galleries (kò, SOTO, O’DA, AMG Projects, 1897, Windsor, Ishara, and MADhouse x Tikera Africa). It also sponsored 10 extra places on a July 2025 classical painting training in Lagos and Abuja. It funds artists and visibility, which is what TLLJ covers.',notes:'Researched '+D51+'. Sources: ThisDay, 24 Nov 2025; The Guardian Nigeria. Founder Osahon Okunbo said “Art is one of the clearest ways a nation tells the truth about itself.” Painting training led by Wouter Steel and Dr Bolaji Ogunwo, 7 to 18 July 2025. Not found: grants, an application process, or how organisations engage. Asked by Fatimah: arts foundations like this one.'},
+{group:'Helios Sports and Entertainment Group',tab:'Africa',category:'Investment funds',size:'Biggest',score:3,chance:'Possible',first:'No contact found.',next:'Ask Fatimah whether she knows anyone at Helios. Otherwise treat this as a long-term target.',propose:'Do not ask for sponsorship first. Ask whether they back editorial partnerships, and offer a series on Africa’s creative economy.',why:'Helios Investment Partners (London) runs a $75m fund for sports and entertainment in Africa: $50m from development finance institutions (IFC up to $30m, Proparco up to $20m). It invests in media rights, sports IP, live events and infrastructure. Its past investments include NBA Africa (2021), the Professional Fighters League and Zaria Group. The fit with TLLJ is indirect: the focus is sport, though the source calls the creative economy an area now starting to attract capital.',notes:'Researched '+D51+'. Source: allAfrica, 31 Jul 2025. Helios is also raising $750m for a fifth fund on technology. The source does not mention sponsorship. Asked by Fatimah: Africa-focused investment funds.'},
+{group:'Africa Finance Corporation',tab:'Nigeria',category:'Banking and finance',score:5,chance:'Possible',first:'No contact found.',next:'Read AFC’s Lagos Fashion Week 2026 announcement, then find its communications lead.',propose:'A feature tied to the creative economy and African fashion. Confirm the details first.',why:'A headline on africa.com says AFC returned as lead sponsor of Lagos Fashion Week 2026, with a session on financing a sustainable African fashion industry. That page could not be opened, so only the headline is confirmed.',notes:'Researched '+D51+'. Headline only. Details of the sponsorship are unconfirmed.'},
+{group:'Isimi Lagos Polo Club',tab:'Nigeria',category:'Clubs',score:3,chance:'Possible',first:'No contact found.',next:'Ask Fatimah whether “Polo Avenue” means Isimi, Lagos Polo Club, or another club.',propose:'Coverage of a polo event or a members’ evening. Confirm the club first.',why:'A membership club with polo, recreation and cultural amenities. Its members get access to concerts, theatre, film screenings, art exhibitions, workshops and lectures.',notes:'Researched '+D51+'. Source: the club’s membership page. Not found: street address, named tiers, tournament dates, or sponsors (it mentions only “partner brands” giving member discounts). “Polo Avenue” was not found. Lagos Polo Club is already on the list as a separate entry.'},
+{group:'Ethiopian Airlines',tab:'Africa',category:'Travel and aviation',score:3,chance:'Possible',first:'No contact found.',next:'Find out what it sponsors in Nigeria, then its Lagos marketing contact.',propose:'A travel feature. Confirm first whether it sponsors media.',why:'Suggested by Fatimah as a strong African airline. Nothing is sourced yet.',notes:'Not yet researched. No facts on the desk.'},
+{group:'Kenya Airways',tab:'Africa',category:'Travel and aviation',score:3,chance:'Possible',first:'No contact found.',next:'Find out what it sponsors in Nigeria, then its Lagos marketing contact.',propose:'A travel feature. Confirm first whether it sponsors media.',why:'Suggested by Fatimah as a strong African airline. Nothing is sourced yet.',notes:'Not yet researched. No facts on the desk.'},
+{group:'RwandAir',tab:'Africa',category:'Travel and aviation',score:3,chance:'Possible',first:'No contact found.',next:'Find out what it sponsors in Nigeria, then its Lagos marketing contact.',propose:'A travel feature, possibly alongside Visit Rwanda. Confirm first whether it sponsors media.',why:'Suggested by Fatimah as a strong African airline. Nothing is sourced yet.',notes:'Not yet researched. No facts on the desk.'}];
+const NEWRE51=[/okunbo|toof/i,/helios/i,/africa finance|\bafc\b/i,/isimi/i,/ethiopian/i,/kenya airways/i,/rwandair/i];
+const ADD51=[
+['L’Occitane','Updated '+D51+'. The Wigmore Trading guide lists where to buy L’Occitane in Nigeria and says there are L’Occitane stores, but it does not name an official distributor, and its Lagos head office is on the Lekki-Epe Expressway, Lekki. So the distributor is still unconfirmed. Not found: any L’Occitane sponsorship in Nigeria.'],
+['Mbari Kola','Researched '+D51+'. Source: Wallpaper, 12 Jun 2026. Mbari Kola: The Arts Society is a cultural club in Ikoyi for Pan-African creatives: talks, workshops and community. Founder and curator: Ugoma Chinelo Ebilah. It occupies a 1960s house by the Italian builder G Cappa, renovated by architect Kelechi Odu. A terrazzo workshop is planned. Not stated: membership rules, partners or sponsors, opening date.'],
+['Air France Nigeria','Researched '+D51+'. Source: ThisDay, 17 Jan 2026. Air France marked 80 years in Nigeria with “Bridging Cultures – The Nigerian-French Connection”, at Alliance Française Lagos, Ikoyi, 16 Jan to 7 Feb 2026. Named: Jean-Luc Mevellec (General Manager, Air France Nigeria), Laurent Favier (Consul General of France in Lagos), Marc Brebant (Director, Alliance Française Lagos). Air France flies Lagos to Paris daily and Abuja to Paris three times a week, and has renovated its Lagos airport lounge. It also says it has long-standing partnerships with Nigerian businesses and cultural institutions. Not found: a list of what it sponsors.'],
+['Visit Rwanda (Rwanda Development Board)','Researched '+D51+'. Source: Brandcom, 30 Jul 2026. Rwanda’s sponsorships are sport-led: Aston Villa (reported $26m a year, from 2026/27), Arsenal (ends after 2025/26), Paris Saint-Germain (to 2028), Atlético Madrid (to 2028), Bayern Munich academy, LA Clippers, LA Rams, and Basketball Africa League games at BK Arena. No African media or arts partnership was found. Treat as a long-term target.']];
+const nk51=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+async function ensureV51(){
+  if(!db||!OWNER()||lsGet('tllj_seed_v51')||!S.pipe.length||S._v51ask) return;
+  const fresh=NEW51.filter((x,i)=>!S.pipe.some(p=>NEWRE51[i].test(p.group)));
+  const upd=ADD51.filter(a=>{const p=S.pipe.find(p=>p.group===a[0]);return p&&!String(p.notes||'').includes('Researched '+D51)});
+  if(!fresh.length&&!upd.length){lsSet('tllj_seed_v51','1');return ensureV52()}
+  S._v51ask=true;
+  askGo47('Add the researched sponsors?',(fresh.length?'New: '+fresh.map(x=>x.group).join(', ')+'. ':'')+(upd.length?'Research notes added to: '+upd.map(a=>a[0]).join(', ')+'. ':'')+'Every fact has a source and gaps are marked. Nothing already on your list is changed except notes, which are added to.','Add them',async()=>{
+    for(const x of fresh){const id=uid('p');await save('pipe',id,{id,n:Math.max(0,...S.pipe.map(p=>p.n||0))+1,size:'Bigger',owner:'Sade',status:'Not started',when:'Second wave',nextDate:'',outcome:'',...x})}
+    for(const a of upd){const p=S.pipe.find(p=>p.group===a[0]);if(p) await patch('pipe',p.id,{notes:(p.notes?p.notes+' ':'')+a[1]})}
+    lsSet('tllj_seed_v51','1');toast((fresh.length+upd.length)+' sponsors updated');render();ensureV52()});
+}
+
+/* ---------- v52 ---------- */
+const FLOW50=()=>EDIT&&MODE!=='p'&&MODE!=='c';
+const LIVE50=['First message sent','In conversation','Proposal sent','Negotiating'];
+const dAgo50=d=>Math.round((Date.parse(TODAY)-Date.parse(String(d).slice(0,10)))/864e5);
+const STOP50=new Set(['lagos','state','african','africa','nigeria','global','first','capital','union','access','group','bank','international','limited','private','club']);
+/* 1. a draft sent from the desk is marked sent */
+window.addEventListener('click',async e=>{
+  const b=e.target.closest&&e.target.closest('[data-act="dr_out"]');if(!b||!EDIT) return;
+  const d=get('kit',b.dataset.id);if(!d||!d.to) return;
+  e.stopImmediatePropagation();e.preventDefault();
+  const ok=await sendMail({to:d.to,subject:d.subject||d.title,text:d.body});
+  if(ok){await act('Mark as sent',()=>patch('kit',d.id,{status:'sent',sentOn:TODAY}));if(d.forId&&get('pipe',d.forId)) {const lid=uid('l');await save('log',lid,{id:lid,pipeId:d.forId,type:'Email sent',date:TODAY,summary:String(d.subject||d.title||'').slice(0,160)})}render()}
+},true);
+/* 2. contacts: pick the inbox they belong to */
+const si50=showImport46;
+showImport46=function(list){
+  si50(list);
+  document.querySelectorAll('#ci_out .ciit').forEach(el=>{
+    const c=el.querySelector('[data-ci]');if(!c) return;const i=+c.dataset.ci,x=CI46[i];if(!x) return;
+    if(x.box===undefined) x.box=window._cibox50||'';
+    el.insertAdjacentHTML('beforeend',`<select data-cibox="${i}" aria-label="Inbox">${[['','No inbox'],['pitches','Pitches inbox'],['me','My inbox'],['both','Both inboxes']].map(o=>`<option value="${o[0]}" ${x.box===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select>`);
+  });
+};
+document.addEventListener('change',e=>{const t=e.target;if(t&&t.matches&&t.matches('[data-cibox]')){const x=CI46[+t.dataset.cibox];if(x) x.box=t.value}},true);
+window.addEventListener('click',async e=>{
+  const b=e.target.closest&&e.target.closest('[data-act="ciapply"]');if(!b||!EDIT) return;e.stopImmediatePropagation();
+  const rows=[...document.querySelectorAll('#ci_out [data-ci]')].filter(x=>x.checked).map(x=>CI46[+x.dataset.ci]).filter(Boolean);
+  if(!rows.length){toast('Tick at least one contact');return}
+  b.disabled=true;let n=0,l=0;
+  await act('Import '+rows.length+' contacts',async()=>{for(const x of rows){const bx=x.box==='both'?['pitches','me']:x.box?[x.box]:[];const o={id:uid('c'),pipeId:x.m.pid||'',name:x.name||'',role:x.role||'',email:x.email||'',phone:x.phone||'',boxes:bx,route:x.m.pid?'Imported from your email':'Imported: address book'};await save('contacts',o.id,o);n++;if(o.pipeId) l++}});
+  const d=$('#dlg');if(d.open) d.close();render();toast(n+' added: '+l+' linked to sponsors, '+(n-l)+' in the Address book.');
+},true);
+/* the buttons sit at the bottom of the email page */
+vPitches=function(){
+  const own=OWNER()&&S.pbox==='me';
+  return vP49()+(EDIT?`<section class="box"><h2>Contacts <small>from this email page</small></h2><div class="row" style="gap:8px"><button class="btn sm" data-act="sndr49">Add ${own?'my inbox':'these'} senders as contacts</button><button class="btn sm" data-act="cimp">Import contacts from a file</button></div></section>`:'');
+};
+window.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-act="sndr49"]');if(b) window._cibox50=(OWNER()&&S.pbox==='me')?'me':'pitches';
+  const c=e.target.closest&&e.target.closest('[data-act="cimp"]');if(c) window._cibox50=''},true);
+const pr50=pitchRow;
+pitchRow=function(x){
+  let h=pr50(x);
+  const em=String(x.from||'').toLowerCase(),known=em&&S.contacts.some(c=>String(c.email||'').toLowerCase()===em);
+  if(known) h=h.replace('<b>','<span class="pill ok">Contact</span> <b>');
+  if(EDIT&&x.kind==='invite'&&(x.dates||[]).filter(Boolean).length){
+    const btn=x.evId?'<span class="pill ok">In Events</span>':`<button class="btn sm" data-act="pev50" data-id="${esc(x.id)}">Add to Events</button>`;
+    const i=h.lastIndexOf('</div>');h=h.slice(0,i)+`<div class="row" style="margin-top:6px">${btn}</div>`+h.slice(i);
+  }
+  return h;
+};
+document.addEventListener('click',e=>{
+  const b=e.target.closest&&e.target.closest('[data-act="pev50"]');if(!b||!EDIT) return;e.stopImmediatePropagation();
+  const x=get('kit',b.dataset.id);if(!x) return;const dt=(x.dates||[]).filter(Boolean)[0];
+  askGo47('Add to Events?',(x.subject||'Invitation')+' · '+fmt(dt)+'. The date comes from the message, so check it.','Add to Events',async()=>{const id=await mkEvent(x.subject||'Invitation',dt);await patch('kit',x.id,{evId:id});toast('Added to Events');render()});
+},true);
+/* 3. question sets you can change and add to */
+const QD50=[['foundation','Foundation','foundation,trust,philanthrop'],['fund','Investment fund','fund,investment,private equity'],['airline','Airline','airline,airways,air france,jet'],['tourism','Tourism board','tourism,visit '],['club','Members club','club,society'],['brand','Brand','']];
+function qsets50(){const sv=(get('kit','qtypes')||{}).items||[],m=new Map(QD50.map(d=>[d[0],{key:d[0],label:d[1],words:d[2],qs:QS49[d[0]].slice()}]));sv.forEach(x=>{if(x.del) m.delete(x.key);else m.set(x.key,x)});return [...m.values()]}
+function qpick50(p){const g=(p.group+' '+(p.category||'')).toLowerCase(),L=qsets50(),sv=((get('kit','qtypes')||{}).items||[]).filter(x=>!x.del).map(x=>x.key);
+  const c=L.find(s=>sv.includes(s.key)&&String(s.words||'').split(',').map(w=>w.trim().toLowerCase()).filter(Boolean).some(w=>g.includes(w)));
+  return (c||L.find(s=>s.key===sType49(p))||L[L.length-1]).key}
+function openQ50(pid,key){
+  const p=get('pipe',pid);if(!p) return;const L=qsets50(),cur=L.find(s=>s.key===key)||L[0],d=$('#dlg');
+  d.innerHTML=`<h2 style="margin-bottom:4px">Questions for ${esc(p.group)}</h2><p class="meta">Choose a type, change the questions if you like, then add them to this sponsor. Save the set to keep your changes for every sponsor of this type.</p>
+  <div class="fld"><label for="q50t">Type</label><select id="q50t" data-q50="type" data-pid="${esc(pid)}">${L.map(s=>`<option value="${esc(s.key)}" ${s.key===cur.key?'selected':''}>${esc(s.label)}</option>`).join('')}<option value="__new">New type…</option></select></div>
+  <div class="fld"><label for="q50n">Type name</label><input type="text" id="q50n" value="${esc(cur.label)}"></div>
+  <div class="fld"><label for="q50w">Words in a sponsor’s name or category that mean this type (separate with commas)</label><input type="text" id="q50w" value="${esc(cur.words||'')}"></div>
+  <div class="fld"><label for="q50q">Questions, one per line. {sponsor} becomes the sponsor’s name</label><textarea id="q50q" rows="9">${esc((cur.qs||[]).join('\n'))}</textarea></div>
+  <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn pri" data-q50="add" data-pid="${esc(pid)}">Add to this sponsor</button><button class="btn" data-q50="save" data-pid="${esc(pid)}">Save this set</button><button class="btn" data-q50="del" data-pid="${esc(pid)}">Remove this type</button><button class="btn" data-q50="close">Close</button></div>`;
+  d.dataset.col='';d.dataset.id='';if(!d.open) d.showModal();
+}
+window.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-act="rqtailor"]');if(!b||!EDIT) return;e.stopImmediatePropagation();openQ50(b.dataset.id,qpick50(get('pipe',b.dataset.id)||{}))},true);
+document.addEventListener('change',e=>{const t=e.target;if(!t||!t.matches||!t.matches('[data-q50="type"]')) return;
+  if(t.value==='__new'){$('#q50n').value='';$('#q50w').value='';$('#q50q').value='';$('#q50n').focus();return}
+  openQ50(t.dataset.pid,t.value)},true);
+document.addEventListener('click',async e=>{
+  const b=e.target.closest&&e.target.closest('[data-q50]');if(!b||b.tagName==='SELECT'||!EDIT) return;e.stopImmediatePropagation();
+  const k=b.dataset.q50,pid=b.dataset.pid,p=get('pipe',pid),d=$('#dlg');
+  if(k==='close'){d.close();return}
+  const sel=$('#q50t').value,name=$('#q50n').value.trim(),words=$('#q50w').value.trim(),qs=$('#q50q').value.split('\n').map(x=>x.trim()).filter(Boolean);
+  const keyOf=sel==='__new'?(name.toLowerCase().replace(/[^a-z0-9]+/g,'-')||'type'):sel;
+  const items=((get('kit','qtypes')||{}).items||[]).filter(x=>x.key!==keyOf);
+  const put=async it=>act('Question sets',()=>save('kit','qtypes',{id:'qtypes',type:'qtypes',items:[...items,...it]}));
+  if(k==='save'){if(!name||!qs.length){toast('Give the type a name and at least one question.');return}await put([{key:keyOf,label:name,words,qs}]);toast('Saved');openQ50(pid,keyOf);return}
+  if(k==='del'){await put([{key:keyOf,del:true}]);toast('Removed');openQ50(pid,qsets50()[0].key);return}
+  if(k==='add'&&p){const have=new Set(RS(pid).map(x=>String(x.q).trim())),add=qs.map(q=>rqSub(q,p)).filter(q=>!have.has(q));
+    if(!add.length){toast('Those are already on this sponsor.');return}
+    let i=0;for(const q of add){const id='rs'+Date.now().toString(36)+(i++);await save('kit',id,{id,type:'research',pipeId:pid,q,done:false,answer:''})}
+    d.close();toast(add.length+' questions added');render()}
+},true);
+/* 4. the sponsor pulse on Today: replies, meetings, going cold, the 14 December target */
+function pidFor50(x){const em=String(x.from||'').toLowerCase();if(!em) return '';
+  const c=S.contacts.find(c=>c.pipeId&&String(c.email||'').toLowerCase()===em);if(c) return c.pipeId;
+  return match46({name:x.name||'',email:em,org:''}).pid||''}
+function evPid50(ev){const t=nz46(ev.title||'');if(!t) return '';
+  for(const p of S.pipe){const g=nz46(p.group);if(g&&t.includes(g)) return p.id;const w=g.split(' ')[0];if(w.length>=5&&!STOP50.has(w)&&t.split(' ').includes(w)) return p.id}
+  for(const c of S.contacts){if(c.pipeId&&c.name&&nz46(c.name).split(' ').length>=2&&t.includes(nz46(c.name))) return c.pipeId}
+  return ''}
+const cout50=id=>get('kit','cout_'+id);
+function pulse50(){
+  const out=[];
+  const reps=S.kit.filter(k=>k.type==='pitch'&&k.box==='me'&&!k.logged&&dAgo50(k.received)<=14).map(k=>({k,pid:pidFor50(k)})).filter(r=>r.pid).slice(0,3);
+  reps.forEach(r=>{const p=get('pipe',r.pid);out.push(`<div class="ptrow"><span class="pill gold">Reply</span><span class="pn"><b style="overflow-wrap:anywhere">${esc(r.k.name||r.k.from)} wrote to you about “${esc(String(r.k.subject||'(no subject)').slice(0,70))}”</b><span class="meta">Looks like ${esc(p.group)}. Log it on their page?</span></span><span class="docact"><button class="btn sm pri" data-act="rep50" data-id="${esc(r.k.id)}" data-pid="${esc(r.pid)}">Log reply</button><button class="btn sm" data-act="rep50no" data-id="${esc(r.k.id)}">Not them</button></span></div>`)});
+  const now=Date.now();
+  const past=calEvs().filter(ev=>{const e=Date.parse(ev.end||ev.start);return e<now&&dAgo50(ev.start)<=7&&!cout50(ev.id)}).map(ev=>({ev,pid:evPid50(ev)})).filter(r=>r.pid).slice(0,2);
+  past.forEach(r=>{const p=get('pipe',r.pid);out.push(`<div class="ptrow"><span class="pill gold">Meeting</span><span class="pn"><b style="overflow-wrap:anywhere">${esc(r.ev.title)} · ${esc(fmt(r.ev.start.slice(0,10)))}</b><span class="meta">How did it go with ${esc(p.group)}?</span></span><span class="docact"><button class="btn sm pri" data-act="out50" data-id="${esc(r.ev.id)}" data-pid="${esc(r.pid)}">Log the outcome</button></span></div>`)});
+  const soon=calEvs().filter(ev=>Date.parse(ev.start)>=now-36e5&&ev.start.slice(0,10)<=addDays(TODAY,3)).map(ev=>({ev,pid:evPid50(ev)})).filter(r=>r.pid).slice(0,2);
+  soon.forEach(r=>{const p=get('pipe',r.pid);out.push(`<div class="ptrow"><span class="pill">Coming up</span><span class="pn"><b style="overflow-wrap:anywhere">${esc(r.ev.title)} · ${esc(fmt(r.ev.start.slice(0,10)))}</b><span class="meta">Brief for ${esc(p.group)}: notes, contacts and recent log in one place.</span></span><span class="docact"><button class="btn sm" data-act="brief50" data-pid="${esc(r.pid)}">Read the brief</button></span></div>`)});
+  const cold=S.pipe.filter(p=>LIVE50.includes(p.status)).map(p=>{const l=logsOf(p.id)[0];return {p,days:l?dAgo50(l.date):null}}).filter(r=>r.days===null||r.days>=10).sort((a,b)=>(b.days??999)-(a.days??999)).slice(0,3);
+  cold.forEach(r=>out.push(`<div class="ptrow"><span class="pill warn">Going cold</span><span class="pn"><b style="overflow-wrap:anywhere">${esc(r.p.group)}</b><span class="meta">${r.days===null?'Nothing logged yet.':'Last contact logged '+r.days+' days ago.'} Status: ${esc(r.p.status)}.</span></span><span class="docact"><button class="btn sm" data-act="edit" data-col="pipe" data-id="${esc(r.p.id)}">Open</button></span></div>`));
+  const left=Math.round((Date.parse('2026-12-14')-Date.parse(TODAY))/864e5),by=s=>S.pipe.filter(p=>p.status===s).length;
+  const kpi=`<div class="meta" style="margin:0 0 10px"><b>${left>0?left+' days':'The date has passed'}</b> to Mon 14 Dec. Signed: <b>${by('Agreed')}</b>. Terms or proposal out: <b>${by('Negotiating')+by('Proposal sent')}</b>. In conversation: <b>${by('In conversation')}</b>. First message sent: <b>${by('First message sent')}</b>. Not yet started: <b>${S.pipe.filter(p=>['Not started','Finding the contact','Contact found'].includes(p.status)).length}</b>. A working guide, not a forecast: a proposal out by 30 Nov and terms agreed by 11 Dec leave room to sign.</div>`;
+  return `<section class="box"><h2>Sponsor pulse <small>from your inbox, calendar and log</small></h2>${kpi}${out.join('')||'<div class="meta">No replies, meetings or cold leads to act on right now.</div>'}</section>`;
+}
+const vT50=vToday;
+vToday=function(){const h=vT50();if(!FLOW50()||!S.pipe.length) return h;return h+pulse50()};
+document.addEventListener('click',async e=>{
+  const b=e.target.closest&&e.target.closest('[data-act="rep50"],[data-act="rep50no"],[data-act="out50"],[data-act="brief50"]');if(!b||!EDIT) return;e.stopImmediatePropagation();
+  const a=b.dataset.act;
+  if(a==='rep50no'){await act('Not this sponsor',()=>patch('kit',b.dataset.id,{logged:'no'}));render();return}
+  if(a==='rep50'){const k=get('kit',b.dataset.id),p=get('pipe',b.dataset.pid);if(!k||!p) return;
+    askGo47('Log this reply for '+p.group+'?',(k.subject||'(no subject)')+(k.summary?' · '+String(k.summary).slice(0,140):'')+(['Not started','Finding the contact','Contact found','First message sent'].includes(p.status)?'. This also moves them to In conversation.':''),'Log reply',async()=>{
+      const id=uid('l');await save('log',id,{id,pipeId:p.id,type:'Reply',date:String(k.received||TODAY).slice(0,10),summary:String(k.subject||'')+(k.summary?': '+String(k.summary).slice(0,200):'')});
+      if(['Not started','Finding the contact','Contact found','First message sent'].includes(p.status)) await patch('pipe',p.id,{status:'In conversation'});
+      await patch('kit',k.id,{logged:true});toast('Reply logged');render()});return}
+  if(a==='brief50'){const f=facts48('pipe',b.dataset.pid);if(!f) return;const d=$('#dlg');
+    d.innerHTML=`<h2 style="margin-bottom:6px">Brief: ${esc(f.name)}</h2><pre style="white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;margin:0 0 12px;max-height:55vh;overflow:auto">${esc(f.text)}</pre><div class="row" style="gap:8px"><button class="btn pri" data-q50x="copy">Copy</button><button class="btn" data-q50x="close">Close</button></div>`;
+    d.dataset.col='';d.dataset.id='';d._brief=f.text;d.showModal();return}
+  if(a==='out50'){const ev=get('kit',b.dataset.id),p=get('pipe',b.dataset.pid);if(!ev||!p) return;const d=$('#dlg');
+    d.innerHTML=`<h2 style="margin-bottom:6px">${esc(ev.title)}</h2><p class="meta">${esc(p.group)} · ${esc(fmt(ev.start.slice(0,10)))}</p><div class="fld"><label for="o50r">What happened</label><select id="o50r"><option value="went">It went well</option><option value="follow">It needs a follow-up</option><option value="no">It did not happen</option></select></div><div class="fld"><label for="o50n">Note</label><textarea id="o50n" rows="4" placeholder="What was agreed, who said what, what comes next"></textarea></div><div class="row" style="gap:8px"><button class="btn pri" data-q50x="out" data-id="${esc(ev.id)}" data-pid="${esc(p.id)}">Save</button><button class="btn" data-q50x="close">Close</button></div>`;
+    d.dataset.col='';d.dataset.id='';d.showModal()}
+},true);
+document.addEventListener('click',async e=>{
+  const b=e.target.closest&&e.target.closest('[data-q50x]');if(!b) return;e.stopImmediatePropagation();const d=$('#dlg'),k=b.dataset.q50x;
+  if(k==='close'){d.close();return}
+  if(k==='copy'){copyText(d._brief||'','Copied.');return}
+  if(k==='out'){const ev=get('kit',b.dataset.id),p=get('pipe',b.dataset.pid),r=$('#o50r').value,n=$('#o50n').value.trim();
+    const lab={went:'Went well',follow:'Needs a follow-up',no:'Did not happen'}[r];
+    await act('Meeting outcome',async()=>{const id=uid('l');await save('log',id,{id,pipeId:p.id,type:'Meeting',date:ev.start.slice(0,10),summary:lab+(n?': '+n:'')});
+      await save('kit','cout_'+ev.id,{id:'cout_'+ev.id,type:'calout',calId:ev.id,result:r});
+      if(r==='follow'){const f=uid('f');await save('kit',f,{id:f,type:'followup',text:'Follow up with '+p.group+' after '+ev.title,due:addDays(TODAY,2),repeat:0,pipeId:p.id,who:'',done:false,created:TODAY,mode:'S'})}});
+    d.close();toast('Outcome saved');render()}
+},true);
+/* 5. researched sponsors, round two */
+const D52='6 Nov 2026';
+const NEW52=[
+{re:/emple/i,x:{group:'emPLE',tab:'Nigeria',category:'Insurance and pensions',score:5,chance:'Feasible',size:'Bigger',first:'Olalekan Oyinade, Managing Director, emPLE.',next:'Find emPLE’s marketing or communications lead, then ask about its 2027 ART X Lagos plans.',propose:'A sponsored feature on its art and community work, linked to ART X Lagos 2027.',why:'emPLE, an insurance and financial services company with a growing cultural presence in West Africa, was a Bronze Sponsor and Presenting Partner of a headline Special Project at ART X Lagos 2025: Temitayo Ogunbiyi’s installation “Where There Is Life, There Is Hope”, curated by Missla Libsekal. A company already paying for art in Lagos is a realistic sponsor.',notes:'Researched '+D52+'. Source: MyJoyOnline. ART X Lagos 2025 ran 6 to 9 Nov at the Federal Palace. Not found: its headquarters, sponsorship value, or a marketing contact.'}}];
+const UPD52=[
+['Leadway Assurance','Batch 1 research '+D52+'. Source: Business Today, on the 2026 +234 Art Fair (5 to 8 Mar 2026, Ecobank Pan African Centre). Leadway has been an active partner since the fair’s first edition in 2024. Olusakin Labeodan, Managing Director, Leadway Pensure, spoke for the group and called the creative sector “a true national soft power”. Search headlines also show Leadway sponsoring the Nigerian pavilion at the London Design Biennale 2025 and the Lagos Leather Fair (4th year running); those pages were not read, so treat them as headlines only. Not found: sponsorship value or a marketing contact. For TLLJ: a company that already pays for Nigerian art year after year is the strongest kind of prospect.'],
+['Afreximbank','Batch 1 research '+D52+'. Source: NAN. Afreximbank hosts CANEX WKND 2026, 5 to 8 Nov 2026, at the Wole Soyinka Centre for Culture and Creative Arts, National Theatre, Iganmu, Lagos, with the Federal Government, the African Union Commission and the AfCFTA Secretariat. Named: Kanayo Awani (Executive Vice-President, Intra-African Trade and Export Development), Vincent Musumba (Communications and Event Manager). It covers film, music, fashion, literature, visual arts, gastronomy and sport, with a Finance Summit and Deal Room. Lagos is a test run for the fifth Intra-African Trade Fair in Nov 2027. Not stated: sponsors, how media partners join. The event is on now, so this week is the time to meet its communications team.'],
+['Coscharis Motors','Batch 1 research '+D52+'. Source: ThisDay, 8 Oct 2024. Coscharis, with Range Rover, tee-d off the Nigeria Cup 2024 golf tournament (21 to 28 Sep 2024, Ikoyi Club 1938) and is described as an increasingly regular tournament sponsor. Named: Abiona Babarinde, General Manager, Marketing and Corporate Communications. Search headlines also show Coscharis at the 2025 Kano Polo Tournament (page not read). Not stated: sponsorship value. Its pattern is sport and lifestyle events, so an arts feature would be new for them: lead with the reader overlap.'],
+['Lagos State Government: Ministry of Tourism, Arts and Culture','Batch 1 research '+D52+'. Source: BusinessDay. Commissioner: Toke Benson-Awoyinka. The ministry sponsored 201 festivals, exhibitions, concerts and cultural programmes in the review year (143 the year before), including AFRIMA 2026 hosting. It issued 159 endorsement letters to help creative stakeholders win sponsorship. Not stated: budget, how to apply for an endorsement, or a contact. An endorsement letter is a realistic first ask.'],
+['Polo Avenue','Researched '+D52+'. Sources: Legit.ng (sponsored article, 12 Nov 2025), Guardian Nigeria, the Polo Avenue site (a coming-soon page). Polo Avenue is a luxury fashion retailer and a subsidiary of Polo Luxury, with a boutique on Admiralty, Lekki Phase 1, Lagos, and partnerships with more than 50 international designers. It carries Gucci, Jimmy Choo, Dolce & Gabbana, Balenciaga, Salvatore Ferragamo and Versace, and hosts brand pop-ups (Muehleder, 2025). Named: Jennifer Obayuwana, Executive Director, Polo Luxury; John Obayuwana, Managing Director, Polo Luxury. Not found: a marketing contact, an email address, or sponsorship history with publications.'],
+['Isimi Lagos Polo Club','Correction '+D52+'. A Lagos clubs guide (Discover Lagos) places Isimi Lagos Polo & Wellness Club in Epe Town, with wellness retreats, eco-homes and a polo academy. “Polo Avenue” is a luxury fashion retailer already on the list, not a club.'],
+['Zenith Bank','Updated '+D52+'. Source: Nairametrics, 3 Nov 2026. Zenith returns as a Silver Sponsor of ART X Lagos 2026 (5 to 8 Nov, Federal Palace), supporting ART X ICON, “Ladi Kwali: Beyond the Vessel”, and the Masterclass for 10 emerging artists. It also sponsored the 10th edition in 2025.']];
+async function ensureV52(){
+  if(!db||!OWNER()||!lsGet('tllj_seed_v51')||lsGet('tllj_seed_v52')||!S.pipe.length||S._v52ask) return;
+  const fresh=NEW52.filter(r=>!S.pipe.some(p=>r.re.test(p.group))).map(r=>r.x),upd=UPD52.filter(a=>{const p=S.pipe.find(p=>p.group===a[0]||p.group.startsWith(a[0]));return p&&!String(p.notes||'').includes(a[1].slice(0,30))});
+  if(!fresh.length&&!upd.length){lsSet('tllj_seed_v52','1');return}
+  S._v52ask=true;
+  askGo47('Add more researched sponsors?',(fresh.length?'New: '+fresh.map(x=>x.group).join(', ')+'. ':'')+(upd.length?'Notes added to: '+upd.map(a=>a[0]).join(', ')+'. ':'')+'Sourced facts only, gaps marked.','Add them',async()=>{
+    for(const x of fresh){const id=uid('p');await save('pipe',id,{id,n:Math.max(0,...S.pipe.map(p=>p.n||0))+1,owner:'Sade',status:'Not started',when:'Second wave',nextDate:'',outcome:'',...x})}
+    for(const a of upd){const p=S.pipe.find(p=>p.group===a[0]||p.group.startsWith(a[0]));if(p) await patch('pipe',p.id,{notes:(p.notes?p.notes+' ':'')+a[1]})}
+    lsSet('tllj_seed_v52','1');toast('Sponsors updated');render()});
+}
 
 /* ---------- v32: templates, inline events, de-duplication ---------- */
 const PTPLS=[['media','Media-partner offer'],['collab','Collaboration proposal'],['press','Press access and coverage request'],['thanks','Coverage follow-up']];
@@ -3456,7 +4027,7 @@ document.addEventListener('click',async e=>{
   if(a==='aisugg') return aisugg();
   if(a==='weekly') return weekly();
   if(a==='addsug'){const s=(el.dataset.k==='ai'?S.ai.sugg:sug())[+id];if(!s) return;const p=get('pipe',s.pid);
-    await act('Add step',()=>save('tasks',uid('t'),{week:'Added',dates:'',goal:'Suggested',action:s.text,target:p?p.group:'',owner:'Sade',done:false,due:s.due}));if(el.dataset.k==='ai') S.ai.sugg.splice(+id,1);render();toast('Added to the plan');return}
+    await act('Add step',()=>save('tasks',uid('t'),{week:'Added',dates:'',goal:'Suggested',action:s.text,target:p?p.group:'',owner:'Sade',done:false,due:s.due}));if(el.dataset.k==='ai') S.ai.sugg.splice(+id,1);else lsSet('tllj_sugx',JSON.stringify([...SUGX(),s.text].slice(-300)));render();toast('Added to the plan');return}
   if(a==='quickc'){const g=el.closest('[data-pid]');const f=k=>g.querySelector(`[data-f="${k}"]`).value.trim();if(!f('n')&&!f('e')&&!f('p')){toast('Enter a name, email or phone');return}
     await act('Add contact',()=>addContact(id,{name:f('n'),email:f('e'),phone:f('p')}));render();toast('Contact added');return}
   if(a==='addcontact'){const c={name:$('#cn').value.trim(),role:$('#cr').value.trim(),email:$('#ce').value.trim(),phone:$('#cp').value.trim()};if(!c.name&&!c.email&&!c.phone){toast('Enter a name, email or phone');return}
@@ -4058,7 +4629,7 @@ async function startApp(env){
   $('#signout').hidden=!env.auth;
   render();hashGo();setTimeout(welcome,700);
   if(!db) return;
-  for(const c of COLS){db.collection(c).onSnapshot(s=>{S[c]=s.docs.map(d=>({...d.data(),id:d.id}));S.loaded[c]=true;softRender();if(EDIT&&!ASSIST&&!S.fixed&&['tasks','pipe','decisions','kit','evsug','activity'].every(k=>S.loaded[k])&&S.pipe.length){S.fixed=true;fixWording().then(()=>ensureRecords()).then(()=>ensureFocus()).then(()=>ensureFiles()).then(()=>ensureGov()).then(()=>ensureNoAlcohol()).then(()=>ensureAudience()).then(()=>ensureRates()).then(()=>ensureV25()).then(()=>ensureV26()).then(()=>ensureV27()).then(()=>ensureV28()).then(()=>ensureV29()).then(()=>ensureV30()).then(()=>ensureV35()).then(()=>ensureV36()).then(()=>ensureV40()).then(()=>ensureV43()).then(()=>ensureV45()).then(()=>ensureV45b()).then(()=>ensureV46()).then(()=>{pruneActivity();return dailyEvents()})}},e=>toast('Could not load '+c+': '+(e.code||e.message||'')))}
+  for(const c of COLS){db.collection(c).onSnapshot(s=>{S[c]=s.docs.map(d=>({...d.data(),id:d.id}));S.loaded[c]=true;softRender();if(EDIT&&!ASSIST&&!S.fixed&&['tasks','pipe','decisions','kit','evsug','activity'].every(k=>S.loaded[k])&&S.pipe.length){S.fixed=true;fixWording().then(()=>ensureRecords()).then(()=>ensureFocus()).then(()=>ensureFiles()).then(()=>ensureGov()).then(()=>ensureNoAlcohol()).then(()=>ensureAudience()).then(()=>ensureRates()).then(()=>ensureV25()).then(()=>ensureV26()).then(()=>ensureV27()).then(()=>ensureV28()).then(()=>ensureV29()).then(()=>ensureV30()).then(()=>ensureV35()).then(()=>ensureV36()).then(()=>ensureV40()).then(()=>ensureV43()).then(()=>ensureV45()).then(()=>ensureV45b()).then(()=>ensureV46()).then(()=>ensureV50()).then(()=>ensureV51()).then(()=>ensureV52()).then(()=>{pruneActivity();return dailyEvents()})}},e=>toast('Could not load '+c+': '+(e.code||e.message||'')))}
 }
 function lsGet(k){try{return localStorage.getItem(k)||''}catch(e){return ''}}
 function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}

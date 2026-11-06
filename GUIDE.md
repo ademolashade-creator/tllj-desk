@@ -252,3 +252,35 @@ The first time Sade opens the desk after this update, it applies Fatimah's notes
 - Every card can be folded with its chevron. The desk remembers it per browser.
 - Balance no longer flags workload. The label Statuses a person can have is now Status.
 - Calendar empty text now says when nothing has synced from Zoho yet.
+
+## v50
+
+- The Friday banner disappears once you send the week or press Not this week.
+- Undo is an icon. Hover over it to see what it will undo.
+- Add to plan removes the suggestion from Suggested next steps.
+- Anything that sends an email now shows it first: you read it, edit it, then press Send. Cancel sends nothing.
+- Restoring saved sponsor answers asks first.
+- Send summary to Fatimah, on a sponsor in Research saved or on a partner, writes a short summary from everything the desk holds on that name. You edit it, then Send to Fatimah or Save in Approvals only.
+- When Fatimah approves a sponsor or partner idea, a card on Today offers Set up next steps. Tilly proposes your steps and the decisions Fatimah needs to take. You tick, edit, then add. Her decisions land on her Decisions tab.
+- Push to Praise lists only what moved: sponsor and partner status, new contacts, events, contributors, decisions answered, then next steps in full.
+- Partnerships has its own Roadmap. Steps that belong to a partner no longer show in the sponsor Roadmap.
+- Search takes you to the page of the result.
+- Pitches has a My inbox switch for the owner. It needs Part E in SETUP-server.md.
+
+## v51
+
+- **Pitch labels.** Email addresses and links are ignored when the desk decides whether a message is a pitch, an invitation or a press release. Only the words count, so pitches@ and welcome@ no longer trigger a label.
+- **Hold before sending.** In the review window, choose No hold, 30 seconds, 1 minute or 5 minutes. After Send, a bar at the bottom counts down with Undo and Send now. Closing the page during a hold sends nothing; on return the bar offers Send now or Discard.
+- **Contacts from your inbox.** On the Pitches page, "Add these senders as contacts" lists the people who wrote in (automatic and newsletter addresses left out). Matches go to their sponsor, the rest to the Address book. "Import contacts from a file" is on the same page. Nothing saves until you press Add.
+- **Questions that fit the sponsor.** In a sponsor’s Research questions, "Add questions that fit this sponsor" offers six questions for a foundation, fund, airline, tourism board, club or brand, and asks first. "Hide the standard questions" removes the general list for that sponsor only; it can be shown again.
+- **Researched sponsors.** On first load the desk asks before adding: The Osahon Okunbo Foundation, Helios Sports and Entertainment Group, Africa Finance Corporation, Isimi Lagos Polo Club, Ethiopian Airlines, Kenya Airways, RwandAir. It also adds sourced notes to L’Occitane, Mbari Kola, Air France Nigeria and Visit Rwanda. Gaps are written as "Not found".
+
+## v52
+
+- **Sent means sent.** A draft sent from the desk is marked Sent, and its sponsor’s log gets an Email sent line.
+- **Contacts and inboxes.** The import buttons are now at the bottom of the email page. When you add senders or import a file, each person has an inbox choice: Pitches, My inbox, Both, or none.
+- **Your own question types.** "Add questions that fit this sponsor" opens a window where you choose a type, edit the questions, add a new type with the words that identify it, save it, or remove it.
+- **Sponsor pulse on Today.** Replies from your inbox matched to a sponsor (log them with one tap, asking first), meetings that just happened (log the outcome, with an optional follow-up), meetings coming up (a one-page brief), sponsors going cold (no contact logged for 10 days), and the count to 14 December.
+- **Invitations.** An invitation with a date in the message has an Add to Events button.
+- **Research.** Polo Avenue, emPLE, Zenith, Isimi and four priority sponsors (Leadway, Afreximbank, Coscharis, Lagos State Ministry) have sourced notes added, with gaps marked.
+- **Full notes.** Pipeline cards no longer cut a note or next step short.
