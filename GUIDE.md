@@ -324,3 +324,9 @@ The "Add a sponsor yourself" button is removed; use the "Add to ..." button at t
 - Every sponsor, partner and writer opens as a full page with chips at the top to jump to each section.
 - Cards have more colour and a soft lift so they stand out.
 - The weekly update lives in Review, and Today offers it on Fridays.
+
+## v60
+Fixed the Work, Check and More menus so they open and stay open, and centred the tab bar.
+
+## v61: full check
+Every tab was checked in Sponsorships, Partnerships, Contributors and Fatimah's view. Fixes: wider Status and Approval boxes in the Sponsors table, every box now has a name for screen readers, card headings no longer break one word per line on a phone, and the page has room at the bottom so the "Met someone" button never covers content.
