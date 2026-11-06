@@ -3500,8 +3500,8 @@ window.addEventListener('click',async e=>{
   const rows=[...document.querySelectorAll('#ci_out [data-ci]')].filter(x=>x.checked).map(x=>CI46[+x.dataset.ci]).filter(Boolean);
   if(!rows.length){toast('Tick at least one contact');return}
   b.disabled=true;let n=0,l=0;
-  await act('Import '+rows.length+' contacts',async()=>{for(const x of rows){const bx=x.box==='both'?['pitches','me']:x.box?[x.box]:[];const o={id:uid('c'),pipeId:x.m.pid||'',name:x.name||'',role:x.role||'',email:x.email||'',phone:x.phone||'',boxes:bx,route:x.m.pid?'Imported from your email':'Imported: address book'};await save('contacts',o.id,o);n++;if(o.pipeId) l++}});
-  const d=$('#dlg');if(d.open) d.close();render();toast(n+' added: '+l+' linked to sponsors, '+(n-l)+' in the Address book.');
+  await act('Import '+rows.length+' contacts',async()=>{for(const x of rows){const bx=x.box==='both'?['pitches','me']:x.box?[x.box]:[];const lk=await linkTo51(x.link!==undefined?x.link:(x.m.pid?'p:'+x.m.pid:''),{name:x.name,email:x.email,phone:x.phone,org:x.org,role:x.role},x.org||x.name);const o={id:uid('c'),...lk,name:x.name||'',role:x.role||'',email:x.email||'',phone:x.phone||'',boxes:bx,route:(lk.pipeId||lk.partnerId||lk.contribId)?'Imported from your email':'Imported: address book'};await save('contacts',o.id,o);n++;if(lk.pipeId||lk.partnerId||lk.contribId) l++}});
+  const d=$('#dlg');if(d.open) d.close();render();toast(n+' added: '+l+' linked, '+(n-l)+' in the Address book.');
 },true);
 /* the buttons sit at the bottom of the email page */
 vPitches=function(){
@@ -3572,8 +3572,8 @@ function evPid50(ev){const t=nz46(ev.title||'');if(!t) return '';
 const cout50=id=>get('kit','cout_'+id);
 function pulse50(){
   const out=[];
-  const reps=S.kit.filter(k=>k.type==='pitch'&&k.box==='me'&&!k.logged&&dAgo50(k.received)<=14).map(k=>({k,pid:pidFor50(k)})).filter(r=>r.pid).slice(0,3);
-  reps.forEach(r=>{const p=get('pipe',r.pid);out.push(`<div class="ptrow"><span class="pill gold">Reply</span><span class="pn"><b style="overflow-wrap:anywhere">${esc(r.k.name||r.k.from)} wrote to you about “${esc(String(r.k.subject||'(no subject)').slice(0,70))}”</b><span class="meta">Looks like ${esc(p.group)}. Log it on their page?</span></span><span class="docact"><button class="btn sm pri" data-act="rep50" data-id="${esc(r.k.id)}" data-pid="${esc(r.pid)}">Log reply</button><button class="btn sm" data-act="rep50no" data-id="${esc(r.k.id)}">Not them</button></span></div>`)});
+  const reps=S.kit.filter(k=>k.type==='pitch'&&k.box==='me'&&!k.logged&&dAgo50(k.received)<=14).map(k=>({k,e:ent52(k)})).filter(r=>r.e).slice(0,3);
+  reps.forEach(r=>{out.push(`<div class="ptrow"><span class="pill gold">Reply</span><span class="pn"><b style="overflow-wrap:anywhere">${esc(r.k.name||r.k.from)} wrote to you about “${esc(String(r.k.subject||'(no subject)').slice(0,70))}”</b><span class="meta">Looks like ${esc(r.e.label)}. Log it on their page?</span></span><span class="docact"><button class="btn sm pri" data-act="rep50" data-id="${esc(r.k.id)}" data-pid="${esc(r.e.t+':'+r.e.id)}">Log reply</button><button class="btn sm" data-act="rep50no" data-id="${esc(r.k.id)}">Not them</button></span></div>`)});
   const now=Date.now();
   const past=calEvs().filter(ev=>{const e=Date.parse(ev.end||ev.start);return e<now&&dAgo50(ev.start)<=7&&!cout50(ev.id)}).map(ev=>({ev,pid:evPid50(ev)})).filter(r=>r.pid).slice(0,2);
   past.forEach(r=>{const p=get('pipe',r.pid);out.push(`<div class="ptrow"><span class="pill gold">Meeting</span><span class="pn"><b style="overflow-wrap:anywhere">${esc(r.ev.title)} · ${esc(fmt(r.ev.start.slice(0,10)))}</b><span class="meta">How did it go with ${esc(p.group)}?</span></span><span class="docact"><button class="btn sm pri" data-act="out50" data-id="${esc(r.ev.id)}" data-pid="${esc(r.pid)}">Log the outcome</button></span></div>`)});
@@ -3591,10 +3591,13 @@ document.addEventListener('click',async e=>{
   const b=e.target.closest&&e.target.closest('[data-act="rep50"],[data-act="rep50no"],[data-act="out50"],[data-act="brief50"]');if(!b||!EDIT) return;e.stopImmediatePropagation();
   const a=b.dataset.act;
   if(a==='rep50no'){await act('Not this sponsor',()=>patch('kit',b.dataset.id,{logged:'no'}));render();return}
-  if(a==='rep50'){const k=get('kit',b.dataset.id),p=get('pipe',b.dataset.pid);if(!k||!p) return;
-    askGo47('Log this reply for '+p.group+'?',(k.subject||'(no subject)')+(k.summary?' · '+String(k.summary).slice(0,140):'')+(['Not started','Finding the contact','Contact found','First message sent'].includes(p.status)?'. This also moves them to In conversation.':''),'Log reply',async()=>{
-      const id=uid('l');await save('log',id,{id,pipeId:p.id,type:'Reply',date:String(k.received||TODAY).slice(0,10),summary:String(k.subject||'')+(k.summary?': '+String(k.summary).slice(0,200):'')});
-      if(['Not started','Finding the contact','Contact found','First message sent'].includes(p.status)) await patch('pipe',p.id,{status:'In conversation'});
+  if(a==='rep50'){const k=get('kit',b.dataset.id),[t,eid]=String(b.dataset.pid).split(':');if(!k) return;
+    const p=t==='p'?get('pipe',eid):get('kit',eid);if(!p) return;const nm=p.group||p.name;
+    const early=t==='p'&&['Not started','Finding the contact','Contact found','First message sent'].includes(p.status);
+    askGo47('Log this reply for '+nm+'?',(k.subject||'(no subject)')+(k.summary?' · '+String(k.summary).slice(0,140):'')+(early?'. This also moves them to In conversation.':''),'Log reply',async()=>{
+      const line=fmt(String(k.received||TODAY).slice(0,10))+': reply, '+String(k.subject||'(no subject)');
+      if(t==='p'){const id=uid('l');await save('log',id,{id,pipeId:p.id,type:'Reply',date:String(k.received||TODAY).slice(0,10),summary:String(k.subject||'')+(k.summary?': '+String(k.summary).slice(0,200):'')});if(early) await patch('pipe',p.id,{status:'In conversation'})}
+      else await patch('kit',p.id,{notes:(p.notes?p.notes+'\n':'')+line});
       await patch('kit',k.id,{logged:true});toast('Reply logged');render()});return}
   if(a==='brief50'){const f=facts48('pipe',b.dataset.pid);if(!f) return;const d=$('#dlg');
     d.innerHTML=`<h2 style="margin-bottom:6px">Brief: ${esc(f.name)}</h2><pre style="white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;margin:0 0 12px;max-height:55vh;overflow:auto">${esc(f.text)}</pre><div class="row" style="gap:8px"><button class="btn pri" data-q50x="copy">Copy</button><button class="btn" data-q50x="close">Close</button></div>`;
@@ -3636,6 +3639,109 @@ async function ensureV52(){
     for(const a of upd){const p=S.pipe.find(p=>p.group===a[0]||p.group.startsWith(a[0]));if(p) await patch('pipe',p.id,{notes:(p.notes?p.notes+' ':'')+a[1]})}
     lsSet('tllj_seed_v52','1');toast('Sponsors updated');render()});
 }
+
+/* ---------- v53: link a contact to a sponsor, partner or writer, or add a new one from the contact screen ---------- */
+const lopts51=sel=>{const so=(a,b)=>String(a).localeCompare(String(b));
+  const P=S.pipe.slice().sort((a,b)=>so(a.group,b.group)),T=S.kit.filter(k=>k.type==='partner').sort((a,b)=>so(a.name,b.name)),W=people().slice().sort((a,b)=>so(a.name,b.name));
+  const o=(v,t)=>`<option value="${esc(v)}" ${sel===v?'selected':''}>${esc(t)}</option>`;
+  return `<option value="">Not linked</option><optgroup label="Sponsors">${P.map(p=>o('p:'+p.id,p.group)).join('')}</optgroup><optgroup label="Partners">${T.map(p=>o('pt:'+p.id,p.name)).join('')}</optgroup><optgroup label="Writers and contributors">${W.map(p=>o('c:'+p.id,p.name)).join('')}</optgroup><optgroup label="Add new"><option value="new:p">New sponsor…</option><option value="new:pt">New partner…</option><option value="new:c">New writer or contributor…</option></optgroup>`};
+async function mk51(kind,name,c){
+  if(kind==='p'){const id=uid('p');await save('pipe',id,{id,n:Math.max(0,...S.pipe.map(p=>p.n||0))+1,group:name,tab:'Nigeria',category:'Added from Contacts',score:3,chance:'Possible',size:'Bigger',owner:'Sade',status:'Contact found',when:'Second wave',first:[c.name,c.role].filter(Boolean).join(', ')||name,next:'Research '+name+' and write the first message.',nextDate:'',propose:'',why:'Added from a contact. Research needed.',notes:'Added from Contacts, '+fmt(TODAY)+'.',outcome:''});return id}
+  if(kind==='pt'){const id=uid('pt');await save('kit',id,{id,type:'partner',name,kind:'Collaboration',stage:'idea',pkgs:[],eventId:'',accred:'Not needed',attendees:'',contact:[c.name,c.email].filter(Boolean).join(' · '),nextDate:'',ask:'',next:'',notes:'Added from Contacts, '+fmt(TODAY)+'.',wrap:{},outcomes:[],created:TODAY});return id}
+  const id=uid('pe');await save('kit',id,{id,type:'contributor',name,email:c.email||'',phone:c.phone||'',roles:['Writer'],status:'Keep on file',portfolio:'',added:TODAY,source:'Added from Contacts'});return id}
+async function linkTo51(val,c,hint){
+  let [k,id]=String(val||'').split(':');if(!k) return {pipeId:'',partnerId:'',contribId:''};
+  if(k==='new'){const kind=id;id=await mk51(kind,hint||c.name||c.email||'New',c);k=kind==='c'?'c':kind}
+  if(k==='pt'){const p=get('kit',id);if(p&&!p.contact&&(c.name||c.email)) await patch('kit',id,{contact:[c.name,c.email].filter(Boolean).join(' · ')})}
+  if(k==='c'){const p=get('kit',id);if(p&&!p.email&&c.email) await patch('kit',id,{email:c.email})}
+  return {pipeId:k==='p'?id:'',partnerId:k==='pt'?id:'',contribId:k==='c'?id:''}}
+const hasLink51=c=>(c.pipeId&&get('pipe',c.pipeId))||(c.partnerId&&get('kit',c.partnerId))||(c.contribId&&get('kit',c.contribId));
+const lname51=c=>c.pipeId&&get('pipe',c.pipeId)?'Sponsor: '+get('pipe',c.pipeId).group:c.partnerId&&get('kit',c.partnerId)?'Partner: '+get('kit',c.partnerId).name:c.contribId&&get('kit',c.contribId)?'Writer: '+get('kit',c.contribId).name:'';
+const cval51=c=>c.pipeId&&get('pipe',c.pipeId)?'p:'+c.pipeId:c.partnerId&&get('kit',c.partnerId)?'pt:'+c.partnerId:c.contribId&&get('kit',c.contribId)?'c:'+c.contribId:'';
+/* the address book: every contact not on a sponsor, with its link to a partner or writer shown */
+addrBook46=function(){
+  const L=S.contacts.filter(c=>!(c.pipeId&&get('pipe',c.pipeId))),q=(S.abq||'').toLowerCase();if(!L.length) return '';
+  const list=L.filter(c=>!q||(c.name+' '+c.email+' '+c.role+' '+c.phone).toLowerCase().includes(q)).sort((a,b)=>String(a.name).localeCompare(String(b.name)));
+  return `<section class="box"><h2>Address book <small>${L.length} not on a sponsor</small></h2><input type="text" id="ab_q" value="${esc(S.abq||'')}" placeholder="Search name, email or role" aria-label="Search the address book">${list.slice(0,80).map(c=>`<div class="ciit"><div><b data-act="edit" data-col="contacts" data-id="${c.id}" style="cursor:pointer" title="Click to edit">${esc(c.name||c.email||'No name')}</b>${lname51(c)?` <span class="pill ok">${esc(lname51(c))}</span>`:''}<div class="meta">${esc([c.role,c.email,c.phone].filter(Boolean).join(' · '))}</div></div>${EDIT?`<select data-cl51="${c.id}" aria-label="Link to a sponsor, partner or writer">${lopts51(cval51(c))}</select>`:''}</div>`).join('')||'<div class="empty">Nobody matches.</div>'}${list.length>80?`<div class="meta">${list.length-80} more. Search to narrow.</div>`:''}</section>`;
+};
+function nameDlg51(kind,c,sel){
+  const d=$('#dlg'),lab={p:'sponsor',pt:'partner',c:'writer or contributor'}[kind];
+  d.innerHTML=`<h2 style="margin-bottom:6px">New ${lab}</h2><p class="meta">${esc(c.name||c.email||'')} will be linked to it.</p><div class="fld"><label for="n51">Name</label><input type="text" id="n51" value="${esc(kind==='c'?(c.name||''):(c.org||c.name||''))}"></div><div class="row" style="gap:8px"><button class="btn pri" data-n51="go">Create and link</button><button class="btn" data-n51="no">Cancel</button></div>`;
+  d.dataset.col='';d.dataset.id='';d._n51={kind,c,sel};d.showModal();setTimeout(()=>{const i=$('#n51');if(i) i.select()},50)}
+document.addEventListener('change',async e=>{
+  const t=e.target;if(!t||!t.matches||!t.matches('[data-cl51]')||!EDIT) return;e.stopImmediatePropagation();
+  const c=get('contacts',t.dataset.cl51);if(!c) return;const v=t.value;
+  if(v.startsWith('new:')){nameDlg51(v.slice(4),c,t.dataset.cl51);return}
+  const f=await linkTo51(v,c);await act('Link contact',()=>patch('contacts',c.id,f));render();
+},true);
+document.addEventListener('click',async e=>{
+  const b=e.target.closest&&e.target.closest('[data-n51]');if(!b) return;e.stopImmediatePropagation();const d=$('#dlg');
+  if(b.dataset.n51==='no'){d.close();render();return}
+  const {kind,c,sel}=d._n51||{},nm=($('#n51')||{}).value.trim();if(!nm){toast('Type a name first.');return}
+  const f=await linkTo51('new:'+kind,c,nm);await act('Link contact',()=>patch('contacts',sel,f));d.close();toast('Added and linked');render()},true);
+/* the import window: the same choice for each person */
+const si51=showImport46;
+showImport46=function(list){
+  si51(list);
+  document.querySelectorAll('#ci_out .ciit').forEach(el=>{
+    const ck=el.querySelector('[data-ci]'),old=el.querySelector('[data-cipid]');if(!ck||!old) return;const i=+ck.dataset.ci,x=CI46[i];if(!x) return;
+    if(x.link===undefined) x.link=x.m&&x.m.pid?'p:'+x.m.pid:'';
+    old.outerHTML=`<select data-ci51="${i}" aria-label="Link to a sponsor, partner or writer">${lopts51(x.link)}</select>`;
+  });
+};
+document.addEventListener('change',e=>{const t=e.target;if(t&&t.matches&&t.matches('[data-ci51]')){const x=CI46[+t.dataset.ci51];if(x) x.link=t.value}},true);
+
+/* ---------- v54: partner and writer pages show their contacts and emails; email senders link to a partner or writer ---------- */
+function ent52(k){
+  const em=String(k.from||'').toLowerCase();if(!em) return null;
+  const c=S.contacts.find(c=>String(c.email||'').toLowerCase()===em&&hasLink51(c));
+  if(c){if(c.pipeId&&get('pipe',c.pipeId)) return {t:'p',id:c.pipeId,label:get('pipe',c.pipeId).group};
+    if(c.partnerId&&get('kit',c.partnerId)) return {t:'pt',id:c.partnerId,label:get('kit',c.partnerId).name+' (partner)'};
+    if(c.contribId&&get('kit',c.contribId)) return {t:'c',id:c.contribId,label:get('kit',c.contribId).name+' (writer)'}}
+  const w=people().find(p=>String(p.email||'').toLowerCase()===em);if(w) return {t:'c',id:w.id,label:w.name+' (writer)'};
+  const pid=pidFor50(k);if(pid&&get('pipe',pid)) return {t:'p',id:pid,label:get('pipe',pid).group};
+  return null}
+const ctOf52=(kind,id)=>S.contacts.filter(c=>kind==='pt'?c.partnerId===id:c.contribId===id);
+function mailsOf52(cs,extra){const ems=new Set([...cs.map(c=>String(c.email||'').toLowerCase()),String(extra||'').toLowerCase()].filter(Boolean));
+  return S.kit.filter(k=>k.type==='pitch'&&ems.has(String(k.from||'').toLowerCase())).sort((a,b)=>String(b.received).localeCompare(String(a.received))).slice(0,5)}
+function sec52(kind,id,extraEmail){
+  const cs=ctOf52(kind,id),ms=mailsOf52(cs,extraEmail);
+  const free=S.contacts.filter(c=>!hasLink51(c)).sort((a,b)=>String(a.name).localeCompare(String(b.name)));
+  return `<div class="sec"><h3 class="ptg">Contacts and emails</h3>${cs.map(c=>`<div class="ptrow"><span class="pn"><b>${esc(c.name||c.email)}</b><span class="meta">${esc([c.role,c.email,c.phone].filter(Boolean).join(' · '))}</span></span>${EDIT?`<span class="docact"><button class="btn sm" data-act="edit" data-col="contacts" data-id="${esc(c.id)}">Edit</button><button class="btn sm" data-ul52="${esc(c.id)}">Unlink</button></span>`:''}</div>`).join('')||'<div class="meta">No contacts linked yet.</div>'}
+  ${EDIT&&free.length?`<div class="fld" style="margin-top:8px"><label for="al52">Link a saved contact</label><select id="al52" data-al52="${esc(kind+':'+id)}"><option value="">Choose a contact</option>${free.map(c=>`<option value="${esc(c.id)}">${esc(c.name||c.email)}${c.email?' · '+esc(c.email):''}</option>`).join('')}</select></div>`:''}
+  ${ms.length?`<h3 class="ptg" style="margin-top:12px">Recent emails</h3>${ms.map(m=>`<div class="ptrow"><span class="pn"><b style="overflow-wrap:anywhere">${esc(m.subject||'(no subject)')}</b><span class="meta">${esc(m.name||m.from)} · ${esc(fmt(String(m.received||'').slice(0,10)))}${m.box==='me'?' · My inbox':''}</span></span></div>`).join('')}`:''}</div>`}
+function inject52(kind,id,extraEmail){
+  const d=document.getElementById('dlg');if(!d||!d.open||d.querySelector('#sec52')) return;
+  const anchor=d.querySelector('[data-act="ptclose"]');if(!anchor||!anchor.parentNode) return;
+  anchor.parentNode.insertAdjacentHTML('beforebegin','<div id="sec52">'+sec52(kind,id,extraEmail)+'</div>')}
+const opp52=openPartner;
+openPartner=function(id){opp52(id);inject52('pt',id)};
+const ope52=openPerson;
+openPerson=function(id){ope52(id);if(id){const p=get('kit',id);inject52('c',id,p&&p.email)}};
+document.addEventListener('change',async e=>{
+  const t=e.target;if(!t||!t.matches||!t.matches('[data-al52]')||!EDIT) return;e.stopImmediatePropagation();
+  const [kind,id]=t.dataset.al52.split(':'),c=get('contacts',t.value);if(!c) return;
+  const f=await linkTo51((kind==='pt'?'pt:':'c:')+id,c);await act('Link contact',()=>patch('contacts',c.id,f));
+  kind==='pt'?openPartner(id):openPerson(id)},true);
+document.addEventListener('click',async e=>{
+  const b=e.target.closest&&e.target.closest('[data-ul52]');if(!b||!EDIT) return;e.stopImmediatePropagation();
+  const c=get('contacts',b.dataset.ul52);if(!c) return;const dl=document.getElementById('dlg'),col=c.partnerId?'pt':'c',id=c.partnerId||c.contribId;
+  await act('Unlink contact',()=>patch('contacts',c.id,{partnerId:'',contribId:''}));col==='pt'?openPartner(id):openPerson(id)},true);
+/* an email's sender: link to a sponsor, partner or writer from the inbox */
+const pr52=pitchRow;
+pitchRow=function(x){
+  let h=pr52(x);if(!EDIT||!x.from) return h;
+  const em=String(x.from).toLowerCase(),c=S.contacts.find(c=>String(c.email||'').toLowerCase()===em),e=ent52(x);
+  const tag=e?`<span class="pill ok">${esc(e.label)}</span>`:'';
+  const sel=`<select data-pl52="${esc(x.id)}" aria-label="Link this sender to a sponsor, partner or writer">${lopts51(c?cval51(c):'')}</select>`;
+  const i=h.lastIndexOf('</div>');return h.slice(0,i)+`<div class="row" style="margin-top:6px;gap:8px;align-items:center">${tag}<span class="meta">Link sender</span>${sel}</div>`+h.slice(i)};
+document.addEventListener('change',async e=>{
+  const t=e.target;if(!t||!t.matches||!t.matches('[data-pl52]')||!EDIT) return;e.stopImmediatePropagation();
+  const x=get('kit',t.dataset.pl52);if(!x||!t.value) return;const em=String(x.from).toLowerCase();
+  let c=S.contacts.find(c=>String(c.email||'').toLowerCase()===em);
+  if(!c){const id=uid('c');c={id,pipeId:'',partnerId:'',contribId:'',name:x.name&&x.name!==x.from?x.name:'',role:'',email:em,phone:'',boxes:[x.box||'pitches'],route:'Added from the inbox'};await save('contacts',id,c)}
+  if(t.value.startsWith('new:')){nameDlg51(t.value.slice(4),c,c.id);return}
+  const f=await linkTo51(t.value,c);await act('Link sender',()=>patch('contacts',c.id,f));render()},true);
 
 /* ---------- v32: templates, inline events, de-duplication ---------- */
 const PTPLS=[['media','Media-partner offer'],['collab','Collaboration proposal'],['press','Press access and coverage request'],['thanks','Coverage follow-up']];

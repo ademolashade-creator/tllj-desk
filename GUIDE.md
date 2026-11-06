@@ -284,3 +284,15 @@ The first time Sade opens the desk after this update, it applies Fatimah's notes
 - **Invitations.** An invitation with a date in the message has an Add to Events button.
 - **Research.** Polo Avenue, emPLE, Zenith, Isimi and four priority sponsors (Leadway, Afreximbank, Coscharis, Lagos State Ministry) have sourced notes added, with gaps marked.
 - **Full notes.** Pipeline cards no longer cut a note or next step short.
+
+## v53
+
+- **Link a contact to a sponsor, partner or writer.** In Contacts, every person in the Address book has one choice list: Sponsors, Partners, Writers and contributors, or Add new. Choosing "New sponsor…", "New partner…" or "New writer or contributor…" asks for a name, creates it, and links the contact, so you do not leave the screen.
+- **Same choice in the import window.** Each person being imported can be linked to any of the three, or added as new. A new one is named from the company if the file has one, otherwise from the person.
+- **Linked people stay visible.** Contacts linked to a partner or writer stay in the Address book with a tag showing where they are linked.
+
+## v54
+
+- **Partner and writer pages show their contacts.** Open a partner or a writer: "Contacts and emails" lists the people linked to them (Edit or Unlink), lets you link a saved contact, and shows their five most recent emails.
+- **Link a sender from the inbox.** Every email in Pitches and My inbox has "Link sender": choose a sponsor, partner or writer, or add a new one. The sender is saved as a contact if they were not one already.
+- **Replies match partners and writers too.** On Today, "Sponsor pulse" now offers to log a reply for a partner or writer as well as a sponsor, asking first. For partners and writers the reply is added as a dated line in their notes.
