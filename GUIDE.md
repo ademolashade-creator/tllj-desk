@@ -296,3 +296,15 @@ The first time Sade opens the desk after this update, it applies Fatimah's notes
 - **Partner and writer pages show their contacts.** Open a partner or a writer: "Contacts and emails" lists the people linked to them (Edit or Unlink), lets you link a saved contact, and shows their five most recent emails.
 - **Link a sender from the inbox.** Every email in Pitches and My inbox has "Link sender": choose a sponsor, partner or writer, or add a new one. The sender is saved as a contact if they were not one already.
 - **Replies match partners and writers too.** On Today, "Sponsor pulse" now offers to log a reply for a partner or writer as well as a sponsor, asking first. For partners and writers the reply is added as a dated line in their notes.
+
+## v55
+
+- **Latest changes** (Contributors, Today) now uses the full width of the card, wraps long lines instead of cutting them, and shows the whole follow-up text where the desk still holds it. New follow-ups are no longer shortened when recorded.
+
+## v56
+
+- **Add a sponsor yourself.** On Sponsors, "Add a sponsor yourself" opens a form for the name, region, category, why they fit, the first person to write to, the next step, and a first contact with role, email and phone. No Tilly needed. If the name is already on the list, it opens that sponsor instead.
+- **Contacts on the Partnerships side.** Partnerships has its own Contacts tab, grouped by partner, with the same Address book underneath. Fatimah sees it too.
+- **A Linked to field on every contact.** Adding or editing a contact now has a Linked to choice: a sponsor, a partner or a writer. A contact is one record, so a change shows on every page that lists it.
+- **Add a contact** button at the top of Contacts, on both sides.
+- **Reply to Fatimah’s editor’s note.** Open a sponsor: under the editor’s note there is a drop-down "Reply to Fatimah". Her answer comes back the same way, and a "New replies" card on Today shows unread ones to whoever is waiting.

@@ -159,6 +159,9 @@ section.box[data-fold]>h2{cursor:pointer}
 #hold49{position:fixed;left:50%;transform:translateX(-50%);bottom:76px;z-index:60;display:none;flex-direction:column;gap:6px;max-width:calc(100vw - 32px)}
 #hold49 .h49{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--card,#fff);border:1px solid var(--line,#ddd);border-radius:12px;padding:8px 12px;box-shadow:0 6px 24px rgba(0,0,0,.14);font-size:.9rem}
 #hold49 .h49 span{flex:1;min-width:160px}
+
+.crow.lc{grid-template-columns:1fr;cursor:default}
+.crow.lc:hover .cb b{text-decoration:none}
 </style></head><body>
 <div class="wrap">
 <header>
@@ -855,8 +858,8 @@ function openPrep(eid){
 function render(){
   applyTarget();
   const all=[['today','Today'],['roadmap','Roadmap'],['sponsors','Sponsors'],['pipeline','Pipeline'],['contacts','Contacts'],['events','Events'],['coverage','Coverage'],['kit','Proposal Kit'],['balance','Balance'],['decisions','Decisions'],['review','Review'],['activity','Activity']];
-  const allP=[['today','Today'],['roadmap','Roadmap'],['partners','Partners'],['events','Events'],['coverage','Coverage'],['templates','Templates'],['wrap','Wrap-ups'],['review','Review'],['activity','Activity']];
-  const allC=[['today','Today'],['people','People'],['assign','Assignments'],['coverage','Coverage'],['activity','Activity']];const tabs=MODE==='c'?(EDIT?allC:allC.filter(([k])=>k!=='activity')):MODE==='p'?(EDIT?allP:allP.filter(([k])=>['today','roadmap','partners','events','coverage','wrap','review'].includes(k))):EDIT?all:all.filter(([k])=>(CONTRIB?['today','sponsors','pipeline','contacts','events','decisions','activity','review']:['today','decisions','activity','review']).includes(k));
+  const allP=[['today','Today'],['roadmap','Roadmap'],['partners','Partners'],['contacts','Contacts'],['events','Events'],['coverage','Coverage'],['templates','Templates'],['wrap','Wrap-ups'],['review','Review'],['activity','Activity']];
+  const allC=[['today','Today'],['people','People'],['assign','Assignments'],['coverage','Coverage'],['activity','Activity']];const tabs=MODE==='c'?(EDIT?allC:allC.filter(([k])=>k!=='activity')):MODE==='p'?(EDIT?allP:allP.filter(([k])=>['today','roadmap','partners','contacts','events','coverage','wrap','review'].includes(k))):EDIT?all:all.filter(([k])=>(CONTRIB?['today','sponsors','pipeline','contacts','events','decisions','activity','review']:['today','decisions','activity','review']).includes(k));
   if(S.tab!=='notes'&&S.tab!=='approvals'&&S.tab!=='docs'&&S.tab!=='cal'&&S.tab!=='pitches'&&S.tab!=='ask'&&!tabs.some(([k])=>k===S.tab)) S.tab=tabs[0][0];
   const bc=EDIT?balanceChecks().filter(x=>x.level!=='info').length:0,nc=EDIT?S.notes.filter(x=>x.status==='New').length:0;
   document.body.dataset.mode=MODE;$('#modesw').innerHTML=modeSw();$('#nav').innerHTML=tabs.map(([k,l])=>`<button data-act="tab" data-id="${k}" ${S.tab===k?'aria-current="true"':''}>${S.tab===k?tabIc(k):''}${l}${k==='balance'&&bc?' ('+bc+')':''}</button>`).join('');const ab=$('#apprbtn'),an=CONTRIB?drafts().filter(d=>d.status==='pending').length:EDIT?drafts().filter(d=>['approved','changes'].includes(d.status)).length:0;ab.textContent='Approvals'+(an?' ('+an+')':'');ab.setAttribute('aria-current',S.tab==='approvals'?'true':'false');ab.hidden=!(EDIT||CONTRIB);const nb=$('#notesbtn');nb.textContent='Suggestions'+(nc?' ('+nc+')':'');nb.setAttribute('aria-current',S.tab==='notes'?'true':'false');$('#tools').hidden=!(EDIT||CONTRIB);$('#tillybtn').hidden=!EDIT;
@@ -2811,7 +2814,7 @@ vAsk=function(){
   return `<div class="askpg"><p class="meta askintro">Ask Tilly for a daily check-in, a briefing or an answer. To tell Tilly what happened, use the Tilly button at the top.</p>${h}</div>`;
 };
 /* Contributors: Today */
-function latest46(){try{return activityIn(addDays(TODAY,-7)).flatMap(a=>a.changes.filter(c=>c.col==='kit').map(c=>{const [k,n]=phrase(c);return `<div class="crow"><span class="cb"><b>${esc(k)}</b><span class="meta">${esc(n)} · ${esc(fmt(fromAt(a.at)))}</span></span></div>`})).slice(0,6)}catch(e){return []}}
+function latest46(){try{return activityIn(addDays(TODAY,-7)).flatMap(a=>a.changes.filter(c=>c.col==='kit').map(c=>{const [k,n0]=phrase(c);let n=String(n0||'');if(/…$/.test(n)){const st=n.slice(0,-1),f=S.kit.find(x=>(x.text&&String(x.text).startsWith(st))||(x.name&&String(x.name).startsWith(st)));if(f) n=f.text||f.name}return `<div class="crow lc"><span class="cb"><b>${esc(k)}</b><span class="meta" style="white-space:normal;overflow-wrap:anywhere">${esc(n)} · ${esc(fmt(fromAt(a.at)))}</span></span></div>`})).slice(0,6)}catch(e){return []}}
 vTodayC=function(){
   const P=people(),A=asgs(),open=A.filter(a=>a.stage!=='Published'),wk=addDays(TODAY,7);
   const over=open.filter(a=>a.due&&a.due<TODAY).sort(byDue),week=open.filter(a=>a.due&&a.due>=TODAY&&a.due<=wk).sort(byDue);
@@ -3660,7 +3663,7 @@ const lname51=c=>c.pipeId&&get('pipe',c.pipeId)?'Sponsor: '+get('pipe',c.pipeId)
 const cval51=c=>c.pipeId&&get('pipe',c.pipeId)?'p:'+c.pipeId:c.partnerId&&get('kit',c.partnerId)?'pt:'+c.partnerId:c.contribId&&get('kit',c.contribId)?'c:'+c.contribId:'';
 /* the address book: every contact not on a sponsor, with its link to a partner or writer shown */
 addrBook46=function(){
-  const L=S.contacts.filter(c=>!(c.pipeId&&get('pipe',c.pipeId))),q=(S.abq||'').toLowerCase();if(!L.length) return '';
+  const L=S.contacts.filter(c=>!(c.pipeId&&get('pipe',c.pipeId))&&!(MODE==='p'&&c.partnerId&&get('kit',c.partnerId))),q=(S.abq||'').toLowerCase();if(!L.length) return '';
   const list=L.filter(c=>!q||(c.name+' '+c.email+' '+c.role+' '+c.phone).toLowerCase().includes(q)).sort((a,b)=>String(a.name).localeCompare(String(b.name)));
   return `<section class="box"><h2>Address book <small>${L.length} not on a sponsor</small></h2><input type="text" id="ab_q" value="${esc(S.abq||'')}" placeholder="Search name, email or role" aria-label="Search the address book">${list.slice(0,80).map(c=>`<div class="ciit"><div><b data-act="edit" data-col="contacts" data-id="${c.id}" style="cursor:pointer" title="Click to edit">${esc(c.name||c.email||'No name')}</b>${lname51(c)?` <span class="pill ok">${esc(lname51(c))}</span>`:''}<div class="meta">${esc([c.role,c.email,c.phone].filter(Boolean).join(' · '))}</div></div>${EDIT?`<select data-cl51="${c.id}" aria-label="Link to a sponsor, partner or writer">${lopts51(cval51(c))}</select>`:''}</div>`).join('')||'<div class="empty">Nobody matches.</div>'}${list.length>80?`<div class="meta">${list.length-80} more. Search to narrow.</div>`:''}</section>`;
 };
@@ -3742,6 +3745,82 @@ document.addEventListener('change',async e=>{
   if(!c){const id=uid('c');c={id,pipeId:'',partnerId:'',contribId:'',name:x.name&&x.name!==x.from?x.name:'',role:'',email:em,phone:'',boxes:[x.box||'pitches'],route:'Added from the inbox'};await save('contacts',id,c)}
   if(t.value.startsWith('new:')){nameDlg51(t.value.slice(4),c,c.id);return}
   const f=await linkTo51(t.value,c);await act('Link sender',()=>patch('contacts',c.id,f));render()},true);
+
+/* ---------- v56: add a sponsor by hand, contacts on partners, a link field on every contact, replies to Fatimah's notes ---------- */
+const who53=()=>CONTRIB?'Fatimah':'Sade';
+/* 1. add a sponsor yourself, with its first contact */
+function spDlg53(){
+  const d=$('#dlg');
+  d.innerHTML=`<h2 style="margin-bottom:4px">Add a sponsor</h2><p class="meta">Fill in what you know. Anything blank can be added later. No Tilly needed.</p>
+  <div class="fld"><label for="sa_n">Name</label><input type="text" id="sa_n" placeholder="For example: Lagos State Tourism"></div>
+  <div class="g2"><div class="fld"><label for="sa_r">Region</label><select id="sa_r">${REGIONS.map(x=>`<option>${esc(x)}</option>`).join('')}</select></div><div class="fld"><label for="sa_c">Category</label><input type="text" id="sa_c" placeholder="For example: Government and tourism"></div></div>
+  <div class="fld"><label for="sa_w">Why they fit TLLJ</label><textarea id="sa_w" style="min-height:60px"></textarea></div>
+  <div class="fld"><label for="sa_x">Who to write to first, and how we know them</label><input type="text" id="sa_x"></div>
+  <div class="fld"><label for="sa_nx">Next step</label><input type="text" id="sa_nx"></div>
+  <h3 class="ptg" style="margin-top:10px">First contact (optional)</h3>
+  <div class="g2"><div class="fld"><label for="sa_cn">Name</label><input type="text" id="sa_cn"></div><div class="fld"><label for="sa_cr">Role</label><input type="text" id="sa_cr"></div></div>
+  <div class="g2"><div class="fld"><label for="sa_ce">Email</label><input type="text" id="sa_ce"></div><div class="fld"><label for="sa_cp">Phone</label><input type="text" id="sa_cp"></div></div>
+  <div class="fld"><label for="sa_cm">Note on the contact</label><input type="text" id="sa_cm" placeholder="For example: a possible route in"></div>
+  <div class="row" style="gap:8px"><button class="btn pri" data-sa53="go">Add sponsor</button><button class="btn" data-sa53="no">Cancel</button></div>`;
+  d.dataset.col='';d.dataset.id='';d.showModal();setTimeout(()=>{const i=$('#sa_n');if(i) i.focus()},50)}
+document.addEventListener('click',async e=>{
+  const b=e.target.closest&&e.target.closest('[data-sa53],[data-act="spadd53"]');if(!b||!EDIT) return;e.stopImmediatePropagation();
+  if(b.dataset.act==='spadd53'){spDlg53();return}
+  const d=$('#dlg');if(b.dataset.sa53==='no'){d.close();return}
+  const g=i=>($('#'+i).value||'').trim(),nm=g('sa_n');if(!nm){toast('Type the sponsor’s name first.');return}
+  const k=nk51(nm),dup=S.pipe.find(p=>nk51(p.group)===k);
+  if(dup){d.close();toast(dup.group+' is already on the list.');openSponsor(dup.id);return}
+  const id=uid('p');
+  await act('Add sponsor: '+nm.slice(0,24),async()=>{
+    await save('pipe',id,{id,n:Math.max(0,...S.pipe.map(p=>p.n||0))+1,group:nm,tab:g('sa_r')||'Nigeria',category:g('sa_c'),score:3,chance:'Possible',size:'Bigger',owner:'Sade',status:g('sa_cn')?'Contact found':'Not started',when:'Second wave',first:g('sa_x')||g('sa_cn'),next:g('sa_nx'),nextDate:'',propose:'',why:g('sa_w'),notes:'Added by hand, '+fmt(TODAY)+'.',outcome:''});
+    if(g('sa_cn')||g('sa_ce')){const cid=uid('c');await save('contacts',cid,{id:cid,pipeId:id,partnerId:'',contribId:'',name:g('sa_cn'),role:g('sa_cr'),email:g('sa_ce'),phone:g('sa_cp'),route:g('sa_cm')||'Added by hand'})}});
+  d.close();toast('Sponsor added');render()},true);
+const vSp53=vSponsors;
+vSponsors=function(){return (EDIT?`<div class="row" style="margin-bottom:10px;gap:8px"><button class="btn sm" data-act="spadd53">Add a sponsor yourself</button><span class="meta">No Tilly needed.</span></div>`:'')+vSp53()};
+/* 2. contacts: grouped by partner on the Partnerships side, and an Add a contact button */
+const vC53=vContacts;
+vContacts=function(){
+  const add=EDIT?`<div class="row" style="margin-bottom:10px"><button class="btn sm" data-act="cadd53">Add a contact</button></div>`:'';
+  if(MODE!=='p') return add+vC53();
+  const so=(a,b)=>String(a).localeCompare(String(b)),pts=PTS().slice().sort((a,b)=>so(a.name,b.name)).map(p=>({p,cs:S.contacts.filter(c=>c.partnerId===p.id)})).filter(r=>r.cs.length);
+  const row=c=>`<div class="ptrow"><span class="pn"><b>${esc(c.name||c.email||'No name')}</b><span class="meta">${esc([c.role,c.email,c.phone].filter(Boolean).join(' · '))}</span></span>${EDIT?`<span class="docact"><button class="btn sm" data-act="edit" data-col="contacts" data-id="${esc(c.id)}">Edit</button></span>`:''}</div>`;
+  return add+(EDIT?'<div class="row" style="margin-bottom:10px"><button class="btn" data-act="cimp">Import contacts</button></div>':'')+(pts.map(r=>`<section class="box"><h2>${esc(r.p.name)} <small>${r.cs.length}</small></h2>${r.cs.map(row).join('')}</section>`).join('')||'<section class="box"><h2>Partner contacts</h2><div class="meta">No contacts are linked to a partner yet. Add one here, or link a contact from its page.</div></section>')+addrBook46();
+};
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-act="cadd53"]');if(!b||!EDIT) return;e.stopImmediatePropagation();openEdit('contacts',null)},true);
+/* 3. every contact form has a Linked to field */
+const oe53=openEdit;
+openEdit=function(col,id,full){
+  oe53(col,id,full);
+  if(col!=='contacts'||!EDIT) return;
+  const frm=$('#frm');if(!frm||$('#f_link53')) return;const c=id?get('contacts',id):null,row=frm.querySelector('.row');if(!row) return;
+  row.insertAdjacentHTML('beforebegin',`<div class="fld"><label for="f_link53">Linked to</label><select id="f_link53">${lopts51(c?cval51(c):'')}</select></div>`);
+  const prev=frm.onsubmit;
+  frm.onsubmit=async ev=>{const val=$('#f_link53').value,nm=($('#f_name')||{}).value,em=($('#f_email')||{}).value;
+    if(val.startsWith('new:')){ev.preventDefault();toast('Save the contact first, then choose New from its Address book line.');return}
+    await prev.call(frm,ev);
+    const cc=id?get('contacts',id):S.contacts.filter(x=>x.name===nm&&x.email===em).pop();
+    if(cc&&(!id||val!==cval51(cc))){const f=await linkTo51(val,cc);await patch('contacts',cc.id,f);render()}}
+};
+/* 4. reply to Fatimah’s editor’s note */
+const os53=openSponsor;
+openSponsor=function(id,keep){
+  os53(id,keep);const sec=$('#edsec'),p=get('pipe',id);if(!sec||!p||$('#edthr53')) return;
+  const T=p.edThread||[],me=who53(),other=me==='Sade'?'Fatimah':'Sade',can=EDIT||CONTRIB;
+  sec.insertAdjacentHTML('beforeend',`<details id="edthr53" ${T.length?'open':''} style="margin-top:8px"><summary>${can?'Reply to '+other:'Replies'}${T.length?' ('+T.length+')':''}</summary>${T.map(m=>`<div class="ptrow"><span class="pn"><b>${esc(m.by)}</b><span class="meta" style="white-space:normal;overflow-wrap:anywhere">${esc(m.text)} · ${esc(fmt(String(m.at).slice(0,10)))}</span></span></div>`).join('')||'<div class="meta">No replies yet.</div>'}${can?`<div class="fld" style="margin-top:6px"><label for="edr53">Your reply</label><textarea id="edr53" style="min-height:60px"></textarea></div><div class="row"><button type="button" class="btn sm pri" data-act="edrep53" data-id="${esc(id)}">Send reply</button></div>`:''}</details>`);
+  const seen={...(p.edSeen||{})};if(can&&(T.length?T[T.length-1].at:'')!==seen[me]&&T.length){seen[me]=T[T.length-1].at;patch('pipe',id,{edSeen:seen}).catch(()=>0)}
+};
+document.addEventListener('click',async e=>{
+  const b=e.target.closest&&e.target.closest('[data-act="edrep53"]');if(!b||!(EDIT||CONTRIB)) return;e.stopImmediatePropagation();
+  const p=get('pipe',b.dataset.id),t=($('#edr53')||{}).value;if(!p||!t||!t.trim()){toast('Type your reply first.');return}
+  const T=[...(p.edThread||[]),{by:who53(),at:TODAY+'T'+new Date().toTimeString().slice(0,5),text:t.trim()}],seen={...(p.edSeen||{}),[who53()]:T[T.length-1].at};
+  await act('Reply on '+p.group.slice(0,24),()=>patch('pipe',p.id,{edThread:T,edSeen:seen}));toast('Reply sent');openSponsor(p.id)},true);
+const vT53=vToday;
+vToday=function(){
+  const h=vT53();if(!(EDIT||CONTRIB)||MODE==='c') return h;
+  const me=who53(),L=S.pipe.filter(p=>{const T=p.edThread||[];if(!T.length) return false;const l=T[T.length-1];return l.by!==me&&l.at!==(p.edSeen||{})[me]});
+  if(!L.length) return h;
+  return h+`<section class="box"><h2>New replies <small>on the editor’s notes</small></h2>${L.slice(0,5).map(p=>{const l=p.edThread[p.edThread.length-1];return `<div class="ptrow"><span class="pn"><b style="overflow-wrap:anywhere">${esc(p.group)}</b><span class="meta" style="white-space:normal;overflow-wrap:anywhere">${esc(l.by)}: ${esc(l.text)}</span></span><span class="docact"><button class="btn sm pri" data-act="edit" data-col="pipe" data-id="${esc(p.id)}">Open</button></span></div>`}).join('')}</section>`;
+};
 
 /* ---------- v32: templates, inline events, de-duplication ---------- */
 const PTPLS=[['media','Media-partner offer'],['collab','Collaboration proposal'],['press','Press access and coverage request'],['thanks','Coverage follow-up']];
@@ -4363,7 +4442,7 @@ function vSponsors0(){
 const NAMEKEY={pipe:'group',tasks:'action',events:'name',contacts:'name',decisions:'decision',kit:'title',prep:'text'};
 const FRIENDLY={pipe:'Sponsor',tasks:'Plan step',events:'Event',contacts:'Contact',decisions:'Decision',kit:'Proposal Kit',prep:'Event prep',deals:'Deal',log:'Outreach log'};
 const shortV=v=>{v=v==null||v===''?'blank':String(v);return v.length>48?v.slice(0,48)+'…':v};
-function nameOfRec(col,r){if(!r) return '';if(col==='kit'&&(r.type==='partner'||r.type==='ptpl')) return shortV(r.name);if(col==='kit'&&r.type==='followup') return shortV(r.text);if(col==='kit'&&r.type==='contributor') return r.name;if(col==='kit'&&(r.type==='assignment'||r.type==='draft')) return shortV(r.title||r.kind);if(col==='log'||col==='deals'){const p=get('pipe',r.pipeId);return (p?p.group+': ':'')+(col==='log'?(r.type+' '+(r.summary||'')).trim():'Deal tracker')}if(col==='contacts'&&!r.name&&r.email) return r.email;return shortV(r[NAMEKEY[col]]||r.id)}
+function nameOfRec(col,r){if(!r) return '';if(col==='kit'&&(r.type==='partner'||r.type==='ptpl')) return shortV(r.name);if(col==='kit'&&r.type==='followup') return String(r.text||'');if(col==='kit'&&r.type==='contributor') return r.name;if(col==='kit'&&(r.type==='assignment'||r.type==='draft')) return shortV(r.title||r.kind);if(col==='log'||col==='deals'){const p=get('pipe',r.pipeId);return (p?p.group+': ':'')+(col==='log'?(r.type+' '+(r.summary||'')).trim():'Deal tracker')}if(col==='contacts'&&!r.name&&r.email) return r.email;return shortV(r[NAMEKEY[col]]||r.id)}
 function diffOf(col,prev,now){
   if(!prev&&now) return 'added';if(prev&&!now) return 'removed';
   const skip=new Set(['id','checks','n','rows','items','body','fee','paidOn','rounds','cid','forId','linkId','sentAt','decidedAt','decidedBy','sentOn','at','by','contribs']);const out=[];
