@@ -308,3 +308,6 @@ The first time Sade opens the desk after this update, it applies Fatimah's notes
 - **A Linked to field on every contact.** Adding or editing a contact now has a Linked to choice: a sponsor, a partner or a writer. A contact is one record, so a change shows on every page that lists it.
 - **Add a contact** button at the top of Contacts, on both sides.
 - **Reply to Fatimah’s editor’s note.** Open a sponsor: under the editor’s note there is a drop-down "Reply to Fatimah". Her answer comes back the same way, and a "New replies" card on Today shows unread ones to whoever is waiting.
+
+## v57: Reply button on the Sponsors tab
+Next to every Editor's note there is now a **Reply** button. Tap it and the sponsor opens with the reply box ready. The number shows how many messages are in the thread.

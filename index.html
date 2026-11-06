@@ -2409,7 +2409,7 @@ vSponsors0=function(){
     <div class="tbl"><table class="sp45"><tr><th>Sponsor</th><th>Category</th><th>Status</th><th>Editor’s approval</th><th>Editor’s note</th><th title="How likely this sponsor is">Chance</th><th title="Fit score out of 10">Score</th><th></th></tr>
     ${a.map(p=>`<tr><td><input type="text" data-cell="pipe" data-id="${p.id}" data-k="group" value="${esc(p.group)}" aria-label="Sponsor" style="min-width:170px"></td><td><input type="text" data-cell="pipe" data-id="${p.id}" data-k="category" value="${esc(p.category)}" aria-label="Category" style="min-width:110px"></td>
     <td><select data-cell="pipe" data-id="${p.id}" data-k="status" aria-label="Status">${sel(STATUSES,p.status)}</select></td>
-    <td><select data-cell="pipe" data-id="${p.id}" data-k="edApproval" aria-label="Editor’s approval" ${edCan()?'':'disabled'}>${sel(EDAP,edVal(p))}</select></td><td><input type="text" style="min-width:200px" data-cell="pipe" data-id="${p.id}" data-k="edNote" value="${esc(p.edNote||'')}" aria-label="Editor’s note" ${edCan()?'':'disabled'}></td>
+    <td><select data-cell="pipe" data-id="${p.id}" data-k="edApproval" aria-label="Editor’s approval" ${edCan()?'':'disabled'}>${sel(EDAP,edVal(p))}</select></td><td><input type="text" style="min-width:200px" data-cell="pipe" data-id="${p.id}" data-k="edNote" value="${esc(p.edNote||'')}" aria-label="Editor’s note" ${edCan()?'':'disabled'}>${edCan()?`<button class="btn sm" style="margin-left:6px" data-act="edreply53" data-id="${p.id}">Reply${(p.edThread||[]).length?' ('+p.edThread.length+')':''}</button>`:''}</td>
     <td><button class="chd" data-act="chcycle" data-id="${p.id}" style="--c:${CHC45[p.chance]||'var(--mute)'}" aria-label="Chance of signing: ${esc(p.chance)}. Press to change" title="Chance of signing: ${esc(p.chance)}. Press to change"${EDIT?'':' disabled'}><i></i></button></td>
     <td><input type="text" class="scb" data-cell="pipe" data-id="${p.id}" data-k="score" value="${esc(p.score)}" aria-label="Score" inputmode="numeric"></td>
     <td style="white-space:nowrap">${EDIT?`<button class="btn ibs" data-act="fxset" data-id="${p.id}" aria-label="Work on ${esc(p.group)} in Sponsoring focus">${I45(ICP45.target,14)}</button> `:''}<button class="btn ibs" data-act="editfull" data-id="${p.id}" aria-label="Open ${esc(p.group)}">${I45(ICP45.pen,14)}</button>${EDIT?` <button class="btn ibs" data-act="hidesp" data-id="${p.id}" aria-label="Hide ${esc(p.group)} for now">${I45(ICP45.hide,14)}</button> <button class="btn ibs del" data-act="rmsp" data-id="${p.id}" aria-label="Remove ${esc(p.group)}">${I45(ICP45.x,14)}</button>`:''}</td></tr>`).join('')||'<tr><td colspan="8" class="empty">No sponsors here yet.</td></tr>'}
@@ -3821,6 +3821,10 @@ vToday=function(){
   if(!L.length) return h;
   return h+`<section class="box"><h2>New replies <small>on the editor’s notes</small></h2>${L.slice(0,5).map(p=>{const l=p.edThread[p.edThread.length-1];return `<div class="ptrow"><span class="pn"><b style="overflow-wrap:anywhere">${esc(p.group)}</b><span class="meta" style="white-space:normal;overflow-wrap:anywhere">${esc(l.by)}: ${esc(l.text)}</span></span><span class="docact"><button class="btn sm pri" data-act="edit" data-col="pipe" data-id="${esc(p.id)}">Open</button></span></div>`}).join('')}</section>`;
 };
+
+document.addEventListener('click',e=>{
+  const b=e.target.closest&&e.target.closest('[data-act="edreply53"]');if(!b) return;e.stopImmediatePropagation();
+  openSponsor(b.dataset.id);setTimeout(()=>{const d=$('#edthr53');if(d){d.open=true;d.scrollIntoView({block:'center'});const t=$('#edr53');if(t) t.focus()}},60)},true);
 
 /* ---------- v32: templates, inline events, de-duplication ---------- */
 const PTPLS=[['media','Media-partner offer'],['collab','Collaboration proposal'],['press','Press access and coverage request'],['thanks','Coverage follow-up']];
