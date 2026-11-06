@@ -311,3 +311,7 @@ The first time Sade opens the desk after this update, it applies Fatimah's notes
 
 ## v57: Reply button on the Sponsors tab
 Next to every Editor's note there is now a **Reply** button. Tap it and the sponsor opens with the reply box ready. The number shows how many messages are in the thread.
+The "Add a sponsor yourself" button is removed; use the "Add to ..." button at the top of each group. The Sponsors tab now shows "Desk version v57" so you can tell which version you have.
+
+## v58
+"Add a sponsor yourself" and the version label are gone. The "Add to Nigeria / Global / ..." button at the top of each group now has an optional First contact (name, role, email, phone) that links to the new sponsor.

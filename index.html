@@ -2409,7 +2409,7 @@ vSponsors0=function(){
     <div class="tbl"><table class="sp45"><tr><th>Sponsor</th><th>Category</th><th>Status</th><th>Editor’s approval</th><th>Editor’s note</th><th title="How likely this sponsor is">Chance</th><th title="Fit score out of 10">Score</th><th></th></tr>
     ${a.map(p=>`<tr><td><input type="text" data-cell="pipe" data-id="${p.id}" data-k="group" value="${esc(p.group)}" aria-label="Sponsor" style="min-width:170px"></td><td><input type="text" data-cell="pipe" data-id="${p.id}" data-k="category" value="${esc(p.category)}" aria-label="Category" style="min-width:110px"></td>
     <td><select data-cell="pipe" data-id="${p.id}" data-k="status" aria-label="Status">${sel(STATUSES,p.status)}</select></td>
-    <td><select data-cell="pipe" data-id="${p.id}" data-k="edApproval" aria-label="Editor’s approval" ${edCan()?'':'disabled'}>${sel(EDAP,edVal(p))}</select></td><td><input type="text" style="min-width:200px" data-cell="pipe" data-id="${p.id}" data-k="edNote" value="${esc(p.edNote||'')}" aria-label="Editor’s note" ${edCan()?'':'disabled'}>${edCan()?`<button class="btn sm" style="margin-left:6px" data-act="edreply53" data-id="${p.id}">Reply${(p.edThread||[]).length?' ('+p.edThread.length+')':''}</button>`:''}</td>
+    <td><select data-cell="pipe" data-id="${p.id}" data-k="edApproval" aria-label="Editor’s approval" ${edCan()?'':'disabled'}>${sel(EDAP,edVal(p))}</select></td><td><input type="text" style="min-width:200px" data-cell="pipe" data-id="${p.id}" data-k="edNote" value="${esc(p.edNote||'')}" aria-label="Editor’s note" ${edCan()?'':'disabled'}>${edCan()?`<div style="margin-top:4px"><button class="btn sm pri" data-act="edreply53" data-id="${p.id}">Reply${(p.edThread||[]).length?' ('+p.edThread.length+')':''}</button></div>`:''}</td>
     <td><button class="chd" data-act="chcycle" data-id="${p.id}" style="--c:${CHC45[p.chance]||'var(--mute)'}" aria-label="Chance of signing: ${esc(p.chance)}. Press to change" title="Chance of signing: ${esc(p.chance)}. Press to change"${EDIT?'':' disabled'}><i></i></button></td>
     <td><input type="text" class="scb" data-cell="pipe" data-id="${p.id}" data-k="score" value="${esc(p.score)}" aria-label="Score" inputmode="numeric"></td>
     <td style="white-space:nowrap">${EDIT?`<button class="btn ibs" data-act="fxset" data-id="${p.id}" aria-label="Work on ${esc(p.group)} in Sponsoring focus">${I45(ICP45.target,14)}</button> `:''}<button class="btn ibs" data-act="editfull" data-id="${p.id}" aria-label="Open ${esc(p.group)}">${I45(ICP45.pen,14)}</button>${EDIT?` <button class="btn ibs" data-act="hidesp" data-id="${p.id}" aria-label="Hide ${esc(p.group)} for now">${I45(ICP45.hide,14)}</button> <button class="btn ibs del" data-act="rmsp" data-id="${p.id}" aria-label="Remove ${esc(p.group)}">${I45(ICP45.x,14)}</button>`:''}</td></tr>`).join('')||'<tr><td colspan="8" class="empty">No sponsors here yet.</td></tr>'}
@@ -3751,7 +3751,7 @@ const who53=()=>CONTRIB?'Fatimah':'Sade';
 /* 1. add a sponsor yourself, with its first contact */
 function spDlg53(){
   const d=$('#dlg');
-  d.innerHTML=`<h2 style="margin-bottom:4px">Add a sponsor</h2><p class="meta">Fill in what you know. Anything blank can be added later. No Tilly needed.</p>
+  d.innerHTML=`<h2 style="margin-bottom:4px">Add a sponsor</h2><p class="meta">Fill in what you know. Anything blank can be added later.</p>
   <div class="fld"><label for="sa_n">Name</label><input type="text" id="sa_n" placeholder="For example: Lagos State Tourism"></div>
   <div class="g2"><div class="fld"><label for="sa_r">Region</label><select id="sa_r">${REGIONS.map(x=>`<option>${esc(x)}</option>`).join('')}</select></div><div class="fld"><label for="sa_c">Category</label><input type="text" id="sa_c" placeholder="For example: Government and tourism"></div></div>
   <div class="fld"><label for="sa_w">Why they fit TLLJ</label><textarea id="sa_w" style="min-height:60px"></textarea></div>
@@ -3776,7 +3776,7 @@ document.addEventListener('click',async e=>{
     if(g('sa_cn')||g('sa_ce')){const cid=uid('c');await save('contacts',cid,{id:cid,pipeId:id,partnerId:'',contribId:'',name:g('sa_cn'),role:g('sa_cr'),email:g('sa_ce'),phone:g('sa_cp'),route:g('sa_cm')||'Added by hand'})}});
   d.close();toast('Sponsor added');render()},true);
 const vSp53=vSponsors;
-vSponsors=function(){return (EDIT?`<div class="row" style="margin-bottom:10px;gap:8px"><button class="btn sm" data-act="spadd53">Add a sponsor yourself</button><span class="meta">No Tilly needed.</span></div>`:'')+vSp53()};
+vSponsors=function(){return vSp53()};
 /* 2. contacts: grouped by partner on the Partnerships side, and an Add a contact button */
 const vC53=vContacts;
 vContacts=function(){
@@ -3825,6 +3825,10 @@ vToday=function(){
 document.addEventListener('click',e=>{
   const b=e.target.closest&&e.target.closest('[data-act="edreply53"]');if(!b) return;e.stopImmediatePropagation();
   openSponsor(b.dataset.id);setTimeout(()=>{const d=$('#edthr53');if(d){d.open=true;d.scrollIntoView({block:'center'});const t=$('#edr53');if(t) t.focus()}},60)},true);
+
+document.addEventListener('click',e=>{
+  const b=e.target.closest&&e.target.closest('[data-act="newsp"]');if(!b||!EDIT) return;e.stopImmediatePropagation();e.preventDefault();
+  spDlg53();const r=$('#sa_r');if(r&&b.dataset.id) r.value=b.dataset.id},true);
 
 /* ---------- v32: templates, inline events, de-duplication ---------- */
 const PTPLS=[['media','Media-partner offer'],['collab','Collaboration proposal'],['press','Press access and coverage request'],['thanks','Coverage follow-up']];
