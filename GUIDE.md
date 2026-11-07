@@ -343,3 +343,11 @@ Open a sponsor: under "Contacts and emails" each linked contact has Edit and Unl
 
 ## v64
 On a sponsor page there is one Contacts list. Each contact has Edit, Unlink and Remove. Below it, "Link a contact and recent emails" holds the link drop-down. The duplicate list is gone.
+
+## v65 — layout and sidebar polish
+- The sidebar now has the app title, the days-left badge and a collapse arrow at the top. Collapse it and the page re-centres.
+- Today: Due now and Sponsor pulse sit side by side; Next 7 days runs full width underneath, centred.
+- Contributors: People sits above the short list of questions. Partners: Research a partner is at the bottom, Coming up sits above Fill in.
+- Proposal Kit: audience figures sit in a tidy grid with the full label visible. Keep that list short and hand-picked: Tilly quotes only those figures and names and never adds others.
+- Activity: Push to Praise is one compact row. Contacts and Events: add/import and Tilly's suggestions are at the bottom.
+- Follow-ups and Events cards on Today now share one height; the Events list scrolls inside its card. What happened rows are evenly spaced.

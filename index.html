@@ -233,9 +233,83 @@ input[type=text],input:not([type]){max-width:100%}
 input[placeholder^="Add a type"],input[placeholder^="Add a status"]{max-width:380px}
 :has(>input[placeholder^="Add a type"]),:has(>input[placeholder^="Add a status"]){justify-content:flex-start}
 .top54{margin-top:0}
-.top54 .ptrow{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
-.top54 .ptrow .meta,.top54 .ptrow>span:nth-child(3){flex:1 1 100%;order:3}
-.top54 .ptrow .btn{order:4;margin-left:auto}
+section.top-w55 .ptrow{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+section.top-w55 .ptrow .meta,section.top-w55 .ptrow>span:nth-child(3){flex:1 1 100%!important;order:3}
+section.top-w55 .ptrow .btn{order:4;margin-left:auto}
+/* v65 */
+html{scrollbar-gutter:stable}
+@media(prefers-reduced-motion:no-preference){@keyframes rise55{from{opacity:0}to{opacity:1}}main.enter55>*{animation-duration:.25s}}
+@media(min-width:1180px){
+ body.side55{--sw:188px;padding-left:0}
+ body.side55.collapsed55{--sw:68px}
+ body.side55 .wrap{max-width:none;margin:0 0 0 var(--sw);padding:0 28px;transition:margin .2s}
+ body.side55 header>.top,body.side55 header>nav,body.side55 main{max-width:1180px;margin-left:auto;margin-right:auto}
+ body.side55 header h1{display:none}
+ body.side55 #nav{left:0;top:0;bottom:0;width:var(--sw);max-height:none;height:100vh;padding:14px 10px 20px;background:var(--surface);border-right:1px solid var(--line);box-shadow:6px 0 22px -18px rgba(0,0,0,.4);z-index:20;transition:width .2s;overflow-y:auto;overflow-x:hidden}
+ body.side55 #nav>button,body.side55 .mp54 button{padding:9px 11px}
+ .brand55{display:flex;align-items:center;justify-content:space-between;gap:6px;margin:2px 2px 10px}
+ .bt55{font:600 17px/1.15 var(--serif,Georgia,serif);color:var(--accent);letter-spacing:-.01em}
+ .col55{flex:none;width:28px;height:28px;border:1px solid var(--line)!important;border-radius:8px!important;display:grid!important;place-items:center;padding:0!important;width:28px!important;background:transparent;color:var(--mute)}
+ .col55 .i55{margin:0!important}
+ .cd55{display:flex;align-items:baseline;gap:8px;margin:0 2px 8px;padding:10px 12px;border-radius:12px;background:linear-gradient(135deg,var(--gold-soft),var(--surface));border:1px solid var(--line)}
+ .cd55 b{font:700 26px/1 var(--serif,Georgia,serif);color:var(--accent)}
+ .cd55 span{font-size:12px;color:var(--mute);line-height:1.2}
+ body.collapsed55 .bt55,body.collapsed55 .cd55{display:none}
+ body.collapsed55 .brand55{justify-content:center}
+ body.collapsed55 .col55 .i55{transform:rotate(180deg)}
+ body.collapsed55 #nav>button,body.collapsed55 .mp54 button{font-size:0!important;justify-content:center;padding:11px 0}
+ body.collapsed55 #nav button .i55{margin:0;width:18px;height:18px}
+ body.collapsed55 details.mn54{margin-top:6px}
+ body.collapsed55 details.mn54>summary{font-size:0;padding:0;margin:4px 12px;border-top:1px solid var(--line);height:1px}
+}
+/* today pairs */
+.tg54 section.due55>.fbody{max-height:460px;overflow:auto;padding-right:6px}
+.pk55{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;flex:1;align-content:stretch}
+.pkt55{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;border:1px solid var(--line);border-radius:14px;padding:14px 8px;background:linear-gradient(160deg,var(--surface),var(--gold-soft))}
+.pkt55 b{font:700 34px/1 var(--serif,Georgia,serif);color:var(--accent)}
+.pkt55 span{font-size:12.5px;color:var(--mute);margin-top:6px}
+.pkg55{text-align:center;margin:12px 0 0}
+.tg54 section.pulse55>.fbody,.tg54 section:has(.pk55)>.fbody{display:flex;flex-direction:column}
+.tg54>.next55 .n7g56{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.tg54>.next55>details>summary{grid-column:1/-1;justify-content:center;text-align:center;list-style:none;font-size:16px;margin-bottom:2px}
+.tg54>.next55 .n7g56>*{text-align:center;margin:0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+@media(max-width:900px){.tg54>.next55 .n7g56{grid-template-columns:1fr}}
+.tg54>.wide54>.fbody>.ptrow{margin:0}
+.tg54>.wide54>.fbody>:not(.item):not(.ptrow){grid-column:1/-1}
+/* chips, icons, compact rows */
+details.terms56[open]{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 8px;padding:6px 0}
+details.terms56>summary{flex:1 1 100%;text-align:center;margin-bottom:4px}
+details.terms56 label.gi{display:inline-flex;align-items:center;gap:6px;margin:0;padding:5px 12px;border:1px solid var(--line);border-radius:99px;background:var(--surface);font-size:13.5px}
+details.terms56 label.gi:has(input:checked){border-color:var(--gold);background:var(--gold-soft)}
+.ibr56{margin-left:auto;display:inline-flex;gap:6px;align-items:center}
+section.box>h2:has(.ibr56){display:flex;align-items:center}
+.tiles{justify-content:center}
+section.row55{display:flex;align-items:center;flex-wrap:wrap;gap:6px 18px;padding-top:12px;padding-bottom:12px}
+section.row55>h2{margin:0}
+section.row55>.fbody{display:flex;align-items:center;flex-wrap:wrap;gap:8px 16px;flex:1;justify-content:space-between}
+section.row55>.fbody>p,section.row55>.fbody>.meta{margin:0;flex:1 1 280px}
+section.row55>.fbody>.row{margin:0}
+.cal56 .calg56{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
+.cal56 .calg56>*{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--surface)}
+
+.tg54>section.opp56{max-height:560px;overflow-y:auto;scrollbar-width:thin}
+@media(max-width:900px){.tg54>section.opp56{max-height:none}}
+.tiles:has(input[data-aud=stats]){display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.tiles:has(input[data-aud=stats]) .tile{min-width:0;text-align:center}
+.tiles:has(input[data-aud=stats]) .tile input{text-align:center;text-overflow:clip}
+@media(max-width:700px){.tiles:has(input[data-aud=stats]){grid-template-columns:repeat(2,minmax(0,1fr))}}
+section.top-w55 .ptrow{justify-content:flex-start!important;text-align:left}
+section.top-w55 .ptrow>.pill,section.top-w55 .ptrow>b{margin:0!important}
+section.top-w55 .ptrow .btn{margin-left:auto!important}
+section.top-w55 .fbody{display:flex;flex-direction:column;gap:8px}
+section.top-w55 .fbody>.ptrow{flex:1 1 auto;align-content:center}
+.tbar54:last-child,.filters:last-child{justify-content:center}
+
+.tg54>section.fu56{display:flex;flex-direction:column}
+.tg54>section.fu56>.fbody{flex:1;display:flex;flex-direction:column;justify-content:center;gap:12px}
+.tg54>section.fu56>.fbody>.banner{text-align:center}
+.tg54>section.evc56{max-height:480px;overflow-y:auto;scrollbar-width:thin}
+@media(max-width:900px){.tg54>section.evc56{max-height:none}}
 /* v58b */
 details.mn54{position:relative;display:inline-block}
 details.mn54>summary{list-style:none;cursor:pointer;padding:6px 10px;font:500 13px var(--sans);color:var(--mute);border:1px solid var(--line);border-radius:99px;white-space:nowrap;transition:background .15s,border-color .15s}
@@ -3969,6 +4043,7 @@ function regroup54(){
     if(help) pan.insertAdjacentHTML('beforeend','<button type="button" data-act="help54">How this works</button>');
     nav.appendChild(det)})}
 document.addEventListener('click',e=>{
+  if(document.body.classList.contains('side55')) return;
   const sm=e.target.closest&&e.target.closest('details.mn54>summary');
   if(sm){e.preventDefault();e.stopImmediatePropagation();const d=sm.parentNode,k=d.dataset.k,was=d.open;
     document.querySelectorAll('details.mn54').forEach(x=>x.open=false);d.open=!was;OPEN54=was?null:k;return}
@@ -4055,6 +4130,8 @@ function label54(){
 
 /* ---------- v62: balanced layouts, sidebar, icons, motion ---------- */
 const IC55={
+ copy:'<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/>',
+ chev:'<path d="M15 6l-6 6 6 6"/>',
  today:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
  sponsors:'<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
  partners:'<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
@@ -4112,15 +4189,18 @@ function today55(){
   const pulse=[...m.children].find(s=>s.matches('section')&&/^Sponsor pulse/.test(head55(s)));
   const n=Math.min(L.length,R.length),order=[];
   for(let i=0;i<n;i++){order.push(L[i],R[i])}
-  [...L.slice(n),...R.slice(n)].forEach(x=>order.push(x));if(pulse) order.push(pulse);
+  const rest=[...L.slice(n),...R.slice(n)],due=rest.find(s=>/^Due now/.test(head55(s))),nx=rest.find(s=>/^Next 7/.test(head55(s)));
+  if(due) order.push(due);if(pulse) order.push(pulse);
+  rest.filter(s=>s!==due&&s!==nx).forEach(x=>order.push(x));if(nx){order.push(nx);nx.classList.add('wide54','next55')}
   const g=document.createElement('div');g.className='tg54';
-  order.forEach(s=>{if(/^Due now/.test(head55(s))){s.classList.add('wide54')}g.appendChild(s)});
+  order.forEach(s=>{g.appendChild(s)});
+  if(due) due.classList.add('due55');
   cols.replaceWith(g);
   g.querySelectorAll('details.more').forEach(d=>d.open=true);
   g.querySelectorAll('section.box').forEach(s=>{const h=head55(s);
     if(/^Events/.test(h)) more55(s,'.ev',4,'events');
     else if(/^Opportunities/.test(h)) more55(s,'.ev',3,'opportunities');
-    else if(/^Due now/.test(h)) more55(s,'.item',8,'tasks')});
+    });
   /* suggested steps: dismiss links go to the bottom right */
   g.querySelectorAll('.cardx').forEach(c=>{
     const bs=[...c.querySelectorAll('button')].filter(b=>/dismiss/i.test(b.textContent));if(!bs.length) return;
@@ -4185,6 +4265,65 @@ function polish55(){
 
 /* sponsor page: linked contacts with Edit and Unlink */
 {const os=openSponsor;openSponsor=function(id,keep){const r=os(id,keep);if(get('pipe',id)) [120,650].forEach(t=>setTimeout(()=>{const d=$('#dlg');if(d&&d.open&&!d.querySelector('#sec52')) inject52('p',id);const d2=$('#dlg');if(d2&&d2.open) d2.querySelectorAll('.sec .item [data-act="edit"][data-col="contacts"]').forEach(eb=>{const c=get('contacts',eb.dataset.id);if(c&&c.pipeId===id&&!eb.parentElement.querySelector('[data-ul52]')) eb.insertAdjacentHTML('afterend',`<button class="btn sm" type="button" data-ul52="${esc(c.id)}" data-k52="p">Unlink</button>`)});page54()},t));return r}}
+
+/* ---------- v65: sidebar brand and collapse, page tidy-ups ---------- */
+let COL56=(()=>{try{return localStorage.getItem('tllj_side')==='1'}catch(e){return false}})();
+const applyCol56=()=>document.body.classList.toggle('collapsed55',COL56);applyCol56();
+const _rg56=regroup54;
+regroup54=function(){
+  _rg56();
+  const nav=$('#nav');if(!nav) return;
+  nav.querySelectorAll('button[data-act="tab"],button[data-act="help54"]').forEach(b=>{b.title=b.textContent.replace(/\s+/g,' ').trim()});
+  if(!document.body.classList.contains('side55')) return;
+  const left=Math.max(0,Math.ceil((new Date('2026-12-14')-new Date(TODAY))/864e5));
+  nav.insertAdjacentHTML('afterbegin',`<div class="brand55"><span class="bt55">TLLJ Partnerships Desk</span><button type="button" class="col55" data-act="col55" aria-label="${COL56?'Open':'Collapse'} the sidebar" title="${COL56?'Open':'Collapse'} the sidebar">${ico55('chev',16)}</button></div><div class="cd55" title="Target: one signed sponsorship by 14 December"><b>${left}</b><span>days to 14 Dec</span></div>`)};
+document.addEventListener('click',e=>{
+  const b=e.target.closest&&e.target.closest('[data-act="col55"]');if(!b) return;e.stopImmediatePropagation();
+  COL56=!COL56;try{localStorage.setItem('tllj_side',COL56?'1':'0')}catch(x){}applyCol56();render()},true);
+const hd56=s=>((s.querySelector(':scope>h2,:scope>details>summary,:scope>summary')||s.querySelector('h2,summary,b')||s).textContent||'').replace(/\s+/g,' ').trim();
+const sec56=(re)=>[...document.querySelectorAll('#main section.box, #main > details')].find(s=>re.test(hd56(s)));
+function compact56(s){if(s) s.classList.add('row55')}
+function polish56(){
+  const m=$('#main');if(!m) return;
+  m.querySelectorAll('.tg54>section').forEach(s=>{const t=s.textContent.trim();if(/^Opportunities/.test(t))s.classList.add('opp56');if(/^Follow-ups/.test(t))s.classList.add('fu56');if(/^Events next/.test(t))s.classList.add('evc56')});
+  m.querySelectorAll('.next55>details').forEach(d=>{if(d.querySelector(':scope>.n7g56'))return;const its=[...d.children].filter(c=>c.tagName!=='SUMMARY');if(!its.length)return;const w=document.createElement('div');w.className='n7g56';its.forEach(i=>w.appendChild(i));d.appendChild(w)});
+  m.querySelectorAll('.top54 section.box').forEach(s=>{if(/^What happened/.test(hd56(s))) s.classList.add('top-w55')});
+  /* contributors: People card sits above the short list of questions */
+  if(MODE==='c'&&S.tab==='people'){const p=sec56(/^People/),q=sec56(/^Short list of questions/);if(p&&q&&p.nextElementSibling!==q&&!p.dataset.mv){p.dataset.mv='1';q.before(p)}}
+  /* partners: research goes to the bottom, coming up goes above fill in */
+  if(MODE==='p'&&S.tab==='partners'){const r=sec56(/^Research a partner/);if(r&&m.lastElementChild!==r) m.appendChild(r)}
+  if(MODE==='p'&&S.tab==='today'&&!m.querySelector('.tg54.pt56')){
+    const nm=sec56(/^Needs a move/),cu=sec56(/^Coming up with partners/),fi=sec56(/^Fill in/),br=sec56(/^Brief and quick/);
+    compact56(br);
+    if(nm&&cu&&fi){const g=document.createElement('div');g.className='tg54 pt56';nm.before(g);g.append(nm,cu,fi);fi.classList.add('wide54')}}
+  /* sponsor pulse becomes big tiles */
+  const pu=sec56(/^Sponsor pulse/);
+  if(pu&&!pu.dataset.pk){pu.dataset.pk='1';const body=pu.querySelector('.fbody');const f=body&&body.querySelector('.meta');
+    if(f){const bs=[...f.querySelectorAll('b')].map(b=>b.textContent.trim());
+      if(bs.length>=6){const lab=['to 14 Dec','Signed','Terms or proposal out','In conversation','First message sent','Not yet started'];
+        const guide=(f.textContent.match(/A working guide[^.]*\.[^.]*\./)||[''])[0];
+        f.outerHTML=`<div class="pk55">${bs.slice(0,6).map((v,i)=>`<div class="pkt55"><b>${esc(v.replace(/\s*days?/,''))}</b><span>${lab[i]}</span></div>`).join('')}</div>${guide?`<p class="meta pkg55">${esc(guide)}</p>`:''}`}}}
+  /* terms as chips; audience tools as icons; push to praise as one row */
+  m.querySelectorAll('details.more').forEach(d=>{const s=d.querySelector(':scope>summary');if(s&&/^Terms to include/.test(s.textContent.trim())) d.classList.add('terms56')});
+  const au=sec56(/^Audience/);
+  if(au&&!au.dataset.ic){au.dataset.ic='1';const h=au.querySelector('h2');
+    const add=au.querySelector('[data-act="audaddst"]'),cp=au.querySelector('[data-act="audresults"]');
+    if(h&&(add||cp)){const w=document.createElement('span');w.className='ibr56';
+      [[add,'plus','Add a figure'],[cp,'copy','Copy results line']].forEach(([b,k,t])=>{if(!b) return;const r=b.parentElement;b.className='btn ibs';b.innerHTML=ico55(k,15);b.title=t;b.setAttribute('aria-label',t);w.appendChild(b);if(r&&r.classList.contains('row')&&!r.children.length) r.remove()});
+      h.appendChild(w)}
+    au.querySelectorAll('p.meta').forEach(p=>{if(/^Small and chosen/.test(p.textContent.trim())) p.textContent='Keep this list short and hand-picked. Tilly quotes only these figures and names in proposals and never adds others.'})}
+  compact56(sec56(/^Push to Praise/));
+  /* contacts: the add and filter rows go to the bottom */
+  if(S.tab==='contacts'){const tb=m.querySelector('.tbar54'),fl=m.querySelector(':scope>.filters');[tb,fl].forEach(x=>{if(x&&m.lastElementChild!==x&&!x.dataset.mv){x.dataset.mv='1';m.appendChild(x)}})}
+  /* events: Tilly suggestions and Add event go to the bottom; the calendar is a card */
+  if(S.tab==='events'&&!m.dataset.ev56){m.dataset.ev56='1';
+    const sg=sec56(/^Suggested by Tilly/),ad=[...m.children].find(e=>e.matches&&e.matches('.row')&&/Add event/.test(e.textContent));
+    [sg,ad].forEach(x=>{if(x) m.appendChild(x)})}
+  const cal=m.querySelector('details[data-k="evCal"]');
+  if(cal&&!cal.dataset.cv){cal.dataset.cv='1';const s=document.createElement('section');s.className='box cal56';const n=cal.querySelector('summary small');
+    s.innerHTML=`<h2>Calendar <small>next 14 days${n?' · '+esc(n.textContent):''}</small></h2><div class="calg56"></div>`;
+    const g=s.querySelector('.calg56');[...cal.children].filter(c=>c.tagName!=='SUMMARY').forEach(c=>g.appendChild(c));cal.replaceWith(s)}}
+{const r=render;render=function(){const x=r.apply(this,arguments);try{polish56()}catch(e){console.error('polish56',e)}return x}}
 
 /* ---------- v32: templates, inline events, de-duplication ---------- */
 const PTPLS=[['media','Media-partner offer'],['collab','Collaboration proposal'],['press','Press access and coverage request'],['thanks','Coverage follow-up']];
