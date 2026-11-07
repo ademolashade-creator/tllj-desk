@@ -330,3 +330,16 @@ Fixed the Work, Check and More menus so they open and stay open, and centred the
 
 ## v61: full check
 Every tab was checked in Sponsorships, Partnerships, Contributors and Fatimah's view. Fixes: wider Status and Approval boxes in the Sponsors table, every box now has a name for screen readers, card headings no longer break one word per line on a phone, and the page has room at the bottom so the "Met someone" button never covers content.
+
+## v62: balanced layout, sidebar, icons
+- On wide screens the tabs are a left sidebar with icons (Work, Check and More are grouped). Phones keep the top bar.
+- Today: cards sit in pairs of equal width and height. Events, Opportunities and tasks show a few and "Show more". Dismiss all and Show dismissed are at the bottom right of Suggested next steps.
+- Sponsors: Research, Sponsoring focus and New sponsor ideas are small cards in one row. Text in the table wraps instead of being cut off.
+- Contacts: Add a contact and Import contacts are on one line. Every sponsor row has "or link a saved contact", and partner and writer pages always show "Link a saved contact".
+- Events are shown as cards in two columns. Soft motion when you change tab (off if your device asks for less motion).
+
+## v63: unlink a contact from a sponsor
+Open a sponsor: under "Contacts and emails" each linked contact has Edit and Unlink buttons. Partner and writer pages already had them.
+
+## v64
+On a sponsor page there is one Contacts list. Each contact has Edit, Unlink and Remove. Below it, "Link a contact and recent emails" holds the link drop-down. The duplicate list is gone.
