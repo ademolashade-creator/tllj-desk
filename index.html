@@ -270,10 +270,11 @@ html{scrollbar-gutter:stable}
 .pkt55 span{font-size:12.5px;color:var(--mute);margin-top:6px}
 .pkg55{text-align:center;margin:12px 0 0}
 .tg54 section.pulse55>.fbody,.tg54 section:has(.pk55)>.fbody{display:flex;flex-direction:column}
-.tg54>.next55 .n7g56{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.tg54>.next55 .n7g56{display:flex;flex-direction:column;gap:8px;max-width:760px;margin:6px auto 0;max-height:340px;overflow-y:auto;scrollbar-width:thin;padding:2px 4px}
 .tg54>.next55>details>summary{grid-column:1/-1;justify-content:center;text-align:center;list-style:none;font-size:16px;margin-bottom:2px}
-.tg54>.next55 .n7g56>*{text-align:center;margin:0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
-@media(max-width:900px){.tg54>.next55 .n7g56{grid-template-columns:1fr}}
+.tg54>.next55 .n7g56>*{margin:0;min-width:0;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:12px;text-align:center}
+.tg54>.next55 .n7g56 .meta{justify-content:center}
+
 .tg54>.wide54>.fbody>.ptrow{margin:0}
 .tg54>.wide54>.fbody>:not(.item):not(.ptrow){grid-column:1/-1}
 /* chips, icons, compact rows */
@@ -310,6 +311,11 @@ section.top-w55 .fbody>.ptrow{flex:1 1 auto;align-content:center}
 .tg54>section.fu56>.fbody>.banner{text-align:center}
 .tg54>section.evc56{max-height:480px;overflow-y:auto;scrollbar-width:thin}
 @media(max-width:900px){.tg54>section.evc56{max-height:none}}
+.tg54>.next55 .n7g56>*{display:grid!important;grid-template-columns:auto 1fr;align-items:center;gap:14px;text-align:left!important;width:100%}
+.tg54>.next55 .n7g56 .meta{justify-content:flex-start!important}
+.tbar54{justify-content:center!important}
+section.box.fold-c>.fbody{display:none!important}
+.tg54>section.fold-c{align-self:start!important;min-height:0!important;height:auto!important;max-height:none!important;overflow:visible!important}
 /* v58b */
 details.mn54{position:relative;display:inline-block}
 details.mn54>summary{list-style:none;cursor:pointer;padding:6px 10px;font:500 13px var(--sans);color:var(--mute);border:1px solid var(--line);border-radius:99px;white-space:nowrap;transition:background .15s,border-color .15s}
@@ -4314,7 +4320,7 @@ function polish56(){
     au.querySelectorAll('p.meta').forEach(p=>{if(/^Small and chosen/.test(p.textContent.trim())) p.textContent='Keep this list short and hand-picked. Tilly quotes only these figures and names in proposals and never adds others.'})}
   compact56(sec56(/^Push to Praise/));
   /* contacts: the add and filter rows go to the bottom */
-  if(S.tab==='contacts'){const tb=m.querySelector('.tbar54'),fl=m.querySelector(':scope>.filters');[tb,fl].forEach(x=>{if(x&&m.lastElementChild!==x&&!x.dataset.mv){x.dataset.mv='1';m.appendChild(x)}})}
+  if(S.tab==='contacts'){const tb=m.querySelector('.tbar54'),fl=m.querySelector(':scope>.filters'),ab=[...m.querySelectorAll(':scope>section')].find(s=>/^Address book/.test(s.textContent.trim()));if(tb&&ab&&tb.nextElementSibling!==ab&&!tb.dataset.mv){tb.dataset.mv='1';m.insertBefore(tb,ab)}if(fl&&m.lastElementChild!==fl&&!fl.dataset.mv){fl.dataset.mv='1';m.appendChild(fl)}}
   /* events: Tilly suggestions and Add event go to the bottom; the calendar is a card */
   if(S.tab==='events'&&!m.dataset.ev56){m.dataset.ev56='1';
     const sg=sec56(/^Suggested by Tilly/),ad=[...m.children].find(e=>e.matches&&e.matches('.row')&&/Add event/.test(e.textContent));

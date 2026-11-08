@@ -351,3 +351,10 @@ On a sponsor page there is one Contacts list. Each contact has Edit, Unlink and 
 - Proposal Kit: audience figures sit in a tidy grid with the full label visible. Keep that list short and hand-picked: Tilly quotes only those figures and names and never adds others.
 - Activity: Push to Praise is one compact row. Contacts and Events: add/import and Tilly's suggestions are at the bottom.
 - Follow-ups and Events cards on Today now share one height; the Events list scrolls inside its card. What happened rows are evenly spaced.
+
+## v67
+- Contacts: Add a contact and Import contacts now sit just above the Address book, centred.
+- Today: Next 7 days is a centred list that scrolls inside its card and can be collapsed.
+
+## v68
+- Every card on Today folds fully to just its heading, and stays folded when the page refreshes.
