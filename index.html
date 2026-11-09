@@ -316,6 +316,11 @@ section.top-w55 .fbody>.ptrow{flex:1 1 auto;align-content:center}
 .tbar54{justify-content:center!important}
 section.box.fold-c>.fbody{display:none!important}
 .tg54>section.fold-c{align-self:start!important;min-height:0!important;height:auto!important;max-height:none!important;overflow:visible!important}
+.sec.urg69{border-left:3px solid #b3261e;padding-left:10px}
+.sec.imp69{border-left:3px solid #c98a12;padding-left:10px}
+.pill.bad{background:#fbe3e1;color:#8c1d18;border-color:#f0b9b5}
+[data-x69row]{align-items:center;gap:10px}
+[data-x69row] select,[data-x69row] input[type=date]{width:auto!important;min-width:0;flex:0 0 auto}
 /* v58b */
 details.mn54{position:relative;display:inline-block}
 details.mn54>summary{list-style:none;cursor:pointer;padding:6px 10px;font:500 13px var(--sans);color:var(--mute);border:1px solid var(--line);border-radius:99px;white-space:nowrap;transition:background .15s,border-color .15s}
@@ -4330,6 +4335,160 @@ function polish56(){
     s.innerHTML=`<h2>Calendar <small>next 14 days${n?' · '+esc(n.textContent):''}</small></h2><div class="calg56"></div>`;
     const g=s.querySelector('.calg56');[...cal.children].filter(c=>c.tagName!=='SUMMARY').forEach(c=>g.appendChild(c));cal.replaceWith(s)}}
 {const r=render;render=function(){const x=r.apply(this,arguments);try{polish56()}catch(e){console.error('polish56',e)}return x}}
+
+/* ---------- v69: send any file to Fatimah for approval ---------- */
+(function(){
+  const SVG='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>';
+  function addBtns(){
+    if(typeof EDIT==='undefined'||!EDIT) return;
+    document.querySelectorAll('#main [data-act="docdl"],#main [data-act="fdl"]').forEach(b=>{
+      const id=b.dataset.id;if(!id) return;
+      const par=b.parentElement;if(!par||par.querySelector('[data-act="fsend69"][data-id="'+id+'"]')) return;
+      const n=document.createElement('button');n.className='btn sm';n.dataset.act='fsend69';n.dataset.id=id;
+      n.setAttribute('aria-label','Send this file to Fatimah for approval');n.innerHTML=SVG+' Send to Fatimah';
+      b.after(n);
+    });
+  }
+  const r0=render;
+  render=function(){const x=r0.apply(this,arguments);try{addBtns()}catch(e){}return x};
+  document.addEventListener('click',async e=>{
+    const b=e.target.closest&&e.target.closest('[data-act="fsend69"]');if(!b) return;
+    e.stopImmediatePropagation();e.preventDefault();
+    if(b.dataset.busy) return;
+    const f=get('kit',b.dataset.id);if(!f){toast('Could not find that file.');return}
+    const lab=f.pipeId&&f.pipeId!=='general'?linkLabel(f.pipeId):'General';
+    const title=f.name+(lab&&lab!=='General'?' ('+lab+')':'');
+    b.dataset.busy='1';
+    try{
+      const dup=S.kit.find(d=>d.type==='draft'&&d.fileId===f.id&&['draft','changes','pending'].includes(d.status));
+      let id=dup&&dup.id;
+      if(!id){
+        id=await newDraft({kind:'Brief',title,body:'Please review the document "'+f.name+'"'+(lab&&lab!=='General'?' on the '+lab+' page':'')+' in the desk (open the page, then Files). Tell me if anything should change before it goes anywhere.',forId:f.pipeId&&f.pipeId!=='general'?f.pipeId:''});
+        await patch('kit',id,{fileId:f.id});
+      }
+      await drToFatimah(id);
+    }catch(err){toast('Could not send: '+(err.message||err))}
+    finally{delete b.dataset.busy}
+  },true);
+})();
+
+/* v69b: send pages, research and the plan to Fatimah; show the file and page on the approval card */
+(function(){
+  const SVG='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>';
+  const SKIP=new Set(['id','type','by','at','pipeId','partnerId','status2','sentAt','decidedAt','decidedBy','wrap']);
+  const L=(k)=>k.replace(/([A-Z])/g,' $1').replace(/^./,c=>c.toUpperCase());
+  const dump=(o)=>Object.keys(o||{}).filter(k=>!SKIP.has(k)&&typeof o[k]==='string'&&o[k].trim()).map(k=>L(k)+': '+o[k].trim()).join('\n');
+  function sponsorBody(p){
+    let t=dump(p);const d=get('kit','fdoc_'+p.id);
+    const FKs=[['who','Who they are and who they sponsor'],['way','The way in'],['offer','What we can do for them'],['get','What we hope to get'],['plan','Dated plan']];
+    if(d){const x=FKs.filter(([k])=>d[k]&&String(d[k]).trim()).map(([k,l])=>l+'\n'+String(d[k]).trim()).join('\n\n');if(x) t+='\n\nResearch page\n'+x;if(d.link) t+='\n\nFull dossier: '+d.link}
+    let rs=[];try{rs=RS(p.id)}catch(e){}
+    if(rs.length) t+='\n\nResearch notes\n'+rs.map(r=>'- '+dump(r).replace(/\n/g,'; ')).join('\n');
+    return t.trim();
+  }
+  async function sendAppr(key,title,body,forId,kind){
+    const ex=S.kit.find(d=>d.type==='draft'&&d.refKey===key&&['draft','changes','pending'].includes(d.status));
+    if(ex&&ex.status==='pending'){toast('Already waiting for Fatimah in Approvals.');return}
+    let id=ex&&ex.id;
+    if(id) await patch('kit',id,{body,title});
+    else{id=await newDraft({kind:kind||'Brief',title,body,forId:forId||''});await patch('kit',id,{refKey:key})}
+    await drToFatimah(id);
+  }
+  window.sendAppr69=sendAppr;
+  const mk=(act,id,label)=>{const b=document.createElement('button');b.className='btn';b.dataset.act=act;b.dataset.id=id||'';b.innerHTML=SVG+' '+label;return b};
+  const oS=openSponsor;openSponsor=function(id,keep){const r=oS.apply(this,arguments);try{if(typeof EDIT!=='undefined'&&EDIT){const dlg=document.getElementById('dlg');if(dlg&&!dlg.querySelector('[data-act="apprsp69"]')){const row=dlg.querySelector('.row')||dlg;row.appendChild(mk('apprsp69',id,'Send this page to Fatimah'))}}}catch(e){}return r};
+  const oP=openPartner;openPartner=function(id){const r=oP.apply(this,arguments);try{if(typeof EDIT!=='undefined'&&EDIT){const dlg=document.getElementById('dlg');if(dlg&&!dlg.querySelector('[data-act="apprpt69"]')){const row=dlg.querySelector('.row')||dlg;row.appendChild(mk('apprpt69',id,'Send this page to Fatimah'))}}}catch(e){}return r};
+  const r1=render;render=function(){const x=r1.apply(this,arguments);try{
+    const m=document.getElementById('main');if(!m) return x;
+    if(typeof EDIT!=='undefined'&&EDIT&&S.tab==='roadmap'&&!m.querySelector('[data-act="apprplan69"]')){const w=document.createElement('div');w.className='row';w.style.cssText='justify-content:flex-end;margin-bottom:8px';w.appendChild(mk('apprplan69','','Send the plan to Fatimah'));m.insertBefore(w,m.firstChild)}
+    m.querySelectorAll('.pt.dr').forEach(c=>{if(c.dataset.x69) return;c.dataset.x69='1';const id=c.id.replace(/^dr_/,''),d=get('kit',id);if(!d) return;const row=c.querySelector(':scope>.row')||(()=>{const r=document.createElement('div');r.className='row';r.style.marginTop='8px';c.appendChild(r);return r})();
+      if(d.fileId){const b=document.createElement('button');b.className='btn sm';b.dataset.act='fdl';b.dataset.id=d.fileId;b.textContent='Open the file';row.prepend(b)}
+      if(d.forId){const sp=get('pipe',d.forId)?'opensp':get('kit',d.forId)&&get('kit',d.forId).type==='partner'?'openpt':'';if(sp){const b=document.createElement('button');b.className='btn sm';b.dataset.act=sp;b.dataset.id=d.forId;b.textContent='Open the page';row.prepend(b)}}
+    })}catch(e){}return x};
+  document.addEventListener('click',async e=>{
+    const b=e.target.closest&&e.target.closest('[data-act="apprsp69"],[data-act="apprpt69"],[data-act="apprplan69"]');if(!b) return;
+    e.stopImmediatePropagation();e.preventDefault();if(b.dataset.busy) return;b.dataset.busy='1';
+    try{
+      const a=b.dataset.act,id=b.dataset.id;
+      if(a==='apprsp69'){const p=get('pipe',id);if(!p) return;await sendAppr('sp:'+id,'Sponsor page: '+p.group,sponsorBody(p),id)}
+      else if(a==='apprpt69'){const x=get('kit',id);if(!x) return;await sendAppr('pt:'+id,'Partner page: '+(x.name||'Partner'),dump(x),id)}
+      else{const t=(S.tasks||[]).map(t=>'- '+(t.done?'[done] ':'')+(t.title||t.text||t.name||t.task||'')+(t.due?' (due '+t.due+')':'')).join('\n');await sendAppr('plan','The plan','The plan, as it stands today:\n\n'+t,'','Proposal')}
+    }catch(err){toast('Could not send: '+(err.message||err))}finally{delete b.dataset.busy}
+  },true);
+})();
+
+/* v69c: decision priority + a "send this page to Fatimah" button on every working page */
+(function(){
+  const SVG='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>';
+  const RANK={urgent:0,important:1,'':2};
+  const LAB={urgent:'Urgent',important:'Important'};
+  const TABS={sponsors:'Sponsors',pipeline:'Pipeline',kit:'Proposal Kit',events:'Events',contacts:'Contacts',coverage:'Coverage',review:'Review',activity:'Activity',balance:'Balance',partners:'Partners',templates:'Templates',wrap:'Wrap-ups',people:'People',score:'Score',deals:'Deals',notes:'Notes'};
+  function pageText(m){
+    const c=m.cloneNode(true);
+    c.querySelectorAll('.fold-c').forEach(x=>x.classList.remove('fold-c'));c.querySelectorAll('details').forEach(d=>d.open=true);
+    c.querySelectorAll('[data-act="sendpage69"],button,svg,script,style,[data-x69row]').forEach(x=>x.remove());
+    c.querySelectorAll('input,textarea,select').forEach(x=>{
+      let v='';
+      if(x.tagName==='SELECT') v=(x.options[x.selectedIndex]||{}).text||'';
+      else if(x.type==='checkbox'||x.type==='radio'||x.type==='file') {x.remove();return}
+      else v=x.value||'';
+      if(!v){x.remove();return}
+      const s=document.createElement('div');s.textContent=v;x.replaceWith(s)});
+    c.style.cssText='position:fixed;left:-99999px;top:0;width:900px';
+    document.body.appendChild(c);let t=c.innerText||c.textContent||'';c.remove();
+    return t.replace(/\n{3,}/g,'\n\n').trim().slice(0,9000);
+  }
+  function decide69(m){
+    const sec=m.querySelector(':scope>section.box');if(!sec||sec.dataset.p69) return;
+    const box=sec.querySelector(':scope>.fbody')||sec;const blocks=[...box.querySelectorAll(':scope>.sec')];if(!blocks.length) return;
+    sec.dataset.p69='1';
+    const rows=blocks.map((b,i)=>{
+      const id=(b.querySelector('[data-act="decide"]')||{}).dataset&&b.querySelector('[data-act="decide"]').dataset.id;
+      const d=id&&get('decisions',id)||{};
+      const pr=d.priority||'';
+      const sel=(typeof EDIT!=='undefined'&&EDIT)?`<div class="row" data-x69row="1" style="margin:4px 0"><label class="meta" for="pr_${id}">How soon</label><select id="pr_${id}" data-pr69="${id}"><option value="">Normal</option><option value="important"${pr==='important'?' selected':''}>Important</option><option value="urgent"${pr==='urgent'?' selected':''}>Urgent</option></select><label class="meta" for="nb_${id}">Needed by</label><input type="date" id="nb_${id}" data-nb69="${id}" value="${d.needBy||''}"></div>`:'';
+      const pill=pr?`<span class="pill ${pr==='urgent'?'bad':'warn'}" style="margin-left:6px">${LAB[pr]}${d.needBy?' · by '+d.needBy:''}</span>`:'';
+      const h=b.querySelector('b');
+      if(h&&pill&&!b.querySelector('.pri69')){const sp=document.createElement('span');sp.className='pri69';sp.innerHTML=pill;h.after(sp)}
+      if(pr==='urgent') b.classList.add('urg69');else if(pr==='important') b.classList.add('imp69');
+      if(sel){const t=document.createElement('div');t.innerHTML=sel;b.insertBefore(t.firstChild,b.querySelector('.fld')||null)}
+      const answered=!!d.answer;
+      return {b,key:(answered?10:0)+(RANK[pr]??2),n:d.n||i,pr,answered};
+    });
+    rows.sort((x,y)=>x.key-y.key||x.n-y.n);
+    rows.forEach(r=>box.appendChild(r.b));
+    const f=S.dec69||'all';
+    const nU=rows.filter(r=>!r.answered&&r.pr==='urgent').length,nI=rows.filter(r=>!r.answered&&r.pr==='important').length;
+    const bar=document.createElement('div');bar.className='row dbar69';bar.dataset.x69row='1';bar.style.cssText='margin:6px 0 10px;justify-content:center';
+    bar.innerHTML=[['all','All'],['top','Urgent and important ('+(nU+nI)+')'],['open','Not answered yet']].map(([k,l])=>`<button class="btn sm ${f===k?'pri':''}" data-act="decf69" data-k="${k}">${l}</button>`).join('')+(nU?`<span class="pill bad">${nU} urgent</span>`:'');
+    box.insertBefore(bar,box.firstChild);
+    rows.forEach(r=>{r.b.style.display=(f==='top'&&!(r.pr&&!r.answered))||(f==='open'&&r.answered)?'none':''});
+  }
+  function pageBtn(m){
+    if(typeof EDIT==='undefined'||!EDIT) return;
+    const tab=S.tab;if(!TABS[tab]||m.querySelector('[data-act="sendpage69"]')) return;
+    const w=document.createElement('div');w.className='row';w.dataset.x69row='1';w.style.cssText='justify-content:center;margin:14px 0 4px';
+    w.innerHTML=`<button class="btn" data-act="sendpage69" data-tab="${tab}">${SVG} Send this page to Fatimah</button>`;m.appendChild(w);
+  }
+  const r2=render;render=function(){const x=r2.apply(this,arguments);try{const m=document.getElementById('main');if(m){if(S.tab==='decisions') decide69(m);else pageBtn(m)}}catch(e){}return x};
+  document.addEventListener('change',async e=>{
+    const t=e.target;if(!t||!t.dataset) return;
+    const id=t.dataset.pr69||t.dataset.nb69;if(!id) return;
+    e.stopImmediatePropagation();
+    const v=t.dataset.pr69?{priority:t.value}:{needBy:t.value};
+    try{await act('Decision priority',()=>patch('decisions',id,v));toast('Saved.')}catch(err){toast('Could not save.')}
+    const m=document.getElementById('main');const s=m&&m.querySelector(':scope>section.box');if(s)delete s.dataset.p69;render();
+  },true);
+  document.addEventListener('click',async e=>{
+    const b=e.target.closest&&e.target.closest('[data-act="decf69"],[data-act="sendpage69"]');if(!b) return;
+    e.stopImmediatePropagation();e.preventDefault();
+    if(b.dataset.act==='decf69'){S.dec69=b.dataset.k;render();return}
+    if(b.dataset.busy) return;b.dataset.busy='1';
+    try{const tab=b.dataset.tab,m=document.getElementById('main');const body='A snapshot of the '+TABS[tab]+' page on '+TODAY+'.\n\n'+pageText(m);
+      await window.sendAppr69('tab:'+(typeof MODE!=='undefined'?MODE:'')+tab,TABS[tab]+' page ('+TODAY+')',body,'')}
+    catch(err){toast('Could not send: '+(err.message||err))}finally{delete b.dataset.busy}
+  },true);
+})();
 
 /* ---------- v32: templates, inline events, de-duplication ---------- */
 const PTPLS=[['media','Media-partner offer'],['collab','Collaboration proposal'],['press','Press access and coverage request'],['thanks','Coverage follow-up']];

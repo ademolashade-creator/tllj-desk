@@ -358,3 +358,12 @@ On a sponsor page there is one Contacts list. Each contact has Edit, Unlink and 
 
 ## v68
 - Every card on Today folds fully to just its heading, and stays folded when the page refreshes.
+
+## v69
+- Every file in Documents now has a "Send to Fatimah" button. It makes a brief that points to the file and its page, then shows you the email before anything is sent. Press it twice and it reuses the same brief. Fatimah approves it from the email or from Approvals.
+- Sponsor and partner pages have "Send this page to Fatimah". It sends the page's details, research page and research notes. The Roadmap has "Send the plan to Fatimah". All of these appear on her Approvals page with an "Open the page" or "Open the file" button, and she can approve, ask for changes or decline there. Nothing is sent until you confirm.
+
+## v70
+- Decisions: each decision has "How soon" (Normal, Important, Urgent) and "Needed by". Urgent ones sit at the top with a red edge, important ones next, and answered ones last. The buttons above the list show All, Urgent and important, or Not answered yet. Fatimah sees the labels and the order.
+- Every working page (Sponsors, Pipeline, Proposal Kit, Events, Contacts, Coverage, Review, Activity, Balance, Partners, Templates, Wrap-ups and more) has "Send this page to Fatimah" at the bottom. It sends a text snapshot to her Approvals page.
+- When Fatimah asks for changes on Approvals, a box opens where she types what should change. She has to write something.
