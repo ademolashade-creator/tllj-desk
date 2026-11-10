@@ -321,6 +321,38 @@ section.box.fold-c>.fbody{display:none!important}
 .pill.bad{background:#fbe3e1;color:#8c1d18;border-color:#f0b9b5}
 [data-x69row]{align-items:center;gap:10px}
 [data-x69row] select,[data-x69row] input[type=date]{width:auto!important;min-width:0;flex:0 0 auto}
+/* v71 */
+.toast[popover]{position:fixed;inset:auto;left:50%;top:auto;right:auto;bottom:calc(16px + env(safe-area-inset-bottom,0px));margin:0;border:0;transform:translateX(-50%);max-width:min(92vw,560px);overflow:visible;text-align:center}
+body[data-fab="1"] .toast[popover]{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+.ow71w{border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:12px;background:var(--surface);padding:10px 14px;margin:16px 0 0;box-shadow:var(--shadow)}
+.ow71w .oh{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;font-weight:600;font-size:14px;margin-bottom:2px}
+.ow71w .oh .meta{font-weight:400;font-size:12.5px}
+.ow71r{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;padding:7px 0;border-top:1px solid var(--line)}
+.ow71r:first-of-type{border-top:0}
+.ow71r .pill{margin:0}
+.ow71r .why{flex:1 1 240px;min-width:0;font-size:12.5px;color:var(--mute);overflow-wrap:anywhere}
+.ow71r .acts{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+.ow71w+.tg54,.ow71w+section{margin-top:12px}
+.tg54:has(>:only-child){grid-template-columns:minmax(0,1fr)}
+section.ow71c .fbody{display:flex;flex-direction:column;gap:0;justify-content:flex-start;max-height:560px;overflow:auto}
+section.ow71c.top-w55 .fbody>.ptrow,section.ow71c .fbody>.ptrow{flex:0 0 auto!important;max-height:none!important;height:auto!important;overflow:visible!important;align-content:center;display:grid!important;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"pill name btn" ". why btn";gap:2px 10px;align-items:center;padding:8px 0;border-top:1px solid var(--line);background:none;border-left:0;border-right:0;border-bottom:0;border-radius:0}
+section.ow71c .fbody>.ptrow:first-child{border-top:0}
+section.ow71c .ptrow>.pill{grid-area:pill}
+section.ow71c .ptrow>b{grid-area:name;min-width:0;overflow-wrap:anywhere}
+section.ow71c .ptrow>.meta,section.ow71c .ptrow>span.meta{grid-area:why!important;order:0!important;flex:none!important;font-size:12.5px;overflow-wrap:anywhere}
+section.ow71c .ptrow>.btn{grid-area:btn!important;order:0!important;margin:0!important;align-self:center}
+.qc71{margin-top:10px;border:1px dashed var(--line);border-radius:10px;padding:8px 12px}
+.qc71>summary{cursor:pointer;font-weight:600;font-size:13px}
+.qc71 .fld{margin-bottom:6px}
+.past71{margin-top:10px}
+.past71>summary{cursor:pointer;font-weight:600;font-size:13px}
+.hint71{margin:2px 0 8px}
+.hit71{outline:2px solid var(--accent);outline-offset:3px;border-radius:8px;animation:hit71 2.4s ease-out 1}
+@keyframes hit71{0%{box-shadow:0 0 0 0 rgba(99,5,81,.35)}100%{box-shadow:0 0 0 14px rgba(99,5,81,0)}}
+@media (max-width:640px){.ow71r .acts{margin-left:0;width:100%}.ow71r .acts .btn{flex:1}}
+.aiask{background:var(--surface)!important;color:var(--ink,inherit);max-height:70vh;overflow:auto;z-index:2147483000}
+.aiask b{color:var(--ink,inherit)}
+.aiask .row{display:flex;gap:8px;flex-wrap:wrap}
 /* v58b */
 details.mn54{position:relative;display:inline-block}
 details.mn54>summary{list-style:none;cursor:pointer;padding:6px 10px;font:500 13px var(--sans);color:var(--mute);border:1px solid var(--line);border-radius:99px;white-space:nowrap;transition:background .15s,border-color .15s}
@@ -4489,6 +4521,219 @@ function polish56(){
     catch(err){toast('Could not send: '+(err.message||err))}finally{delete b.dataset.busy}
   },true);
 })();
+
+/* ---------- v71: messages on top, What happened, outcomes, events, wrap-up, contacts, search ---------- */
+/* 1. messages always sit above every window and card */
+(function(){
+  const t=document.getElementById('toast');if(!t||t.dataset.p71) return;t.dataset.p71='1';
+  try{t.setAttribute('popover','manual')}catch(e){return}
+  const t0=toast;
+  toast=function(m){t0(m);try{if(t.matches(':popover-open')) t.hidePopover();t.showPopover()}catch(e){}
+    clearTimeout(toast.h71);toast.h71=setTimeout(()=>{try{if(t.matches(':popover-open')) t.hidePopover()}catch(e){}},2900)};
+})();
+
+/* 2. the email button says what is in it */
+(function(){const b=document.getElementById('pitchbtn');if(!b) return;b.title='Email: the pitches inbox and your own inbox';b.setAttribute('aria-label','Email inbox')})();
+
+/* 3. What happened: short lists become slim lines, long lists stay a compact card */
+function ow71(){
+  const m=$('#main');if(!m||S.tab!=='today') return;
+  m.querySelectorAll('section.box').forEach(s=>{
+    if(s.dataset.ow71) return;const h=s.querySelector('h2');if(!h||!/^What happened/.test(h.textContent)) return;
+    s.dataset.ow71='1';const rows=[...s.querySelectorAll('.ptrow')];
+    if(rows.length>4||!rows.length){s.classList.add('ow71c');return}
+    const wrap=document.createElement('div');wrap.className='ow71w';
+    wrap.innerHTML=`<div class="oh">What happened? <span class="meta">${rows.length} waiting. Log the result and the next step so nothing stalls.</span></div>`+rows.map(r=>{
+      const pill=(r.querySelector('.pill')||{}).textContent||'',nm=(r.querySelector('b')||{}).textContent||'',why=(r.querySelector('.meta')||{}).textContent||'',bt=r.querySelector('button[data-act="outopen"]');
+      if(!bt) return '';
+      return `<div class="ow71r"><span class="pill">${esc(pill)}</span><b>${esc(nm)}</b><span class="why">${esc(why)}</span><span class="acts"><button class="btn sm pri" data-act="outopen" data-k="${esc(bt.dataset.k)}" data-id="${esc(bt.dataset.id)}">Log outcome</button><button class="btn sm" data-ow71="later" data-id="${esc(bt.dataset.id)}" title="Hide this until you reload the desk">Later</button></span></div>`}).join('');
+    const par=s.parentElement;
+    if(par&&par.classList.contains('top54')){par.insertAdjacentElement('beforebegin',wrap);s.remove()}else s.replaceWith(wrap)});
+}
+document.addEventListener('click',e=>{
+  const b=e.target.closest&&e.target.closest('[data-ow71]');if(!b) return;e.stopImmediatePropagation();
+  S._nm=S._nm||[];S._nm.push(b.dataset.id);render()},true);
+
+/* 4. Partnerships also gets "Move overdue to today": next steps, follow-ups and package dates */
+function od71(){
+  const pts=PTS().filter(x=>x.stage!=='wrapped'&&x.nextDate&&x.nextDate<TODAY),fus=FUS().filter(f=>!f.done&&f.due&&f.due<TODAY),pks=[];
+  PTS().filter(x=>x.stage!=='wrapped').forEach(x=>(x.pkgs||[]).forEach(p=>{if(!p.done&&p.due&&p.due<TODAY) pks.push([x,p])}));
+  return {pts,fus,pks,n:pts.length+fus.length+pks.length}}
+document.addEventListener('click',async e=>{
+  const b=e.target.closest&&e.target.closest('[data-act="startfresh"]');if(!b||MODE!=='p'||!EDIT) return;e.stopImmediatePropagation();e.preventDefault();
+  const o=od71();if(!o.n){toast('Nothing is overdue.');return}
+  await act('Move overdue to today',async()=>{
+    const byP={};o.pts.forEach(x=>{byP[x.id]=byP[x.id]||{x,pk:new Set()}});o.pks.forEach(([x,p])=>{byP[x.id]=byP[x.id]||{x,pk:new Set()};byP[x.id].pk.add(p.id)});
+    for(const id in byP){const {x,pk}=byP[id],f={};
+      if(x.nextDate&&x.nextDate<TODAY&&x.stage!=='wrapped'){f.was=x.was||x.nextDate;f.nextDate=TODAY}
+      if(pk.size) f.pkgs=(x.pkgs||[]).map(p=>pk.has(p.id)?{...p,was:p.was||p.due,due:TODAY}:p);
+      await patch('kit',id,f)}
+    for(const f of o.fus) await patch('kit',f.id,{was:f.was||f.due,due:TODAY})});
+  render();toast(o.n+' moved to today. Each keeps its old date as "was". Undo is in the header.')},true);
+
+/* 5. outcomes: one timeline per brand, no duplicates, each one can be deleted */
+outSave=async function(k,id){
+  const r=$('#o_r').value.trim(),n=$('#o_n').value.trim(),d=$('#o_d').value,none=$('#o_x')&&$('#o_x').checked,st=$('#o_s')&&$('#o_s').value;
+  if(!r){toast('Say what happened');return}
+  if(k!=='event'&&!none&&!d){toast('Pick a date for the next step, or tick Nothing further needed');return}
+  const dlg=$('#dlg');
+  if(k==='event'){
+    const e=get('events',id);if(!e) return;const old=(e.outcome&&e.outcome.result)||'';
+    if(old.includes(r)){dlg.close();toast('That outcome is already recorded for this event.');return}
+    const res=old?old+'\n'+fmt(TODAY)+': '+r:r;
+    await act('Log outcome: '+e.name,async()=>{await patch('events',id,{outcome:{result:res,next:n||(e.outcome||{}).next||'',at:TODAY}});
+      if(n){const f=uid('fu');await save('kit',f,{id:f,type:'followup',text:n,due:d||addDays(TODAY,3),repeat:0,pipeId:'',who:'',done:false,created:TODAY,mode:'Both'})}});
+  }else if(k==='pipe'){
+    const p=get('pipe',id);if(!p) return;
+    if(logsOf(id).some(l=>l.type==='Note'&&String(l.summary).trim()===r)){dlg.close();toast('That outcome is already in the outreach log.');return}
+    await act('Log outcome: '+p.group,async()=>{await addLog(id,{type:'Note',date:TODAY,summary:r});await patch('pipe',id,{status:st,next:none?'':n,nextDate:none?'':d})});
+  }else{
+    const x=get('kit',id);if(!x) return;const outs=(x.outcomes||[]).slice();
+    if(outs.some(o=>String(o.result).includes(r))){dlg.close();toast('That outcome is already recorded for '+x.name+'.');return}
+    const i=outs.findIndex(o=>o.at===TODAY);
+    if(i>=0) outs[i]={...outs[i],result:outs[i].result+'\n'+r,next:n||outs[i].next||''};else outs.unshift({id:uid('oc'),at:TODAY,result:r,next:n});
+    await act('Log outcome: '+x.name,async()=>{await patch('kit',id,{stage:st,next:none?'':n,nextDate:none?'':d,outcomes:outs,...(st==='wrapped'&&!(x.wrap&&x.wrap.date)?{wrap:{...(x.wrap||{}),date:TODAY}}:{})})});
+  }
+  dlg.close();toast('Outcome saved.');
+};
+document.addEventListener('click',async e=>{
+  const b=e.target.closest&&e.target.closest('[data-del71]');if(!b||!EDIT) return;e.stopImmediatePropagation();
+  if(b.dataset.del71==='oc'){const x=get('kit',b.dataset.pid),i=+b.dataset.i;if(!x) return;
+    await act('Delete outcome',()=>patch('kit',x.id,{outcomes:(x.outcomes||[]).filter((_,j)=>j!==i)}));openPartner(x.id);toast('Outcome deleted. Undo is in the header.');return}
+  if(b.dataset.del71==='eo'){const ev=get('events',b.dataset.id);if(!ev) return;
+    await act('Delete event outcome',()=>patch('events',ev.id,{outcome:{result:'',next:'',at:TODAY,skipped:true}}));render();toast('Outcome deleted. Undo is in the header.')}},true);
+
+/* 6. Partners at events: only live and upcoming; ended events are recorded in Wrap-ups and Event outcomes */
+vEventsP=function(){
+  const L=PTS(),ids=[...new Set(L.map(x=>x.eventId).filter(Boolean))],all=ids.map(i=>get('events',i)).filter(Boolean).sort((a,b)=>a.start<b.start?-1:1);
+  const live=e=>{const d=e.end||e.start;return !d||d>=TODAY},A=all.filter(live),Z=all.filter(e=>!live(e));
+  const row=e=>`<div class="sec"><b>${esc(e.name)}</b><div class="meta"><span>${esc(evDates(e))}</span><span>${esc(e.where||'')}</span></div>${L.filter(x=>x.eventId===e.id).map(x=>ptRow(x,esc(stLabel(x.stage))+(x.accred&&x.accred!=='Not needed'?' · Accreditation: '+esc(x.accred):'')+(x.attendees?' · Attending: '+esc(x.attendees):''))).join('')}</div>`;
+  const past=Z.length?`<details class="past71"><summary>Ended events <small>${Z.length}</small></summary><p class="meta">Ended events are recorded in Wrap-ups and under Event outcomes. They no longer list their partners here.</p>${Z.map(e=>`<div class="ptrow"><b>${esc(e.name)}</b><span class="meta">${esc(evDates(e))} · ${esc(L.filter(x=>x.eventId===e.id).map(x=>x.name).join(', '))}</span></div>`).join('')}</details>`:'';
+  return `<section class="box"><h2>Partners at events <small>live and upcoming</small></h2>${A.map(row).join('')||'<div class="empty">No live or upcoming event has a partner linked. Open a partner and choose its event.</div>'}${past}</section>`+vEvents()+vEvOut();
+};
+
+/* 7. event details can be edited before an event is added */
+window.EVX71=null;
+document.addEventListener('click',e=>{
+  const b=e.target.closest&&e.target.closest('[data-act="pastesave"],[data-act="evcreate"]');if(!b) return;
+  const pe=b.dataset.act==='pastesave',n=(($(pe?'#pe_en':'#ne_n')||{}).value||'').trim(),en=(($(pe?'#pe_ee':'#ne_e')||{}).value)||'',wh=(($(pe?'#pe_ew':'#ne_w')||{}).value||'').trim();
+  window.EVX71=n&&(en||wh)?{n:n.toLowerCase(),end:en,where:wh}:null},true);
+{const mk0=mkEvent;mkEvent=async function(name,d){const id=await mk0(name,d),x=window.EVX71;
+  if(x&&x.n===String(name).toLowerCase()){const ev=get('events',id);if(ev) await patch('events',id,{end:x.end||ev.end||ev.start,where:x.where||ev.where,status:ev.status==='Dates and place to add'&&(x.end||ev.start)?'Details to add':ev.status});window.EVX71=null}
+  return id}}
+function evx71(){
+  const d=$('#dlg');if(!d||!d.open) return;
+  const pe=d.querySelector('#pe_en'),ne=d.querySelector('#ne_n');
+  if(pe&&!d.querySelector('#pe_ee')){const row=pe.closest('.row');if(row) row.insertAdjacentHTML('afterend','<div class="row" style="margin-top:6px"><input type="date" id="pe_ee" aria-label="End date, optional" style="width:140px"><input type="text" id="pe_ew" placeholder="Place, optional" style="flex:1" aria-label="Place, optional"></div><span class="meta">Name, dates and place are all optional here. You can change any of them later under Events.</span>')}
+  if(ne&&!d.querySelector('#ne_e')){const g=ne.closest('.g2');if(g) g.insertAdjacentHTML('afterend','<div class="g2" style="margin-top:6px"><input type="date" id="ne_e" aria-label="End date, optional"><input type="text" id="ne_w" placeholder="Place, optional" aria-label="Place, optional"></div>')}}
+(function(){const d=document.getElementById('dlg');if(!d||d.dataset.mo71) return;d.dataset.mo71='1';new MutationObserver(()=>{try{evx71()}catch(e){}}).observe(d,{childList:true,subtree:true})})();
+/* suggested events: edit first */
+function evsug71(){
+  const m=$('#main');if(!m||!EDIT) return;
+  m.querySelectorAll('[data-act="evadd"]').forEach(b=>{if(b.nextElementSibling&&b.nextElementSibling.dataset&&b.nextElementSibling.dataset.evm71) return;
+    b.insertAdjacentHTML('afterend',`<button class="btn sm" data-ev71="edit" data-evm71="1" data-id="${esc(b.dataset.id)}">Edit first</button>`)})}
+document.addEventListener('click',async e=>{
+  const b=e.target.closest&&e.target.closest('[data-ev71]');if(!b||!EDIT) return;e.stopImmediatePropagation();
+  const dlg=$('#dlg');
+  if(b.dataset.ev71==='edit'){const x=get('evsug',b.dataset.id);if(!x) return;
+    dlg.innerHTML=`<h2 style="margin-bottom:6px">Check this event before it is added</h2><p class="meta">Change anything. Nothing is added until you press Add to events.</p>
+    <div class="fld"><label for="ev71n">Name</label><input type="text" id="ev71n" value="${esc(x.name||'')}"></div>
+    <div class="g2"><div class="fld"><label for="ev71s">Starts</label><input type="date" id="ev71s" value="${esc(x.start||'')}"></div><div class="fld"><label for="ev71e">Ends</label><input type="date" id="ev71e" value="${esc(x.end||x.start||'')}"></div></div>
+    <div class="fld"><label for="ev71w">Place</label><input type="text" id="ev71w" value="${esc(x.where||'')}"></div>
+    <div class="fld"><label for="ev71o">Notes</label><textarea id="ev71o" style="min-height:80px">${esc([x.can,x.benefit].filter(Boolean).join(' '))}</textarea></div>
+    <div class="row"><button class="btn pri" data-ev71="save" data-id="${esc(x.id)}">Add to events</button><button class="btn" data-act="close">Cancel</button></div>`;
+    dlg.dataset.col='';dlg.dataset.id='';if(!dlg.open) dlg.showModal();return}
+  if(b.dataset.ev71==='save'){const x=get('evsug',b.dataset.id);if(!x) return;const name=$('#ev71n').value.trim();if(!name){toast('Give the event a name');return}
+    const st=$('#ev71s').value,en=$('#ev71e').value||st,ev={id:uid('e'),name,start:st,end:en,where:$('#ev71w').value.trim(),who:'To decide',reach:'',how:x.how||'',status:'Suggested by Tilly. Source: '+x.source,note:$('#ev71o').value.trim()};
+    await guard('events',null,ev,'Add event: '+name.slice(0,24),async()=>{await save('events',ev.id,ev);await dbSet('evsug',{...x,status:'added'})});dlg.close();render();toast('Event added.')}},true);
+
+/* 8. the partner window: type list, who attends, wrap-up, outcomes */
+BASE54.ptkind=PKINDS.slice();
+document.addEventListener('change',async e=>{
+  const s=e.target.closest&&e.target.closest('[data-ext71]');if(!s||s.value!=='__add') return;e.stopImmediatePropagation();
+  const x=get('kit',s.dataset.pid),v=(prompt('Type the new type')||'').trim();
+  if(!v||!x){s.value=x?x.kind:'';return}
+  const cur=(S.kit.find(q=>q.id==='opts54_ptkind')||{}).items||[];
+  await save('kit','opts54_ptkind',{id:'opts54_ptkind',type:'opts',items:[...new Set([...cur,v])]});
+  await patch('kit',x.id,{kind:v});openPartner(x.id)},true);
+document.addEventListener('change',async e=>{
+  const i=e.target.closest&&e.target.closest('[data-pt="attendees"]');if(!i||!EDIT) return;const v=i.value.trim();if(!v) return;
+  const cur=(S.kit.find(q=>q.id==='opts54_attend')||{}).items||[];if(cur.includes(v)) return;
+  await save('kit','opts54_attend',{id:'opts54_attend',type:'opts',items:[...new Set([...cur,v])].slice(-80)})});
+function pt71(id){
+  const x=get('kit',id),dlg=$('#dlg');if(!x||!dlg||!dlg.open) return;
+  const ks=dlg.querySelector('select[data-pt="kind"]');
+  if(ks&&EDIT){const L=optList54('ptkind');if(x.kind&&!L.includes(x.kind)) L.push(x.kind);
+    ks.dataset.ext71='1';ks.innerHTML=L.map(k=>`<option ${x.kind===k?'selected':''}>${esc(k)}</option>`).join('')+'<option value="__add">+ Add a new type…</option>'}
+  const at=dlg.querySelector('[data-pt="attendees"]');
+  if(at&&EDIT){const saved=(S.kit.find(q=>q.id==='opts54_attend')||{}).items||[],L=[...new Set([...saved,...PTS().map(p=>p.attendees).filter(Boolean),'Sade','Fatimah','Praise',...S.contacts.map(c=>c.name).filter(Boolean)])];
+    at.setAttribute('list','dl71a');at.placeholder='Choose a saved name or type a new one';at.insertAdjacentHTML('afterend',`<datalist id="dl71a">${L.map(o=>`<option value="${esc(o)}"></option>`).join('')}</datalist>`)}
+  const g=dlg.querySelector('[data-ptw="gave"]'),r=dlg.querySelector('[data-ptw="got"]');
+  if(g&&r&&EDIT){const w=x.wrap||{},mk=side=>(x.pkgs||[]).filter(p=>p.side===side&&p.item).map(p=>p.item+(p.detail?' ('+p.detail+')':'')+(p.done?': '+(side==='give'?'delivered':'received'):': not yet')).join('\n');
+    if(!w.pre71&&!g.value.trim()&&!r.value.trim()&&(mk('give')||mk('get'))){g.value=mk('give');r.value=mk('get');
+      patch('kit',id,{wrap:{...w,gave:g.value,got:r.value,pre71:true}})}}
+  const oc=[...dlg.querySelectorAll('textarea[data-oc]')];
+  if(oc.length){const h=[...dlg.querySelectorAll('h3')].find(q=>q.textContent.trim()==='Outcomes');
+    if(h&&!h.nextElementSibling.classList.contains('hint71')) h.insertAdjacentHTML('afterend','<p class="meta hint71">Every outcome for this partner is kept here, newest first, with one entry for each day. Logging another outcome on the same day adds to that day. Event outcomes are under Events.</p>');
+    if(EDIT) oc.forEach(t=>{if(!t.nextElementSibling||!t.nextElementSibling.dataset.del71) t.insertAdjacentHTML('afterend',`<button class="btn sm" data-del71="oc" data-pid="${esc(id)}" data-i="${esc(t.dataset.oc)}" style="margin:-4px 0 8px">Delete this outcome</button>`)})}
+  const ae=dlg.querySelector('.addev'),ne=dlg.querySelector('#ne_n');if(ae&&ne) evx71()}
+{const op=openPartner;openPartner=function(id){const x=op.apply(this,arguments);try{pt71(id)}catch(e){console.error('v71 partner',e)}return x}}
+
+/* 9. link a contact: add a new one right there, and pull people from linked emails */
+const FREE71=/^(gmail|googlemail|yahoo|ymail|outlook|hotmail|live|icloud|me|aol|proton|protonmail|msn)\./i;
+function qc71(kind,id){
+  if(!EDIT) return '';
+  const cs=ctOf52(kind,id),have=new Set(S.contacts.map(c=>String(c.email||'').toLowerCase()).filter(Boolean)),dom=new Set();
+  cs.forEach(c=>{const d=String(c.email||'').split('@')[1];if(d&&!FREE71.test(d)) dom.add(d.toLowerCase())});
+  if(kind==='pt'){const p=get('kit',id);(String((p||{}).contact||'').match(/[\w.+-]+@[\w.-]+\.\w+/g)||[]).forEach(a=>{const d=a.split('@')[1].toLowerCase();if(!FREE71.test(d)) dom.add(d)})}
+  const seen=new Set(),sug=[];
+  S.kit.filter(k=>k.type==='pitch'&&k.from).sort((a,b)=>String(b.received).localeCompare(String(a.received))).forEach(m=>{const a=String(m.from).toLowerCase(),d=a.split('@')[1]||'';if(dom.has(d)&&!have.has(a)&&!seen.has(a)&&sug.length<4){seen.add(a);sug.push(m)}});
+  return `<details class="qc71" ${sug.length?'open':''}><summary>Add a new contact here${sug.length?' · '+sug.length+' from emails':''}</summary>
+  <div class="g2"><div class="fld"><label>Name</label><input type="text" data-qf="name" placeholder="Name"></div><div class="fld"><label>Role</label><input type="text" data-qf="role" placeholder="For example: PR manager"></div></div>
+  <div class="g2"><div class="fld"><label>Email</label><input type="email" data-qf="email" placeholder="name@example.com"></div><div class="fld"><label>Phone</label><input type="tel" data-qf="phone" placeholder="Optional"></div></div>
+  <div class="row" style="margin-bottom:6px"><button class="btn pri sm" data-qc71="add" data-k="${kind}" data-id="${esc(id)}">Add and link</button></div>
+  ${sug.length?`<div class="meta" style="margin:6px 0 2px">People who emailed from the same organisation, not saved yet</div>${sug.map(m=>`<div class="ptrow"><span class="pn"><b>${esc(m.name||m.from)}</b><span class="meta">${esc(m.from)}${m.subject?' · '+esc(m.subject):''}</span></span><button class="btn sm" data-qc71="mail" data-k="${kind}" data-id="${esc(id)}" data-n="${esc(m.name||'')}" data-e="${esc(m.from)}">Add as contact</button></div>`).join('')}`:''}</details>`}
+document.addEventListener('click',async e=>{
+  const b=e.target.closest&&e.target.closest('[data-qc71]');if(!b||!EDIT) return;e.stopImmediatePropagation();
+  const box=b.closest('.qc71'),k=b.dataset.k,id=b.dataset.id;let c;
+  if(b.dataset.qc71==='mail') c={name:b.dataset.n,email:b.dataset.e,phone:'',role:''};
+  else{const g=f=>((box.querySelector(`[data-qf="${f}"]`)||{}).value||'').trim();c={name:g('name'),email:g('email'),phone:g('phone'),role:g('role')};
+    if(!c.name&&!c.email){toast('Add a name or an email first');return}
+    if(c.email&&S.contacts.some(x=>String(x.email||'').toLowerCase()===c.email.toLowerCase())){toast('That email is already a saved contact. Link it from the list above.');return}}
+  const lk=await linkTo51((k==='p'?'p:':k==='pt'?'pt:':'c:')+id,c),o={id:uid('c'),...c,...lk};
+  await act('Add contact',async()=>{const ok=await save('contacts',o.id,o);if(ok&&k==='p'&&typeof advanceOnContact==='function') await advanceOnContact(id,o)});
+  toast('Contact added and linked.');
+  const d=$('#dlg');if(d.open&&k==='p') openSponsor(id,true);else if(d.open&&k==='pt') openPartner(id);else render()},true);
+function qcmount71(){
+  const d=$('#dlg');
+  if(d&&d.open){const s=d.querySelector('#sec52');if(s&&!s.querySelector('.qc71')){const m=/^(p|pt|c)$/;const al=s.querySelector('[data-al52]');if(al){const [k,id]=String(al.dataset.al52).split(':');if(m.test(k)) s.insertAdjacentHTML('beforeend',qc71(k,id))}}}
+  const mm=$('#main');if(mm&&EDIT) mm.querySelectorAll('.lk55').forEach(l=>{if(l.nextElementSibling&&l.nextElementSibling.classList.contains('qc71')) return;
+    const pid=(l.querySelector('[data-lk55]')||{}).dataset;if(!pid) return;const id=pid.lk55,k=get('pipe',id)?'p':get('kit',id)&&get('kit',id).type==='partner'?'pt':'c';
+    l.insertAdjacentHTML('afterend',qc71(k,id))})}
+{const i52=inject52;inject52=function(){const x=i52.apply(this,arguments);try{qcmount71()}catch(e){console.error('v71 contacts',e)}return x}}
+
+/* 10. search takes you to the exact item */
+function flash71(txt){
+  const m=$('#main');if(!m||!txt) return;const q=String(txt).trim().toLowerCase();let best=null,bl=1e9;
+  m.querySelectorAll('b,h3,h2,.item,.sec,.ev,.ptrow,.ciit,tr,.fu,.card').forEach(el=>{const t=(el.textContent||'').toLowerCase();if(t.includes(q)&&t.length<bl){best=el;bl=t.length}});
+  if(!best) return;
+  for(let p=best.parentElement;p&&p!==m;p=p.parentElement){if(p.tagName==='DETAILS') p.open=true;if(p.classList.contains('fold-c')) p.classList.remove('fold-c')}
+  best.scrollIntoView({block:'center',behavior:'smooth'});best.classList.add('hit71');setTimeout(()=>best.classList.remove('hit71'),2600)}
+document.addEventListener('click',e=>{
+  const it=e.target.closest&&e.target.closest('#gres [data-act="gotab"]');if(!it) return;e.stopImmediatePropagation();
+  const title=((it.querySelector('b')||{}).textContent||'');$('#dlg').close();S.tab=it.dataset.id;render();setTimeout(()=>flash71(title),150);setTimeout(()=>{if(!document.querySelector('.hit71')) flash71(title)},900)},true);
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Enter'||!e.target||e.target.id!=='gq') return;const f=document.querySelector('#gres .item');if(f){e.preventDefault();f.click()}},true);
+
+/* 11. one place for everything done after each render */
+function post71(){
+  ow71();
+  const m=$('#main');if(!m) return;
+  if(MODE==='p'&&S.tab==='today'&&EDIT&&!m.querySelector('[data-od71]')){const o=od71();if(o.n){const first=m.querySelector('.ow71w,.tg54,section.box');if(first) first.insertAdjacentHTML('beforebegin',`<div class="banner" role="status" data-od71="1">${o.n} overdue. Clear these first. <button class="btn" data-act="startfresh">Move overdue to today</button></div>`)}}
+  if(EDIT) m.querySelectorAll('textarea[data-eo]').forEach(t=>{if(!t.nextElementSibling||!t.nextElementSibling.dataset.del71) t.insertAdjacentHTML('afterend',`<button class="btn sm" data-del71="eo" data-id="${esc(t.dataset.eo)}" style="margin-top:4px">Delete this outcome</button>`)});
+  m.querySelectorAll('section.box').forEach(s=>{const h=s.querySelector('h2');if(h&&/^Event outcomes/.test(h.textContent)&&!s.querySelector('.hint71')) h.insertAdjacentHTML('afterend','<p class="meta hint71">Outcomes for events are kept here, one per event, with a dated line each time you add to it. Partner and sponsor outcomes are on their own pages.</p>')});
+  evsug71();qcmount71()}
+{const r=render;render=function(){const x=r.apply(this,arguments);try{post71()}catch(e){console.error('v71',e)}return x}}
 
 /* ---------- v32: templates, inline events, de-duplication ---------- */
 const PTPLS=[['media','Media-partner offer'],['collab','Collaboration proposal'],['press','Press access and coverage request'],['thanks','Coverage follow-up']];

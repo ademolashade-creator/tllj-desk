@@ -367,3 +367,18 @@ On a sponsor page there is one Contacts list. Each contact has Edit, Unlink and 
 - Decisions: each decision has "How soon" (Normal, Important, Urgent) and "Needed by". Urgent ones sit at the top with a red edge, important ones next, and answered ones last. The buttons above the list show All, Urgent and important, or Not answered yet. Fatimah sees the labels and the order.
 - Every working page (Sponsors, Pipeline, Proposal Kit, Events, Contacts, Coverage, Review, Activity, Balance, Partners, Templates, Wrap-ups and more) has "Send this page to Fatimah" at the bottom. It sends a text snapshot to her Approvals page.
 - When Fatimah asks for changes on Approvals, a box opens where she types what should change. She has to write something.
+
+## v71
+- **Messages sit on top.** Every message (saved, deleted, errors) now appears above windows and cards, never behind them.
+- **What happened?** Up to four waiting items show as slim full-width lines with Log outcome and Later (Later hides one until you reload the desk). Five or more stay as a compact card beside the Good morning card, with the button on the right of each row. There is no card with one item and empty space.
+- **Partnerships: "Move overdue to today".** Added. On Partnerships Today, a banner counts what is overdue (partner next steps, follow-ups and package dates) and one button moves them all to today. Each keeps its old date as "was". Undo is in the header. Sponsorships has it too.
+- **Outcomes.** A partner keeps one timeline of dated outcomes, newest first, one entry per day. Logging a second outcome on the same day adds to that day, and an outcome that is already recorded is not added twice. Open a partner to edit or delete any outcome (Undo is in the header). Event outcomes are under Events, with a Delete button. Sponsor outcomes are in the Outreach log, with its own delete.
+- **Partners at events** lists live and upcoming events only. Ended events fold away under "Ended events"; what happened at them is recorded in Wrap-ups and Event outcomes.
+- **Adding an event.** In a partner's "+ Add a new event" and in Paste an email, you can now add an end date and a place before saving. Suggested events have "Edit first" before they are added.
+- **Partner window.** Type has "+ Add a new type…". Who attends is a drop-down of names you have used before, and new names are remembered. The Wrap-up opens pre-filled from What we give and What we get, with delivered and received items marked.
+- **Link a contact.** Under every "Link a saved contact" there is "Add a new contact here" (name, role, email, phone). It also lists people who emailed from the same organisation and are not saved yet, with "Add as contact".
+- **Search.** Press Enter to open the first result. Results that lead to a page now scroll to the exact item and highlight it.
+- **Email button.** Its hover label now says "Email: the pitches inbox and your own inbox".
+
+## v72
+- Same as v71, plus the Partnerships "Move overdue to today" described above. Refresh twice after uploading.
