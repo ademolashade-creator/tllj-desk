@@ -382,3 +382,6 @@ On a sponsor page there is one Contacts list. Each contact has Edit, Unlink and 
 
 ## v72
 - Same as v71, plus the Partnerships "Move overdue to today" described above. Refresh twice after uploading.
+
+## v73
+Same as v72, plus the Events card on Sponsorships Today now matches the Follow-ups card in height and scrolls inside itself. Refresh twice after uploading.
