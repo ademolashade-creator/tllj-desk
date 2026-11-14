@@ -177,7 +177,13 @@ nav button .i55{margin-right:6px;opacity:.8}
 .cfoot54{display:flex;justify-content:flex-end;gap:8px;padding:10px 2px 2px;margin-top:6px;border-top:1px solid var(--line)}
 .cfoot54 button{font-size:12.5px}
 /* tool cards in one row */
-.trow54{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:0 0 16px;align-items:start}
+.trow54{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0 0 16px;align-items:start}
+.trow54>section.fxs{grid-column:1/-1;order:-1;padding:18px 22px}
+.trow54>section.fxs details.fx>summary{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;font-size:18px}
+.trow54>section.fxs details.fx>summary .meta{font-size:13px}
+.fxp{flex:1 1 160px;min-width:120px;max-width:340px;height:6px;border-radius:99px;background:var(--line);overflow:hidden}
+.fxp i{display:block;height:100%;background:var(--gold);border-radius:99px}
+.trow54>section.fxs .fxb{margin-top:14px}
 .trow54>section.box{margin:0;padding:12px 16px}
 .trow54>section.box h2{font-size:17px;margin:0}
 .trow54>section.box h2 small{display:block;width:100%;font-size:12.5px;order:3}
@@ -2376,6 +2382,75 @@ async function ensureV43(){
   }catch(e){}
 }
 
+/* ---------- v53: this week's updates (13 Nov 2026) ---------- */
+async function ensureV53(){
+  if(!db||!OWNER()||lsGet('tllj_seed_v53')||!S.pipe.length) return;
+  try{
+    const D='2026-11-13',EARLY=['Not started','Finding the contact','Contact found'];
+    const pg=re=>S.pipe.find(p=>re.test(p.group||''));
+    const N=()=>Math.max(0,...S.pipe.map(p=>p.n||0))+1;
+    const mk=async o=>{const id=uid('p');await save('pipe',id,{id,n:N(),tab:'Nigeria',size:'Bigger',owner:'Sade',status:'Not started',when:'Start now',nextDate:'',notes:'',outcome:'',propose:'',...o});return get('pipe',id)};
+    const addC=async(p,c)=>{if(!p||S.contacts.some(x=>x.pipeId===p.id&&String(x.name||'').toLowerCase()===c.name.toLowerCase())) return;const id=uid('c');await save('contacts',id,{id,pipeId:p.id,name:c.name,role:c.role||'',email:'',phone:c.phone||'',route:c.route||''})};
+    const logIt=async(p,type,summary)=>{if(!p||S.log.some(l=>l.pipeId===p.id&&l.type===type&&l.date===D)) return;const id=uid('l');await save('log',id,{id,pipeId:p.id,type,date:D,summary})};
+    const note=async(p,line)=>{if(!p) return;const cur=get('pipe',p.id)||p;if((cur.notes||'').includes(line)) return;await patch('pipe',p.id,{notes:(cur.notes?cur.notes+'\n':'')+line})};
+    const sent=async(p,next,nextDate)=>{if(!p) return;const cur=get('pipe',p.id)||p;if(EARLY.includes(cur.status)) await patch('pipe',p.id,{status:'First message sent',next,nextDate})};
+
+    // Capital Club Lagos
+    let cc=pg(/capital club/i);
+    if(!cc) cc=await mk({group:'Capital Club Lagos',category:'Clubs',score:6,chance:'Feasible',first:'Capital Club membership team, route to find.',next:'',why:'A private members’ club in Victoria Island that hosted a Collectors Evening with Polo Luxury, with a panel on fine art, timepieces, investment and asset protection.'});
+    await addC(cc,{name:'Emem Akodu',role:'Senior Membership Administrator & Manager',route:'Listed on ZoomInfo for Capital Club Lagos. Not verified. Ask for the right person for media sponsorships.'});
+    await addC(cc,{name:'Mariam Makanjuola',role:'Membership Coordinator',route:'Listed on ZoomInfo for Capital Club Lagos. Not verified.'});
+    await addC(cc,{name:'Capital Club Lagos (main line)',role:'Main line',phone:'+234 814 500 0074',route:'6 Elsie Femi Pearse Street, off Adeola Odeku Street, Victoria Island. Phone from affinet.io and a business listing. No email found.'});
+    await logIt(cc,'Email sent','First introduction sent: A story idea for Capital Club Lagos.');
+    await sent(cc,'Follow up if there is no reply. Ask by phone who handles media sponsorships.','2026-11-20');
+
+    // Legend Hotel Lagos Airport
+    let lg=pg(/legend hotel/i);
+    if(!lg) lg=await mk({group:'Legend Hotel Lagos Airport',category:'Hotels',score:5,chance:'Possible',first:'Peter Idoko, General Manager.',next:''});
+    await addC(lg,{name:'Peter Idoko',role:'General Manager',phone:'+234 201 460 8200',route:'Named in ThisDay (27 Jul 2026) and BusinessDay (26 Sep 2025). LinkedIn: linkedin.com/in/peter-m-idoko/. Hotel phone from Google. No marketing or events contact found yet.'});
+    await logIt(lg,'Email sent','First introduction sent: A story idea for Legend Hotel Lagos Airport.');
+    await sent(lg,'Follow up if there is no reply. Ask for sales or events.','2026-11-20');
+
+    // Polo Avenue (Polo Limited)
+    let po=pg(/polo avenue/i);
+    if(!po) po=await mk({group:'Polo Avenue',category:'Luxury retail',score:6,chance:'Feasible',first:'Oluwatoyin Akindele, Polo Limited.',next:''});
+    await addC(po,{name:'Oluwatoyin Akindele',role:'Polo Limited, taking the conversation forward',route:'Copied on Polo’s reply of 13 Nov 2026. Email to add.'});
+    await addC(po,{name:'Polo Luxury (main line and WhatsApp)',role:'Main line',phone:'+234 (0) 901 999 9401. WhatsApp +234 916 000 2340',route:'Contact form: pololuxury.com/en/aftersales-contact'});
+    await note(po,'Marketing staff listed on ZoomInfo and LinkedIn, not verified: Anu Scott (Manager, Digital Marketing) and Tega Offo (Brand Digital Marketing Executive). Leadership: John Obayuwana (Managing Director) and Jennifer Obayuwana (Executive Director).');
+    await logIt(po,'Email sent','First introduction sent: A story idea for Polo Avenue, written to the Polo Luxury team.');
+    if(po&&!S.log.some(l=>l.pipeId===po.id&&l.type==='Email received'&&l.date===D)){const id=uid('l');await save('log',id,{id,pipeId:po.id,type:'Email received',date:D,summary:'Polo Limited thanked us for the introduction, said they welcome the opportunity to explore collaboration, and copied Oluwatoyin Akindele to take the conversation forward and understand our proposal.'})}
+    if(po&&['Not started','Finding the contact','Contact found','First message sent'].includes((get('pipe',po.id)||po).status)) await patch('pipe',po.id,{status:'In conversation',next:'Reply to Oluwatoyin Akindele and send the outline she will need to understand the proposal.',nextDate:'2026-11-16'});
+
+    // Imisigo: pick up on 6 or 7 January 2027
+    const im=pg(/imisigo/i);
+    if(im&&!im.nextDate) await patch('pipe',im.id,{next:'Pick the conversation up again: Wednesday 6 January 2027 proposed to Imisigo.',nextDate:'2027-01-06'});
+
+    // Partnerships: Banke Kuku
+    const bk=S.kit.find(k=>k.type==='partner'&&/banke/i.test(k.name||''));
+    if(bk) await patch('kit',bk.id,{next:'Send the follow-up to Toyosi Adedeji: sit-down interview (Life in Looks style) next week. Fatimah spoke to Bukky.',nextDate:D});
+
+    // Follow-up: Tutu call
+    if(!S.kit.some(k=>k.type==='followup'&&/tutu/i.test(k.text||'')&&k.due==='2026-11-14')){const id=uid('fu');await save('kit',id,{id,type:'followup',text:'Call with Tutu',due:'2026-11-14',dueTime:'13:00',repeat:0,pipeId:'',who:'',done:false,created:TODAY,mode:'Both'})}
+
+    // Contributors: assignments for Bolaji and Kafayat
+    const per=re=>S.kit.find(k=>k.type==='contributor'&&re.test(k.name||''));
+    const bo=per(/bolaji/i),ka=per(/kafayat/i);
+    const terms='800 words maximum, as a Google Doc. ₦25 per word, so ₦20,000. Payment on final approval. At least one round of edits. Credited by name.';
+    if(bo&&!asgs().some(a=>/jewel/i.test(a.title||''))){const id=uid('a');await save('kit',id,{id,type:'assignment',title:'African jewellers: a discovery piece',kind:'Article',stage:'Commissioned',linkId:'',due:'2026-11-20',brief:'A discovery piece on African jewellery brands. Real gold, real diamonds and real gemstones only. Provenance for every brand: say how you know what it uses, and leave out any you cannot confirm. Origin, base, region and, if possible, a designer quote. Photos sourced with each brand’s permission and credited. '+terms,draft:'',pub:'',credit:bo.name,fee:'₦20,000',paid:false,paidOn:'',notes:'Commission email prepared 13 Nov 2026. Not marked as sent.',cid:bo.id,rounds:[]})}
+    if(ka&&!asgs().some(a=>/hosting/i.test(a.title||''))){const id=uid('a');await save('kit',id,{id,type:'assignment',title:'Hosting etiquette: the guest is half of it',kind:'Article',stage:'Pitched',linkId:'',due:'',brief:'The guest is half of a good evening. Add Nigerian hosting etiquette and stories from her childhood, Lagos detail, one or two other voices if they come easily, and sources for any claim. '+terms,draft:'',pub:'',credit:ka.name,fee:'₦20,000',paid:false,paidOn:'',notes:'Pitch received 13 Nov 2026. Pointers email prepared, not marked as sent. Deadline to set.',cid:ka.id,rounds:[]})}
+
+    // Decisions for Fatimah
+    const nD=()=>Math.max(0,...S.decisions.map(d=>d.n||0))+1;
+    const dec=async(key,text,why)=>{if(S.decisions.some(d=>new RegExp(key,'i').test(d.decision||''))) return;const id=uid('d');await save('decisions',id,{id,n:nD(),decision:text,proposed:'',why,comment:'',answer:'',archived:false})};
+    await dec('government body','Government sponsor: which government body should we approach first?','There is no government sponsor on the list yet, and Sade is choosing one in each category she can reach.');
+    await dec('detty december.*publication date','Detty December: what is the publication date?','Sade needs it to plan the partner outreach and the writers.');
+    await dec('weeks? 3 and 5','Detty December: which angles for weeks 3 and 5?','The writers and sponsors need a brief for each week.');
+
+    lsSet('tllj_seed_v53','1');
+    toast('This week’s updates are on the desk.');
+  }catch(e){console.warn('v53',e)}
+}
+
 /* ---------- v44: Met someone, call log, Documents, week in review, big Today buttons ---------- */
 const CAN_LOG=()=>EDIT||CONTRIB;
 const dlgOpen=(html,col)=>{const d=$('#dlg');d.innerHTML=html;d.dataset.col=col;d.dataset.id='';if(!d.open) d.showModal()};
@@ -2692,7 +2767,7 @@ function vFocus45(){
   const f=vFocus();if(!f) return '';const p=rqFocusP();if(!p) return f;
   const st=rqStat(p),vis={length:st.n},done=st.d;
   const inner=f.replace('<section class="box"><h2>Sponsor in focus <small>pick from your sponsors list</small></h2>','<div class="fxb"><div class="fxl">Pick the sponsor to work on</div>').replace(/<\/section>$/,'</div>');
-  return `<section class="box fxs"><details class="fx" ${S.fxOpen?'open':''}><summary><b>Sponsoring focus</b> <span class="meta">${esc(p.group)} · ${done} of ${vis.length} questions answered</span></summary>${inner}${vRQ(p)}</details></section>`;
+  return `<section class="box fxs"><details class="fx" ${S.fxOpen?'open':''}><summary><b>Sponsoring focus</b> <span class="meta">${esc(p.group)} · ${done} of ${vis.length} questions answered</span><span class="fxp" aria-hidden="true"><i style="width:${vis.length?Math.round(100*done/vis.length):0}%"></i></span></summary>${inner}${vRQ(p)}</details></section>`;
 }
 const vSp45=vSponsors;
 const vRsBox=()=>EDIT?`<section class="box"><h2>Research a sponsor <small>type a name; Tilly searches and fills the sponsor’s fields and its research answers</small></h2><div class="row" style="gap:6px"><input type="text" id="rs_name" placeholder="For example: L’Occitane" aria-label="Sponsor name to research" style="flex:1;min-width:180px"><select id="rs_reg" aria-label="Region">${REGIONS.map(x=>`<option>${esc(x)}</option>`).join('')}</select><button class="btn pri" data-act="rsnew" ${S.rsBusy?'disabled':''}>${S.rsBusy?'Researching…':'Research and add'}</button></div><div class="meta" style="margin-top:6px">Needs the Tilly key in Settings. Tilly writes Ask where it cannot confirm something. Check each source before it goes in a proposal. Alcohol, tobacco and gambling brands are refused.</div></section>`:'';
@@ -5729,7 +5804,7 @@ async function startApp(env){
   $('#signout').hidden=!env.auth;
   render();hashGo();setTimeout(welcome,700);
   if(!db) return;
-  for(const c of COLS){db.collection(c).onSnapshot(s=>{S[c]=s.docs.map(d=>({...d.data(),id:d.id}));S.loaded[c]=true;softRender();if(EDIT&&!ASSIST&&!S.fixed&&['tasks','pipe','decisions','kit','evsug','activity'].every(k=>S.loaded[k])&&S.pipe.length){S.fixed=true;fixWording().then(()=>ensureRecords()).then(()=>ensureFocus()).then(()=>ensureFiles()).then(()=>ensureGov()).then(()=>ensureNoAlcohol()).then(()=>ensureAudience()).then(()=>ensureRates()).then(()=>ensureV25()).then(()=>ensureV26()).then(()=>ensureV27()).then(()=>ensureV28()).then(()=>ensureV29()).then(()=>ensureV30()).then(()=>ensureV35()).then(()=>ensureV36()).then(()=>ensureV40()).then(()=>ensureV43()).then(()=>ensureV45()).then(()=>ensureV45b()).then(()=>ensureV46()).then(()=>ensureV50()).then(()=>ensureV51()).then(()=>ensureV52()).then(()=>{pruneActivity();return dailyEvents()})}},e=>toast('Could not load '+c+': '+(e.code||e.message||'')))}
+  for(const c of COLS){db.collection(c).onSnapshot(s=>{S[c]=s.docs.map(d=>({...d.data(),id:d.id}));S.loaded[c]=true;softRender();if(EDIT&&!ASSIST&&!S.fixed&&['tasks','pipe','decisions','kit','evsug','activity'].every(k=>S.loaded[k])&&S.pipe.length){S.fixed=true;fixWording().then(()=>ensureRecords()).then(()=>ensureFocus()).then(()=>ensureFiles()).then(()=>ensureGov()).then(()=>ensureNoAlcohol()).then(()=>ensureAudience()).then(()=>ensureRates()).then(()=>ensureV25()).then(()=>ensureV26()).then(()=>ensureV27()).then(()=>ensureV28()).then(()=>ensureV29()).then(()=>ensureV30()).then(()=>ensureV35()).then(()=>ensureV36()).then(()=>ensureV40()).then(()=>ensureV43()).then(()=>ensureV45()).then(()=>ensureV45b()).then(()=>ensureV46()).then(()=>ensureV50()).then(()=>ensureV51()).then(()=>ensureV52()).then(()=>ensureV53()).then(()=>{pruneActivity();return dailyEvents()})}},e=>toast('Could not load '+c+': '+(e.code||e.message||'')))}
 }
 function lsGet(k){try{return localStorage.getItem(k)||''}catch(e){return ''}}
 function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}

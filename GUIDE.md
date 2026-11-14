@@ -385,3 +385,17 @@ On a sponsor page there is one Contacts list. Each contact has Edit, Unlink and 
 
 ## v73
 Same as v72, plus the Events card on Sponsorships Today now matches the Follow-ups card in height and scrolls inside itself. Refresh twice after uploading.
+
+## v53: this week's updates (13 Nov 2026) and a wider Sponsoring focus
+
+- **Sponsors tab.** Sponsoring focus now sits alone on its own line, full width, with a progress bar beside its title. Research a sponsor and New sponsor ideas sit side by side beneath it. Press the arrow to open it.
+- **One-time update.** The first time you open the desk as owner after the upload, it applies this week's changes once and shows "This week's updates are on the desk." It never repeats, and it skips anything already on the desk.
+  - **Capital Club Lagos, Legend Hotel Lagos Airport:** first email logged (13 Nov), status First message sent, follow-up date 20 Nov, contacts added (Emem Akodu, Mariam Makanjuola and the club's main line; Peter Idoko and the hotel line). Capital Club Lagos is added if it is not on the list.
+  - **Polo Avenue:** first email logged, Polo Limited's reply logged (Email received), status In conversation, next step "Reply to Oluwatoyin Akindele" on 16 Nov, contacts added. Anu Scott and Tega Offo are noted as unverified.
+  - **Partnerships, Banke Kuku:** next step is to send the follow-up to Toyosi Adedeji.
+  - **Follow-up:** Call with Tutu, Saturday 14 Nov at 1 pm.
+  - **Contributors, Assignments:** Bolaji's African jewellers piece (Commissioned, due 20 Nov, ₦20,000) and Kafayat's hosting piece (Pitched, deadline to set), if they are on People.
+  - **Decisions:** government body, the Detty December publication date, and the week 3 and 5 angles, added only if not already there.
+  - **Imisigo:** next step set to 6 Jan 2027, if it is on the list.
+- Not marked as sent: the commission email to Bolaji, the pointers email to Kafayat and the follow-up to Toyosi. Log them yourself once they have gone.
+- Upload `index.html`, `sw.js` and `GUIDE.md`. Nothing changes in Firebase, Apps Script or the config.
